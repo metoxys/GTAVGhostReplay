@@ -1,0 +1,36 @@
+# Build results
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Ll]og/
+[Tt]mp/
+
+# Visual Studio cache files
+ipch/
+*.aps
+*.cachefile
+*.opendb
+*.opensdf
+*.user
+*.sdf
+*.suo
+*.db
+.vs/
+
+# Temporary OS files
+.DS_Store
+Thumbs.db
+
+# NuGet stuff
+[Pp]ackages/
+packages.config
+
+*.log
+*.exe
+
+# Temp
+Server/
+*.TMP
+doc/changelog.pdf
+
+README.pdf

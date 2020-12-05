@@ -4,7 +4,7 @@
 #include <vector>
 #include <map>
 
-struct CReplayNode {
+struct SReplayNode {
     unsigned long long Timestamp;
     Vector3 Pos;
     Vector3 Rot;
@@ -35,5 +35,5 @@ public:
     // Nodes.front() shall be used to figure out which CReplayDatas apply to a given starting point.
     // The menu shall be used to select the one that applies, so multiple CReplayData recordings can be
     // chosen from.
-    std::vector<CReplayNode> Nodes;
+    std::vector<SReplayNode> Nodes;
 };

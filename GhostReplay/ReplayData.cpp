@@ -24,7 +24,7 @@ CReplayData CReplayData::Read(const std::string& replayFile) {
     replayData.DriverModel = replayJson["DriverModel"];
 
     for (auto& jsonNode : replayJson["Nodes"]) {
-        CReplayNode node{};
+        SReplayNode node{};
         node.Timestamp = jsonNode["T"];
         node.Pos.x = jsonNode["PX"];
         node.Pos.y = jsonNode["PY"];

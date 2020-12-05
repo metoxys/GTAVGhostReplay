@@ -23,6 +23,7 @@ namespace {
     std::shared_ptr<CReplayScript> scriptInst;
 
     std::vector<CReplayData> replays;
+    std::vector<CTrackData> tracks;
 }
 
 void GhostReplay::ScriptMain() {
@@ -41,7 +42,7 @@ void GhostReplay::ScriptMain() {
 
     GhostReplay::LoadReplays();
 
-    scriptInst = std::make_shared<CReplayScript>(*settings, replays);
+    scriptInst = std::make_shared<CReplayScript>(*settings, replays, tracks);
 
     VehicleExtensions::Init();
     Compatibility::Setup();
@@ -80,14 +81,48 @@ const std::vector<CReplayData>& GhostReplay::GetConfigs() {
 }
 
 uint32_t GhostReplay::LoadReplays() {
+    const std::string replaysPath =
+        Paths::GetModuleFolder(Paths::GetOurModuleHandle()) +
+        Constants::ModDir +
+        "\\Replays";
+
+    logger.Write(DEBUG, "Clearing and reloading replays");
+
+    replays.clear();
+
+    if (!(fs::exists(fs::path(replaysPath)) && fs::is_directory(fs::path(replaysPath)))) {
+        logger.Write(ERROR, "Directory [%s] not found!", replaysPath.c_str());
+        return 0;
+    }
+
+    for (const auto& file : fs::directory_iterator(replaysPath)) {
+        if (Util::to_lower(fs::path(file).extension().string()) != ".json") {
+            logger.Write(DEBUG, "Skipping [%s] - not .json", file.path().c_str());
+            continue;
+        }
+
+        CReplayData replay = CReplayData::Read(fs::path(file).string());
+        if (!replay.Nodes.empty())
+            replays.push_back(replay);
+        else
+            logger.Write(WARN, "Skipping [%s] - not a valid file", file.path().c_str());
+
+        logger.Write(DEBUG, "Loaded replay [%s]", replay.Name.c_str());
+    }
+    logger.Write(INFO, "Replays loaded: %d", replays.size());
+
+    return static_cast<unsigned>(replays.size());
+}
+
+uint32_t GhostReplay::LoadTracks() {
     const std::string configsPath =
         Paths::GetModuleFolder(Paths::GetOurModuleHandle()) +
         Constants::ModDir +
-        "\\Configs";
+        "\\Tracks";
 
-    logger.Write(DEBUG, "Clearing and reloading configs");
+    logger.Write(DEBUG, "Clearing and reloading tracks");
 
-    replays.clear();
+    tracks.clear();
 
     if (!(fs::exists(fs::path(configsPath)) && fs::is_directory(fs::path(configsPath)))) {
         logger.Write(ERROR, "Directory [%s] not found!", configsPath.c_str());
@@ -100,15 +135,15 @@ uint32_t GhostReplay::LoadReplays() {
             continue;
         }
 
-        CReplayData config = CReplayData::Read(fs::path(file).string());
-        if (!config.Nodes.empty())
-            replays.push_back(config);
+        CTrackData track = CTrackData::Read(fs::path(file).string());
+        if (!track.Name.empty())
+            tracks.push_back(track);
         else
             logger.Write(WARN, "Skipping [%s] - not a valid file", file.path().c_str());
 
-        logger.Write(DEBUG, "Loaded vehicle config [%s]", config.Name.c_str());
+        logger.Write(DEBUG, "Loaded track [%s]", track.Name.c_str());
     }
-    logger.Write(INFO, "Configs loaded: %d", replays.size());
+    logger.Write(INFO, "Tracks loaded: %d", tracks.size());
 
-    return static_cast<unsigned>(replays.size());
+    return static_cast<unsigned>(tracks.size());
 }

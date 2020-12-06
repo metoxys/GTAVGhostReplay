@@ -1,4 +1,5 @@
 #include "ReplayScript.hpp"
+#include "Script.hpp"
 
 #include "Compatibility.h"
 #include "Constants.hpp"
@@ -7,6 +8,7 @@
 #include "Util/Game.hpp"
 #include "Util/UI.hpp"
 #include "Util/Logger.hpp"
+#include "Util/String.hpp"
 
 #include <inc/enums.h>
 #include <inc/natives.h>
@@ -280,7 +282,21 @@ void CReplayScript::updateReplay() {
 
             if (finishPassedThisTick) {
                 mRecordState = ERecordState::Finished;
-                mUnsavedRuns.push_back(mCurrentRun);
+                if (mSettings.Main.AutoGhost &&
+                    (!mActiveReplay || mActiveReplay->Nodes.back().Timestamp > node.Timestamp)) {
+                    std::string timeStr = Util::FormatMillisTime(node.Timestamp);
+
+                    std::string trackName = mCurrentRun.Track;
+                    std::string runName = fmt::format("{} - {}", trackName, timeStr);
+
+                    mCurrentRun.Name = runName;
+                    mCurrentRun.Write();
+                    GhostReplay::LoadReplays();
+                    SetReplay(runName);
+                }
+                else {
+                    mUnsavedRuns.push_back(mCurrentRun);
+                }
                 UI::Notify("Record stopped", false);
             }
             break;

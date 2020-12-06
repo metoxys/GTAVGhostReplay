@@ -1,5 +1,6 @@
 #include "String.hpp"
 
+#include <fmt/format.h>
 #include <sstream>
 #include <algorithm>
 
@@ -47,4 +48,12 @@ std::string Util::StripString(std::string input) {
         }
     }
     return input;
+}
+
+std::string Util::FormatMillisTime(unsigned long long totalTime) {
+    unsigned long long minutes, seconds, milliseconds;
+    milliseconds = totalTime % 1000;
+    seconds = (totalTime / 1000) % 60;
+    minutes = (totalTime / 1000) / 60;
+    return fmt::format("{}:{:02d}.{:03d}", minutes, seconds, milliseconds);
 }

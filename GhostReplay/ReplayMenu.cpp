@@ -10,6 +10,7 @@
 
 #include "Util/UI.hpp"
 #include "Util/Math.hpp"
+#include "Util/String.hpp"
 
 #include <fmt/format.h>
 
@@ -199,12 +200,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         auto unsavedRunIt = context.GetUnsavedRuns().begin();
         while (unsavedRunIt != context.GetUnsavedRuns().end()) {
             auto unsavedRun = *unsavedRunIt;
-            unsigned long long minutes, seconds, milliseconds;
-            auto totalTime = unsavedRun.Nodes.back().Timestamp;
-            milliseconds = totalTime % 1000;
-            seconds = (totalTime / 1000) % 60;
-            minutes = (totalTime / 1000) / 60;
-            std::string timeStr = fmt::format("{}:{:02d}.{:03d}", minutes, seconds, milliseconds);
+            std::string timeStr = Util::FormatMillisTime(unsavedRun.Nodes.back().Timestamp);
 
             std::string trackName = unsavedRun.Track;
             std::string runName = fmt::format("{} - {}", trackName, timeStr);

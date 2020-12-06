@@ -27,4 +27,6 @@ namespace Util {
     std::string ByteArrayToString(uint8_t* byteArray, size_t length);
 
     std::string StripString(std::string input);
+
+    std::string FormatMillisTime(unsigned long long totalTime);
 }

@@ -10,6 +10,7 @@ public:
 
     struct {
         bool Enable = true;
+        bool AutoGhost = true;
     } Main;
 
 private:

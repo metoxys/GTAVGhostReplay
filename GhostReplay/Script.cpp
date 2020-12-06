@@ -57,6 +57,7 @@ void GhostReplay::ScriptMain() {
         },
         []() {
             // OnExit
+            scriptInst->SetScriptMode(EScriptMode::ReplayActive);
             settings->Save();
         },
         BuildMenu()

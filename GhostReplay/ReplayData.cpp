@@ -2,7 +2,7 @@
 #include "Constants.hpp"
 #include "Util/Paths.hpp"
 #include "Util/Logger.hpp"
-#include "Util/String.hpp"
+#include "ReplayScriptUtils.hpp"
 
 #include <nlohmann/json.hpp>
 #include <fmt/format.h>
@@ -23,8 +23,8 @@ CReplayData CReplayData::Read(const std::string& replayFile) {
         replayFileStream >> replayJson;
 
         replayData.Name = replayJson["Name"];
+        replayData.Track = replayJson["Track"];
         replayData.VehicleModel = replayJson["VehicleModel"];
-        replayData.DriverModel = replayJson["DriverModel"];
         replayData.VehicleMods = replayJson.value("Mods", VehicleModData());
 
         for (auto& jsonNode : replayJson["Nodes"]) {
@@ -57,8 +57,8 @@ void CReplayData::Write() {
     nlohmann::json replayJson;
 
     replayJson["Name"] = Name;
+    replayJson["Track"] = Track;
     replayJson["VehicleModel"] = VehicleModel;
-    replayJson["DriverModel"] = DriverModel;
     replayJson["Mods"] = VehicleMods;
 
     for (auto& Node : Nodes) {

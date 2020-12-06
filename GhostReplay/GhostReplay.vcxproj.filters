@@ -57,6 +57,7 @@
       <Filter>Menu %28Generic%29</Filter>
     </ClCompile>
     <ClCompile Include="TrackData.cpp" />
+    <ClCompile Include="ReplayScriptUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Util">
@@ -149,5 +150,6 @@
       <Filter>Menu %28Generic%29</Filter>
     </ClInclude>
     <ClInclude Include="TrackData.hpp" />
+    <ClInclude Include="ReplayScriptUtils.hpp" />
   </ItemGroup>
 </Project>

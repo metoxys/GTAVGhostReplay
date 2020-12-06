@@ -17,6 +17,8 @@
 #include <filesystem>
 #include <algorithm>
 
+#include "ReplayScriptUtils.hpp"
+
 using VExt = VehicleExtensions;
 
 CReplayScript::CReplayScript(
@@ -320,15 +322,13 @@ void CReplayScript::updateReplay() {
                 mRecordState = ERecordState::Finished;
                 if (mSettings.Main.AutoGhost &&
                     (!mActiveReplay || mActiveReplay->Nodes.back().Timestamp > node.Timestamp)) {
-                    std::string timeStr = Util::FormatMillisTime(node.Timestamp);
-
-                    std::string trackName = mCurrentRun.Track;
-                    std::string runName = fmt::format("{} - {}", trackName, timeStr);
-
-                    mCurrentRun.Name = runName;
+                    mCurrentRun.Name = Util::FormatReplayName(
+                        node.Timestamp,
+                        mCurrentRun.Track,
+                        Util::GetVehicleName(mCurrentRun.VehicleModel));
                     mCurrentRun.Write();
                     GhostReplay::LoadReplays();
-                    SetReplay(runName);
+                    SetReplay(mCurrentRun.Name);
                 }
                 else {
                     mUnsavedRuns.push_back(mCurrentRun);

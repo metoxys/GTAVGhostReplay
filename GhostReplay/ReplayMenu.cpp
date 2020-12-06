@@ -14,6 +14,8 @@
 
 #include <fmt/format.h>
 
+#include "ReplayScriptUtils.hpp"
+
 std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
     std::vector<CScriptMenu<CReplayScript>::CSubmenu> submenus;
     /* mainmenu */
@@ -202,10 +204,10 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         auto unsavedRunIt = context.GetUnsavedRuns().begin();
         while (unsavedRunIt != context.GetUnsavedRuns().end()) {
             auto unsavedRun = *unsavedRunIt;
-            std::string timeStr = Util::FormatMillisTime(unsavedRun.Nodes.back().Timestamp);
-
-            std::string trackName = unsavedRun.Track;
-            std::string runName = fmt::format("{} - {}", trackName, timeStr);
+            std::string runName = Util::FormatReplayName(
+                unsavedRun.Nodes.back().Timestamp,
+                unsavedRun.Track,
+                Util::GetVehicleName(unsavedRun.VehicleModel));
 
             if (mbCtx.Option(fmt::format("Save [{}]", runName))) {
                 unsavedRun.Name = runName;

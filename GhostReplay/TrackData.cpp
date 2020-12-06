@@ -2,7 +2,7 @@
 #include "Constants.hpp"
 #include "Util/Paths.hpp"
 #include "Util/Logger.hpp"
-#include "Util/String.hpp"
+#include "ReplayScriptUtils.hpp"
 
 #include <nlohmann/json.hpp>
 #include <fmt/format.h>

@@ -31,14 +31,10 @@ public:
     std::string Track;
 
     Hash VehicleModel;
-    Hash DriverModel;
-
-    // TODO: Car tuning stuff
-    // TODO: Maybe selectable
+    VehicleModData VehicleMods;
 
     // Nodes.front() shall be used to figure out which CReplayDatas apply to a given starting point.
     // The menu shall be used to select the one that applies, so multiple CReplayData recordings can be
     // chosen from.
     std::vector<SReplayNode> Nodes;
-    VehicleModData VehicleMods;
 };

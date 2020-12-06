@@ -99,6 +99,7 @@
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="Memory\NativeMemory.cpp" />
     <ClCompile Include="Memory\VehicleExtensions.cpp" />
+    <ClCompile Include="ReplayScriptUtils.cpp" />
     <ClCompile Include="ScriptMenuUtils.cpp" />
     <ClCompile Include="ReplayMenu.cpp" />
     <ClCompile Include="ReplayScript.cpp" />
@@ -126,6 +127,7 @@
     <ClInclude Include="Memory\Offsets.hpp" />
     <ClInclude Include="Memory\VehicleExtensions.hpp" />
     <ClInclude Include="Memory\Versions.hpp" />
+    <ClInclude Include="ReplayScriptUtils.hpp" />
     <ClInclude Include="ScriptMenuUtils.h" />
     <ClInclude Include="ReplayScript.hpp" />
     <ClInclude Include="ScriptMenu.hpp" />

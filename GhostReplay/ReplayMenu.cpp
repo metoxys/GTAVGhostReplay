@@ -32,11 +32,18 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             currentTrackName = activeTrack->Name;
 
         std::string currentGhostName = "None";
-        if (activeReplay)
+        std::vector<std::string> ghostDetails;
+        if (activeReplay) {
             currentGhostName = activeReplay->Name;
+            ghostDetails = {
+                fmt::format("Track: {}", activeReplay->Track),
+                fmt::format("Car: {}", Util::GetVehicleName(activeReplay->VehicleModel)),
+                fmt::format("Time: {}", Util::FormatMillisTime(activeReplay->Nodes.back().Timestamp))
+            };
+        }
 
         mbCtx.MenuOption(fmt::format("Track: {}", currentTrackName), "trackselectmenu");
-        mbCtx.MenuOption(fmt::format("Ghost: {}", currentGhostName), "ghostselectmenu");
+        mbCtx.MenuOption(fmt::format("Ghost: {}", currentGhostName), "ghostselectmenu", ghostDetails);
 
         if (mbCtx.MenuOption("Track setup", "tracksetupmenu")) {
             context.SetScriptMode(EScriptMode::DefineTrack);
@@ -179,10 +186,17 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             bool currentReplay = false;
             if (context.ActiveReplay())
                 currentReplay = context.ActiveReplay()->Name == replay.Name;
-            std::string selector = currentReplay ? "->" : "";
+            std::string selector = currentReplay ? "-> " : "";
 
             std::string optionName = fmt::format("{}{}", selector, replay.Name);
-            if (mbCtx.Option(optionName)) {
+            std::vector<std::string> details
+            {
+                fmt::format("Track: {}", replay.Track),
+                fmt::format("Car: {}", Util::GetVehicleName(replay.VehicleModel)),
+                fmt::format("Time: {}",  Util::FormatMillisTime(replay.Nodes.back().Timestamp))
+            };
+
+            if (mbCtx.Option(optionName, details)) {
                 if (!currentReplay)
                     context.SetReplay(replay.Name);
                 else

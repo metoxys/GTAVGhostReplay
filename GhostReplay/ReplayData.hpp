@@ -26,6 +26,7 @@ public:
 
     CReplayData() = default;
     void Write();
+    void WriteAsync();
 
     std::string Name;
     std::string Track;

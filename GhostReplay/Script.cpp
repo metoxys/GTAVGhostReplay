@@ -78,11 +78,6 @@ CReplayScript* GhostReplay::GetScript() {
     return scriptInst.get();
 }
 
-
-const std::vector<CReplayData>& GhostReplay::GetConfigs() {
-    return replays;
-}
-
 uint32_t GhostReplay::LoadReplays() {
     const std::string replaysPath =
         Paths::GetModuleFolder(Paths::GetOurModuleHandle()) +
@@ -149,4 +144,8 @@ uint32_t GhostReplay::LoadTracks() {
     logger.Write(INFO, "Tracks loaded: %d", tracks.size());
 
     return static_cast<unsigned>(tracks.size());
+}
+
+void GhostReplay::AddReplay(CReplayData replay) {
+    replays.push_back(replay);
 }

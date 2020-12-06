@@ -8,6 +8,7 @@
 #include <fmt/format.h>
 #include <filesystem>
 #include <fstream>
+#include <thread>
 
 CReplayData CReplayData::Read(const std::string& replayFile) {
     CReplayData replayData{};
@@ -102,4 +103,10 @@ void CReplayData::Write() {
     replayFile << std::setw(2) << replayJson << std::endl;
 
     logger.Write(INFO, "[Replay] Written %s", replayFileName.c_str());
+}
+
+void CReplayData::WriteAsync() {
+    std::thread([this]() {
+        Write();
+    }).detach();
 }

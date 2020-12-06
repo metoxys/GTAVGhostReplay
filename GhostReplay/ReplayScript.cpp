@@ -326,8 +326,8 @@ void CReplayScript::updateReplay() {
                         node.Timestamp,
                         mCurrentRun.Track,
                         Util::GetVehicleName(mCurrentRun.VehicleModel));
-                    mCurrentRun.Write();
-                    GhostReplay::LoadReplays();
+                    mCurrentRun.WriteAsync();
+                    GhostReplay::AddReplay(mCurrentRun);
                     SetReplay(mCurrentRun.Name);
                 }
                 else {

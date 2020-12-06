@@ -19,28 +19,34 @@ CTrackData CTrackData::Read(const std::string& trackFile) {
         return trackData;
     }
 
-    replayFileStream >> trackJson;
+    try {
+        replayFileStream >> trackJson;
 
-    trackData.Name = trackJson["Name"];
+        trackData.Name = trackJson["Name"];
 
-    trackData.StartLine.A.x = trackJson["StartLine"]["A"]["X"];
-    trackData.StartLine.A.y = trackJson["StartLine"]["A"]["Y"];
-    trackData.StartLine.A.z = trackJson["StartLine"]["A"]["Z"];
+        trackData.StartLine.A.x = trackJson["StartLine"]["A"]["X"];
+        trackData.StartLine.A.y = trackJson["StartLine"]["A"]["Y"];
+        trackData.StartLine.A.z = trackJson["StartLine"]["A"]["Z"];
 
-    trackData.StartLine.B.x = trackJson["StartLine"]["B"]["X"];
-    trackData.StartLine.B.y = trackJson["StartLine"]["B"]["Y"];
-    trackData.StartLine.B.z = trackJson["StartLine"]["B"]["Z"];
+        trackData.StartLine.B.x = trackJson["StartLine"]["B"]["X"];
+        trackData.StartLine.B.y = trackJson["StartLine"]["B"]["Y"];
+        trackData.StartLine.B.z = trackJson["StartLine"]["B"]["Z"];
 
-    trackData.FinishLine.A.x = trackJson["FinishLine"]["A"]["X"];
-    trackData.FinishLine.A.y = trackJson["FinishLine"]["A"]["Y"];
-    trackData.FinishLine.A.z = trackJson["FinishLine"]["A"]["Z"];
+        trackData.FinishLine.A.x = trackJson["FinishLine"]["A"]["X"];
+        trackData.FinishLine.A.y = trackJson["FinishLine"]["A"]["Y"];
+        trackData.FinishLine.A.z = trackJson["FinishLine"]["A"]["Z"];
 
-    trackData.FinishLine.B.x = trackJson["FinishLine"]["B"]["X"];
-    trackData.FinishLine.B.y = trackJson["FinishLine"]["B"]["Y"];
-    trackData.FinishLine.B.z = trackJson["FinishLine"]["B"]["Z"];
+        trackData.FinishLine.B.x = trackJson["FinishLine"]["B"]["X"];
+        trackData.FinishLine.B.y = trackJson["FinishLine"]["B"]["Y"];
+        trackData.FinishLine.B.z = trackJson["FinishLine"]["B"]["Z"];
 
-    logger.Write(DEBUG, "[Track] Parsed %s", trackFile.c_str());
-    return trackData;
+        logger.Write(DEBUG, "[Track] Parsed %s", trackFile.c_str());
+        return trackData;
+    }
+    catch (std::exception& ex) {
+        logger.Write(ERROR, "[Track] Failed to open %s, exception: %s", trackFile.c_str(), ex.what());
+        return trackData;
+    }
 }
 
 CTrackData::CTrackData()

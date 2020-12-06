@@ -25,7 +25,7 @@ CReplayData CReplayData::Read(const std::string& replayFile) {
         replayData.Name = replayJson["Name"];
         replayData.VehicleModel = replayJson["VehicleModel"];
         replayData.DriverModel = replayJson["DriverModel"];
-        replayData.VehicleMods = replayJson["Mods"];
+        replayData.VehicleMods = replayJson.value("Mods", VehicleModData());
 
         for (auto& jsonNode : replayJson["Nodes"]) {
             SReplayNode node{};
@@ -36,11 +36,11 @@ CReplayData CReplayData::Read(const std::string& replayFile) {
             node.Rot.x = jsonNode["RX"];
             node.Rot.y = jsonNode["RY"];
             node.Rot.z = jsonNode["RZ"];
-            node.Throttle = jsonNode["Throttle"];
-            node.Brake = jsonNode["Brake"];
-            node.SteeringAngle = jsonNode["Steering"];
-            node.LowBeams = jsonNode["LowBeams"];
-            node.HighBeams = jsonNode["HighBeams"];
+            node.Throttle = jsonNode.value("Throttle", 0.0f);
+            node.Brake = jsonNode.value("Brake", 0.0f);
+            node.SteeringAngle = jsonNode.value("Steering", 0.0f);
+            node.LowBeams = jsonNode.value("LowBeams", false);
+            node.HighBeams = jsonNode.value("HighBeams", false);
 
             replayData.Nodes.push_back(node);
         }

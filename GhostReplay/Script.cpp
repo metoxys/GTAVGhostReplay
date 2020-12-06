@@ -100,7 +100,7 @@ uint32_t GhostReplay::LoadReplays() {
 
     for (const auto& file : fs::directory_iterator(replaysPath)) {
         if (Util::to_lower(fs::path(file).extension().string()) != ".json") {
-            logger.Write(DEBUG, "Skipping [%s] - not .json", file.path().c_str());
+            logger.Write(DEBUG, "Skipping [%s] - not .json", fs::path(file).string().c_str());
             continue;
         }
 
@@ -134,7 +134,7 @@ uint32_t GhostReplay::LoadTracks() {
 
     for (const auto& file : fs::directory_iterator(tracksPath)) {
         if (Util::to_lower(fs::path(file).extension().string()) != ".json") {
-            logger.Write(DEBUG, "Skipping [%s] - not .json", file.path().c_str());
+            logger.Write(DEBUG, "Skipping [%s] - not .json", fs::path(file).string().c_str());
             continue;
         }
 

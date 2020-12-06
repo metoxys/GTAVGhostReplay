@@ -42,6 +42,10 @@ public:
         return mTracks;
     }
 
+    const std::vector<CReplayData>& GetUnsavedRuns() const{
+        return mUnsavedRuns;
+    }
+
     CReplayData* ActiveReplay() const {
         return mActiveReplay;
     }
@@ -60,6 +64,8 @@ public:
 
     void SetTrack(const std::string& trackName);
     void SetReplay(const std::string& replayName);
+    void ClearUnsavedRuns();
+    std::vector<CReplayData>::const_iterator EraseUnsavedRun(std::vector<CReplayData>::const_iterator runIt);
 
     bool StartLineDef(SLineDef& lineDef, const std::string& lineName);
 

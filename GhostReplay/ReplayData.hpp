@@ -26,6 +26,8 @@ public:
     void Write();
 
     std::string Name;
+    std::string Track;
+
     Hash VehicleModel;
     Hash DriverModel;
 

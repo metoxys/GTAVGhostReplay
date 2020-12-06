@@ -68,7 +68,20 @@ void CTrackData::Write() {
         Constants::ModDir +
         "\\Tracks";
 
-    const std::string trackFileName = fmt::format("{}\\{}.json", tracksPath, Name);
+    std::string cleanName = Util::StripString(Name);
+    unsigned count = 0;
+    std::string suffix;
+
+    while (std::filesystem::exists(fmt::format("{}\\{}{}.json", tracksPath, cleanName, suffix))) {
+        if (suffix.empty()) {
+            suffix = "_0";
+        }
+        else {
+            suffix = fmt::format("_{}", ++count);
+        }
+    }
+
+    const std::string trackFileName = fmt::format("{}\\{}{}.json", tracksPath, cleanName, suffix);
 
     std::ofstream trackFile(trackFileName);
     trackFile << std::setw(2) << trackJson << std::endl;

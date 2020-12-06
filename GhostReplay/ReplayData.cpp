@@ -19,31 +19,37 @@ CReplayData CReplayData::Read(const std::string& replayFile) {
         return replayData;
     }
 
-    replayFileStream >> replayJson;
+    try {
+        replayFileStream >> replayJson;
 
-    replayData.Name = std::filesystem::path(replayFile).stem().string();
-    replayData.VehicleModel = replayJson["VehicleModel"];
-    replayData.DriverModel = replayJson["DriverModel"];
+        replayData.Name = replayJson["Name"];
+        replayData.VehicleModel = replayJson["VehicleModel"];
+        replayData.DriverModel = replayJson["DriverModel"];
 
-    for (auto& jsonNode : replayJson["Nodes"]) {
-        SReplayNode node{};
-        node.Timestamp = jsonNode["T"];
-        node.Pos.x = jsonNode["PX"];
-        node.Pos.y = jsonNode["PY"];
-        node.Pos.z = jsonNode["PZ"];
-        node.Rot.x = jsonNode["RX"];
-        node.Rot.y = jsonNode["RY"];
-        node.Rot.z = jsonNode["RZ"];
-        replayData.Nodes.push_back(node);
+        for (auto& jsonNode : replayJson["Nodes"]) {
+            SReplayNode node{};
+            node.Timestamp = jsonNode["T"];
+            node.Pos.x = jsonNode["PX"];
+            node.Pos.y = jsonNode["PY"];
+            node.Pos.z = jsonNode["PZ"];
+            node.Rot.x = jsonNode["RX"];
+            node.Rot.y = jsonNode["RY"];
+            node.Rot.z = jsonNode["RZ"];
+            replayData.Nodes.push_back(node);
+        }
+        logger.Write(DEBUG, "[Replay] Parsed %s", replayFile.c_str());
+        return replayData;
     }
-
-    logger.Write(DEBUG, "[Replay] Parsed %s", replayFile.c_str());
-    return replayData;
+    catch (std::exception& ex) {
+        logger.Write(ERROR, "[Replay] Failed to open %s, exception: %s", replayFile.c_str(), ex.what());
+        return replayData;
+    }
 }
 
 void CReplayData::Write() {
     nlohmann::ordered_json replayJson;
 
+    replayJson["Name"] = Name;
     replayJson["VehicleModel"] = VehicleModel;
     replayJson["DriverModel"] = DriverModel;
 
@@ -64,7 +70,20 @@ void CReplayData::Write() {
         Constants::ModDir +
         "\\Replays";
 
-    const std::string replayFileName = fmt::format("{}\\{}.json", replaysPath, Name);
+    std::string cleanName = Util::StripString(Name);
+    unsigned count = 0;
+    std::string suffix;
+
+    while (std::filesystem::exists(fmt::format("{}\\{}{}.json", replaysPath, cleanName, suffix))) {
+        if (suffix.empty()) {
+            suffix = "_0";
+        }
+        else {
+            suffix = fmt::format("_{}", ++count);
+        }
+    }
+
+    const std::string replayFileName = fmt::format("{}\\{}{}.json", replaysPath, cleanName, suffix);
 
     std::ofstream replayFile(replayFileName);
     replayFile << std::setw(2) << replayJson << std::endl;

@@ -41,6 +41,8 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         else {
             context.SetScriptMode(EScriptMode::ReplayActive);
         }
+
+        mbCtx.MenuOption("Unsaved runs", "unsavedrunsmenu");
     });
 
     /* mainmenu -> tracksetupmenu */
@@ -120,6 +122,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
                 activeTrack->Write();
                 UI::Notify(fmt::format("Saved track {}", activeTrack->Name), true);
+                GhostReplay::LoadTracks();
             }
         }
     });
@@ -142,7 +145,10 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
             std::string optionName = fmt::format("{}{}", selector, track.Name);
             if (mbCtx.Option(optionName)) {
-                context.SetTrack(track.Name);
+                if (!currentTrack)
+                    context.SetTrack(track.Name);
+                else
+                    context.SetTrack("");
             }
         }
     });
@@ -170,8 +176,50 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
             std::string optionName = fmt::format("{}{}", selector, replay.Name);
             if (mbCtx.Option(optionName)) {
-                context.SetReplay(replay.Name);
+                if (!currentReplay)
+                    context.SetReplay(replay.Name);
+                else
+                    context.SetReplay("");
             }
+        }
+    });
+
+    /* mainmenu -> unsavedrunsmenu */
+    submenus.emplace_back("unsavedrunsmenu", [](NativeMenu::Menu& mbCtx, CReplayScript& context) {
+        mbCtx.Title("Unsaved runs");
+        mbCtx.Subtitle("");
+
+        if (context.GetUnsavedRuns().empty()) {
+            mbCtx.Option("No unsaved runs");
+            return;
+        }
+
+        auto unsavedRunIt = context.GetUnsavedRuns().begin();
+        while (unsavedRunIt != context.GetUnsavedRuns().end()) {
+            auto unsavedRun = *unsavedRunIt;
+            unsigned long long minutes, seconds, milliseconds;
+            auto totalTime = unsavedRun.Nodes.back().Timestamp;
+            milliseconds = totalTime % 1000;
+            seconds = (totalTime / 1000) % 60;
+            minutes = (totalTime / 1000) / 60;
+            std::string timeStr = fmt::format("{}:{:02d}.{:03d}", minutes, seconds, milliseconds);
+
+            std::string trackName = unsavedRun.Track;
+            std::string runName = fmt::format("{} - {}", trackName, timeStr);
+
+            if (mbCtx.Option(fmt::format("Save [{}]", runName))) {
+                unsavedRun.Name = runName;
+                unsavedRun.Write();
+                unsavedRunIt = context.EraseUnsavedRun(unsavedRunIt);
+                GhostReplay::LoadReplays();
+            }
+            else {
+                ++unsavedRunIt;
+            }
+        }
+
+        if (mbCtx.Option("Clear unsaved runs")) {
+            context.ClearUnsavedRuns();
         }
     });
 

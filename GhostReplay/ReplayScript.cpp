@@ -79,8 +79,16 @@ void CReplayScript::Tick() {
 }
 
 void CReplayScript::SetTrack(const std::string& trackName) {
+    if (trackName.empty()) {
+        mActiveTrack = nullptr;
+        mReplayState = EReplayState::Idle;
+        mRecordState = ERecordState::Idle;
+        return;
+    }
+
     for (auto& track : mTracks) {
         if (track.Name == trackName) {
+            createReplayVehicle(0, Vector3{});
             mActiveTrack = &track;
             mReplayState = EReplayState::Idle;
             mRecordState = ERecordState::Idle;
@@ -91,12 +99,18 @@ void CReplayScript::SetTrack(const std::string& trackName) {
 }
 
 void CReplayScript::SetReplay(const std::string& replayName) {
+    if (replayName.empty()) {
+        mActiveReplay = nullptr;
+        mLastNode = std::vector<SReplayNode>::iterator();
+        mReplayState = EReplayState::Idle;
+        mRecordState = ERecordState::Idle;
+        return;
+    }
+
     for (auto& replay : mReplays) {
         if (replay.Name == replayName) {
-            mActiveReplay = &replay;
-
             createReplayVehicle(replay.VehicleModel, replay.Nodes[0].Pos);
-
+            mActiveReplay = &replay;
             mLastNode = replay.Nodes.begin();
             mReplayState = EReplayState::Idle;
             mRecordState = ERecordState::Idle;
@@ -104,6 +118,14 @@ void CReplayScript::SetReplay(const std::string& replayName) {
         }
     }
     logger.Write(ERROR, "SetReplay: No replay found with the name [%s]", replayName.c_str());
+}
+
+void CReplayScript::ClearUnsavedRuns() {
+    mUnsavedRuns.clear();
+}
+
+std::vector<CReplayData>::const_iterator CReplayScript::EraseUnsavedRun(std::vector<CReplayData>::const_iterator runIt) {
+    return mUnsavedRuns.erase(runIt);
 }
 
 bool CReplayScript::StartLineDef(SLineDef& lineDef, const std::string& lineName) {
@@ -242,6 +264,7 @@ void CReplayScript::updateReplay() {
             if (startPassedThisTick) {
                 mRecordState = ERecordState::Recording;
                 recordStart = gameTime;
+                mCurrentRun.Track = mActiveTrack->Name;
                 mCurrentRun.Nodes.clear();
                 mCurrentRun.VehicleModel = ENTITY::GET_ENTITY_MODEL(vehicle);
                 UI::Notify("Record started", false);
@@ -258,10 +281,7 @@ void CReplayScript::updateReplay() {
             if (finishPassedThisTick) {
                 mRecordState = ERecordState::Finished;
                 mUnsavedRuns.push_back(mCurrentRun);
-                // TODO: Impatience! Remove.
-                mCurrentRun.Name = fmt::format("{}", recordStart);
-                mCurrentRun.Write();
-                UI::Notify("Record stopped (temp: also saved)", false);
+                UI::Notify("Record stopped", false);
             }
             break;
         }
@@ -286,6 +306,9 @@ void CReplayScript::createReplayVehicle(Hash model, Vector3 pos) {
     if (ENTITY::DOES_ENTITY_EXIST(mReplayVehicle)) {
         ENTITY::DELETE_ENTITY(&mReplayVehicle);
         mReplayVehicle = 0;
+    }
+    if (model == 0) {
+        return;
     }
 
     mReplayVehicle = VEHICLE::CREATE_VEHICLE(model,

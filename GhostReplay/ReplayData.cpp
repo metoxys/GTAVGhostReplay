@@ -35,6 +35,12 @@ CReplayData CReplayData::Read(const std::string& replayFile) {
             node.Rot.x = jsonNode["RX"];
             node.Rot.y = jsonNode["RY"];
             node.Rot.z = jsonNode["RZ"];
+            node.Throttle = jsonNode["Throttle"];
+            node.Brake = jsonNode["Brake"];
+            node.SteeringAngle = jsonNode["Steering"];
+            node.LowBeams = jsonNode["LowBeams"];
+            node.HighBeams = jsonNode["HighBeams"];
+
             replayData.Nodes.push_back(node);
         }
         logger.Write(DEBUG, "[Replay] Parsed %s", replayFile.c_str());
@@ -62,7 +68,12 @@ void CReplayData::Write() {
             { "RX", Node.Rot.x },
             { "RY", Node.Rot.y },
             { "RZ", Node.Rot.z },
-            });
+            { "Throttle", Node.Throttle },
+            { "Brake", Node.Brake },
+            { "Steering", Node.SteeringAngle },
+            { "LowBeams", Node.LowBeams },
+            { "HighBeams", Node.HighBeams },
+        });
     }
 
     const std::string replaysPath =

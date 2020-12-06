@@ -219,6 +219,7 @@ void CReplayScript::updateReplay() {
                 ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, true, true);
                 ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, 127, false);
                 ENTITY::SET_ENTITY_COLLISION(mReplayVehicle, false, false);
+                VEHICLE::SET_VEHICLE_ENGINE_ON(mReplayVehicle, true, true, false);
                 UI::Notify("Replay started", false);
             }
             break;
@@ -246,6 +247,15 @@ void CReplayScript::updateReplay() {
             Vector3 rot = nodeCurr->Rot;
             ENTITY::SET_ENTITY_COORDS(mReplayVehicle, pos.x, pos.y, pos.z, false, false, false, false);
             ENTITY::SET_ENTITY_ROTATION(mReplayVehicle, rot.x, rot.y, rot.z, 0, false);
+
+            VExt::SetThrottleP(mReplayVehicle, nodeCurr->Throttle);
+            VExt::SetBrakeP(mReplayVehicle, nodeCurr->Brake);
+            VExt::SetSteeringAngle(mReplayVehicle, nodeCurr->SteeringAngle);
+
+            VEHICLE::SET_VEHICLE_BRAKE_LIGHTS(mReplayVehicle, nodeCurr->Brake > 0.1f);
+
+            VEHICLE::SET_VEHICLE_LIGHTS(mReplayVehicle, nodeCurr->LowBeams ? 3 : 4);
+            VEHICLE::SET_VEHICLE_FULLBEAM(mReplayVehicle, nodeCurr->HighBeams);
 
             if (finishPassedThisTick) {
                 mReplayState = EReplayState::Finished;
@@ -278,6 +288,14 @@ void CReplayScript::updateReplay() {
             node.Timestamp = gameTime - recordStart;
             node.Pos = nowPos;
             node.Rot = nowRot;
+            node.Throttle = VExt::GetThrottleP(vehicle);
+            node.Brake = VExt::GetBrakeP(vehicle);
+            node.SteeringAngle = VExt::GetSteeringAngle(vehicle);
+
+            BOOL areLowBeamsOn, areHighBeamsOn;
+            VEHICLE::GET_VEHICLE_LIGHTS_STATE(vehicle, &areLowBeamsOn, &areHighBeamsOn);
+            node.LowBeams = areLowBeamsOn;
+            node.HighBeams = areHighBeamsOn;
 
             bool saved = false;
             unsigned long long lastNodeTime = 0;

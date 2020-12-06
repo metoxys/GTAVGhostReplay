@@ -297,6 +297,9 @@ void CReplayScript::updateTrackDefine() {
 }
 
 bool CReplayScript::passedLineThisTick(SLineDef line, Vector3 oldPos, Vector3 newPos) {
+    if (Distance(line.A, newPos) > Distance(line.A, line.B) || Distance(line.B, newPos) > Distance(line.A, line.B)) {
+        return false;
+    }
     float oldSgn = sgn(GetAngleABC(line.A, line.B, oldPos));
     float newSgn = sgn(GetAngleABC(line.A, line.B, newPos));
     return oldSgn != newSgn && oldSgn > 0.0f;

@@ -25,6 +25,7 @@ CReplayData CReplayData::Read(const std::string& replayFile) {
         replayData.Name = replayJson["Name"];
         replayData.VehicleModel = replayJson["VehicleModel"];
         replayData.DriverModel = replayJson["DriverModel"];
+        replayData.VehicleMods = replayJson["Mods"];
 
         for (auto& jsonNode : replayJson["Nodes"]) {
             SReplayNode node{};
@@ -53,11 +54,12 @@ CReplayData CReplayData::Read(const std::string& replayFile) {
 }
 
 void CReplayData::Write() {
-    nlohmann::ordered_json replayJson;
+    nlohmann::json replayJson;
 
     replayJson["Name"] = Name;
     replayJson["VehicleModel"] = VehicleModel;
     replayJson["DriverModel"] = DriverModel;
+    replayJson["Mods"] = VehicleMods;
 
     for (auto& Node : Nodes) {
         replayJson["Nodes"].push_back({

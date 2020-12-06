@@ -45,214 +45,208 @@ namespace VEHICLE {
     }
 }
 
-VehicleModData::VehicleMod VehicleModData::VehicleMod::Get() {
+VehicleMod VehicleMod::Get(Vehicle vehicle) {
     switch (Type) {
         case ModType::Color:
-            VEHICLE::GET_VEHICLE_COLOURS(Handle, &Value0, &Value1);
+            VEHICLE::GET_VEHICLE_COLOURS(vehicle, &Value0, &Value1);
             break;
         case ModType::ExtraColors:
-            VEHICLE::GET_VEHICLE_EXTRA_COLOURS(Handle, &Value0, &Value1);
+            VEHICLE::GET_VEHICLE_EXTRA_COLOURS(vehicle, &Value0, &Value1);
             break;
         case ModType::ColorCustom1:
-            Value0 = true;// VEHICLE::GET_IS_VEHICLE_PRIMARY_COLOUR_CUSTOM(Handle);
-            VEHICLE::GET_VEHICLE_CUSTOM_PRIMARY_COLOUR(Handle, &Value1, &Value2, &Value3);
+            Value0 = true;// VEHICLE::GET_IS_VEHICLE_PRIMARY_COLOUR_CUSTOM(vehicle);
+            VEHICLE::GET_VEHICLE_CUSTOM_PRIMARY_COLOUR(vehicle, &Value1, &Value2, &Value3);
             break;
         case ModType::ColorCustom2:
-            Value0 = true;// VEHICLE::GET_IS_VEHICLE_SECONDARY_COLOUR_CUSTOM(Handle);
-            VEHICLE::GET_VEHICLE_CUSTOM_SECONDARY_COLOUR(Handle, &Value1, &Value2, &Value3);
+            Value0 = true;// VEHICLE::GET_IS_VEHICLE_SECONDARY_COLOUR_CUSTOM(vehicle);
+            VEHICLE::GET_VEHICLE_CUSTOM_SECONDARY_COLOUR(vehicle, &Value1, &Value2, &Value3);
             break;
         case ModType::Mod:
-            Value0 = VEHICLE::GET_VEHICLE_MOD(Handle, ModId);
-            Value1 = VEHICLE::GET_VEHICLE_MOD_VARIATION(Handle, ModId);
+            Value0 = VEHICLE::GET_VEHICLE_MOD(vehicle, ModId);
+            Value1 = VEHICLE::GET_VEHICLE_MOD_VARIATION(vehicle, ModId);
             break;
         case ModType::ModToggle:
-            Value0 = VEHICLE::IS_TOGGLE_MOD_ON(Handle, ModId);
+            Value0 = VEHICLE::IS_TOGGLE_MOD_ON(vehicle, ModId);
             break;
         case ModType::WheelType:
-            Value0 = VEHICLE::GET_VEHICLE_WHEEL_TYPE(Handle);
+            Value0 = VEHICLE::GET_VEHICLE_WHEEL_TYPE(vehicle);
             break;
         case ModType::WindowTint:
-            Value0 = VEHICLE::GET_VEHICLE_WINDOW_TINT(Handle);
+            Value0 = VEHICLE::GET_VEHICLE_WINDOW_TINT(vehicle);
             break;
         case ModType::TyresCanBurst:
-            Value0 = VEHICLE::GET_VEHICLE_TYRES_CAN_BURST(Handle);
+            Value0 = VEHICLE::GET_VEHICLE_TYRES_CAN_BURST(vehicle);
             break;
         case ModType::TyreSmoke:
-            VEHICLE::GET_VEHICLE_TYRE_SMOKE_COLOR(Handle, &Value0, &Value1, &Value2);
+            VEHICLE::GET_VEHICLE_TYRE_SMOKE_COLOR(vehicle, &Value0, &Value1, &Value2);
             break;
         case ModType::Livery:
-            Value0 = VEHICLE::GET_VEHICLE_LIVERY(Handle);
+            Value0 = VEHICLE::GET_VEHICLE_LIVERY(vehicle);
             break;
         case ModType::ModColor1:
-            VEHICLE::GET_VEHICLE_MOD_COLOR_1(Handle, &Value0, &Value1, &Value2);
+            VEHICLE::GET_VEHICLE_MOD_COLOR_1(vehicle, &Value0, &Value1, &Value2);
             break;
         case ModType::ModColor2:
-            VEHICLE::GET_VEHICLE_MOD_COLOR_2(Handle, &Value0, &Value1);
+            VEHICLE::GET_VEHICLE_MOD_COLOR_2(vehicle, &Value0, &Value1);
             break;
         case ModType::Extra:
-            if (VEHICLE::DOES_EXTRA_EXIST(Handle, ModId))
-                Value0 = VEHICLE::IS_VEHICLE_EXTRA_TURNED_ON(Handle, ModId);
+            if (VEHICLE::DOES_EXTRA_EXIST(vehicle, ModId))
+                Value0 = VEHICLE::IS_VEHICLE_EXTRA_TURNED_ON(vehicle, ModId);
             break;
         case ModType::Neon:
-            Value0 = VEHICLE::_IS_VEHICLE_NEON_LIGHT_ENABLED(Handle, ModId);
+            Value0 = VEHICLE::_IS_VEHICLE_NEON_LIGHT_ENABLED(vehicle, ModId);
             break;
         case ModType::NeonColor:
-            VEHICLE::_GET_VEHICLE_NEON_LIGHTS_COLOUR(Handle, &Value0, &Value1, &Value2);
+            VEHICLE::_GET_VEHICLE_NEON_LIGHTS_COLOUR(vehicle, &Value0, &Value1, &Value2);
             break;
         case ModType::XenonColor:
-            Value0 = VEHICLE::_GET_VEHICLE_XENON_LIGHTS_COLOUR(Handle);
+            Value0 = VEHICLE::_GET_VEHICLE_XENON_LIGHTS_COLOUR(vehicle);
             break;
         case ModType::PlateType:
-            Value0 = VEHICLE::GET_VEHICLE_NUMBER_PLATE_TEXT_INDEX(Handle);
+            Value0 = VEHICLE::GET_VEHICLE_NUMBER_PLATE_TEXT_INDEX(vehicle);
             break;
         case ModType::InteriorColor:
-            VEHICLE::_GET_VEHICLE_INTERIOR_COLOUR(Handle, &Value0);
+            VEHICLE::_GET_VEHICLE_INTERIOR_COLOUR(vehicle, &Value0);
             break;
         case ModType::DashboardColor:
-            VEHICLE::_GET_VEHICLE_DASHBOARD_COLOUR(Handle, &Value0);
+            VEHICLE::_GET_VEHICLE_DASHBOARD_COLOUR(vehicle, &Value0);
             break;
         default:;
     }
     return *this;
 }
 
-void VehicleModData::VehicleMod::Set() {
+void VehicleMod::Set(Vehicle vehicle) {
     switch (Type) {
         case ModType::Color:
-            VEHICLE::SET_VEHICLE_COLOURS(Handle, Value0, Value1);
+            VEHICLE::SET_VEHICLE_COLOURS(vehicle, Value0, Value1);
             break;
         case ModType::ExtraColors:
-            VEHICLE::SET_VEHICLE_EXTRA_COLOURS(Handle, Value0, Value1);
+            VEHICLE::SET_VEHICLE_EXTRA_COLOURS(vehicle, Value0, Value1);
             break;
         case ModType::ColorCustom1:
-            VEHICLE::CLEAR_VEHICLE_CUSTOM_PRIMARY_COLOUR(Handle);
+            VEHICLE::CLEAR_VEHICLE_CUSTOM_PRIMARY_COLOUR(vehicle);
             if (Value0)
-                VEHICLE::SET_VEHICLE_CUSTOM_PRIMARY_COLOUR(Handle, Value1, Value2, Value3);
+                VEHICLE::SET_VEHICLE_CUSTOM_PRIMARY_COLOUR(vehicle, Value1, Value2, Value3);
             break;
         case ModType::ColorCustom2:
-            VEHICLE::CLEAR_VEHICLE_CUSTOM_SECONDARY_COLOUR(Handle);
+            VEHICLE::CLEAR_VEHICLE_CUSTOM_SECONDARY_COLOUR(vehicle);
             if (Value0)
-                VEHICLE::SET_VEHICLE_CUSTOM_SECONDARY_COLOUR(Handle, Value1, Value2, Value3);
+                VEHICLE::SET_VEHICLE_CUSTOM_SECONDARY_COLOUR(vehicle, Value1, Value2, Value3);
             break;
         case ModType::Mod:
-            VEHICLE::SET_VEHICLE_MOD(Handle, ModId, Value0, Value1);
+            VEHICLE::SET_VEHICLE_MOD(vehicle, ModId, Value0, Value1);
             break;
         case ModType::ModToggle:
-            VEHICLE::TOGGLE_VEHICLE_MOD(Handle, ModId, Value0);
+            VEHICLE::TOGGLE_VEHICLE_MOD(vehicle, ModId, Value0);
             break;
         case ModType::WheelType:
-            VEHICLE::SET_VEHICLE_WHEEL_TYPE(Handle, Value0);
+            VEHICLE::SET_VEHICLE_WHEEL_TYPE(vehicle, Value0);
             break;
         case ModType::WindowTint:
-            VEHICLE::SET_VEHICLE_WINDOW_TINT(Handle, Value0);
+            VEHICLE::SET_VEHICLE_WINDOW_TINT(vehicle, Value0);
             break;
         case ModType::TyresCanBurst:
-            VEHICLE::SET_VEHICLE_TYRES_CAN_BURST(Handle, Value0);
+            VEHICLE::SET_VEHICLE_TYRES_CAN_BURST(vehicle, Value0);
             break;
         case ModType::TyreSmoke:
-            VEHICLE::SET_VEHICLE_TYRE_SMOKE_COLOR(Handle, Value0, Value1, Value2);
+            VEHICLE::SET_VEHICLE_TYRE_SMOKE_COLOR(vehicle, Value0, Value1, Value2);
             break;
         case ModType::Livery:
-            VEHICLE::SET_VEHICLE_LIVERY(Handle, Value0);
+            VEHICLE::SET_VEHICLE_LIVERY(vehicle, Value0);
             break;
         case ModType::ModColor1:
-            VEHICLE::SET_VEHICLE_MOD_COLOR_1(Handle, Value0, Value1, Value2);
+            VEHICLE::SET_VEHICLE_MOD_COLOR_1(vehicle, Value0, Value1, Value2);
             break;
         case ModType::ModColor2:
-            VEHICLE::SET_VEHICLE_MOD_COLOR_2(Handle, Value0, Value1);
+            VEHICLE::SET_VEHICLE_MOD_COLOR_2(vehicle, Value0, Value1);
             break;
         case ModType::Extra:
-            if (VEHICLE::DOES_EXTRA_EXIST(Handle, ModId))
-                VEHICLE::SET_VEHICLE_EXTRA(Handle, ModId, !Value0);
+            if (VEHICLE::DOES_EXTRA_EXIST(vehicle, ModId))
+                VEHICLE::SET_VEHICLE_EXTRA(vehicle, ModId, !Value0);
             break;
         case ModType::Neon:
-            VEHICLE::_SET_VEHICLE_NEON_LIGHT_ENABLED(Handle, ModId, Value0);
+            VEHICLE::_SET_VEHICLE_NEON_LIGHT_ENABLED(vehicle, ModId, Value0);
             break;
         case ModType::NeonColor:
-            VEHICLE::_SET_VEHICLE_NEON_LIGHTS_COLOUR(Handle, Value0, Value1, Value2);
+            VEHICLE::_SET_VEHICLE_NEON_LIGHTS_COLOUR(vehicle, Value0, Value1, Value2);
             break;
         case ModType::XenonColor:
-            VEHICLE::_SET_VEHICLE_XENON_LIGHTS_COLOUR(Handle, Value0);
+            VEHICLE::_SET_VEHICLE_XENON_LIGHTS_COLOUR(vehicle, Value0);
             break;
         case ModType::PlateType:
-            VEHICLE::SET_VEHICLE_NUMBER_PLATE_TEXT_INDEX(Handle, Value0);
+            VEHICLE::SET_VEHICLE_NUMBER_PLATE_TEXT_INDEX(vehicle, Value0);
             break;
         case ModType::InteriorColor:
-            VEHICLE::_SET_VEHICLE_INTERIOR_COLOUR(Handle, Value0);
+            VEHICLE::_SET_VEHICLE_INTERIOR_COLOUR(vehicle, Value0);
             break;
         case ModType::DashboardColor:
-            VEHICLE::_SET_VEHICLE_DASHBOARD_COLOUR(Handle, Value0);
+            VEHICLE::_SET_VEHICLE_DASHBOARD_COLOUR(vehicle, Value0);
             break;
         default:;
     }
 }
 
-void VehicleModData::GetAll() {
-    if (!Handle)
-        return;
+VehicleModData VehicleModData::LoadFrom(Vehicle vehicle) {
+    VehicleModData data;
+    data.Plate = VEHICLE::GET_VEHICLE_NUMBER_PLATE_TEXT(vehicle);
 
-    VehicleMods.clear();
+    data.VehicleMods.clear();
 
-    Plate = VEHICLE::GET_VEHICLE_NUMBER_PLATE_TEXT(Handle);
 
     // Custom colors
-    VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::ColorCustom1 }.Get());
-    VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::ColorCustom2 }.Get());
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::ColorCustom1 }.Get(vehicle));
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::ColorCustom2 }.Get(vehicle));
 
     // Primary/Secondary
-    VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::Color }.Get());
-    VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::ExtraColors }.Get());
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::Color }.Get(vehicle));
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::ExtraColors }.Get(vehicle));
 
     // Wheeltype
-    VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::WheelType }.Get());
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::WheelType }.Get(vehicle));
 
     // 0 t/m 24: normal; 25 t/m 49: Benny's
     for (uint8_t i = 0; i < 50; ++i) {
         if (i >= 17 && i <= 22) {
-            VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::ModToggle, i }.Get());
+            data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::ModToggle, i }.Get(vehicle));
         }
         else {
-            VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::Mod, i }.Get());
+            data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::Mod, i }.Get(vehicle));
         }
     }
 
-    VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::TyresCanBurst }.Get());
-    VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::TyreSmoke }.Get());
-    VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::PlateType }.Get());
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::TyresCanBurst }.Get(vehicle));
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::TyreSmoke }.Get(vehicle));
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::PlateType }.Get(vehicle));
 
     for (uint8_t i = 0; i <= 60; ++i) {
-        VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::Extra, i }.Get());
+        data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::Extra, i }.Get(vehicle));
     }
 
-    VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::Livery }.Get());
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::Livery }.Get(vehicle));
 
-    VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::WindowTint }.Get());
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::WindowTint }.Get(vehicle));
 
-    VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::Neon, 0 }.Get());
-    VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::Neon, 1 }.Get());
-    VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::Neon, 2 }.Get());
-    VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::Neon, 3 }.Get());
-    VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::NeonColor }.Get());
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::Neon, 0 }.Get(vehicle));
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::Neon, 1 }.Get(vehicle));
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::Neon, 2 }.Get(vehicle));
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::Neon, 3 }.Get(vehicle));
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::NeonColor }.Get(vehicle));
 
-    VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::ModColor1 }.Get());
-    VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::ModColor2 }.Get());
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::ModColor1 }.Get(vehicle));
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::ModColor2 }.Get(vehicle));
 
-    VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::XenonColor }.Get());
-    VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::InteriorColor }.Get());
-    VehicleMods.push_back(VehicleMod{ Handle, VehicleMod::ModType::DashboardColor }.Get());
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::XenonColor }.Get(vehicle));
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::InteriorColor }.Get(vehicle));
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::DashboardColor }.Get(vehicle));
 
+    return data;
 }
 
-void VehicleModData::SetAll() {
-    if (!Handle)
-        return;
-
-    VEHICLE::SET_VEHICLE_NUMBER_PLATE_TEXT(Handle, Plate.c_str());
-
-    VEHICLE::SET_VEHICLE_MOD_KIT(Handle, 0);
-
-    for (auto& vehicleMod : VehicleMods) {
-        vehicleMod.Handle = Handle;
-        vehicleMod.Set();
+void VehicleModData::ApplyTo(Vehicle vehicle, VehicleModData modData) {
+    VEHICLE::SET_VEHICLE_NUMBER_PLATE_TEXT(vehicle, modData.Plate.c_str());
+    VEHICLE::SET_VEHICLE_MOD_KIT(vehicle, 0);
+    for (auto& vehicleMod : modData.VehicleMods) {
+        vehicleMod.Set(vehicle);
     }
 }

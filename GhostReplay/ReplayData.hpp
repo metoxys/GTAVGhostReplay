@@ -4,6 +4,8 @@
 #include <vector>
 #include <map>
 
+#include "VehicleMod.h"
+
 struct SReplayNode {
     unsigned long long Timestamp;
     Vector3 Pos;
@@ -38,4 +40,5 @@ public:
     // The menu shall be used to select the one that applies, so multiple CReplayData recordings can be
     // chosen from.
     std::vector<SReplayNode> Nodes;
+    VehicleModData VehicleMods;
 };

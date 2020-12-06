@@ -1,5 +1,6 @@
 #include "ReplayScript.hpp"
 #include "Script.hpp"
+#include "VehicleMod.h"
 
 #include "Compatibility.h"
 #include "Constants.hpp"
@@ -90,7 +91,7 @@ void CReplayScript::SetTrack(const std::string& trackName) {
 
     for (auto& track : mTracks) {
         if (track.Name == trackName) {
-            createReplayVehicle(0, Vector3{});
+            createReplayVehicle(0, nullptr, Vector3{});
             mActiveTrack = &track;
             mReplayState = EReplayState::Idle;
             mRecordState = ERecordState::Idle;
@@ -111,11 +112,11 @@ void CReplayScript::SetReplay(const std::string& replayName) {
 
     for (auto& replay : mReplays) {
         if (replay.Name == replayName) {
-            createReplayVehicle(replay.VehicleModel, replay.Nodes[0].Pos);
             mActiveReplay = &replay;
             mLastNode = replay.Nodes.begin();
             mReplayState = EReplayState::Idle;
             mRecordState = ERecordState::Idle;
+            createReplayVehicle(replay.VehicleModel, mActiveReplay, replay.Nodes[0].Pos);
             return;
         }
     }
@@ -279,6 +280,10 @@ void CReplayScript::updateReplay() {
                 mCurrentRun.Track = mActiveTrack->Name;
                 mCurrentRun.Nodes.clear();
                 mCurrentRun.VehicleModel = ENTITY::GET_ENTITY_MODEL(vehicle);
+
+                VehicleModData modData = VehicleModData::LoadFrom(vehicle);
+                mCurrentRun.VehicleMods = modData;
+
                 UI::Notify("Record started", false);
             }
             break;
@@ -352,12 +357,12 @@ bool CReplayScript::passedLineThisTick(SLineDef line, Vector3 oldPos, Vector3 ne
     return oldSgn != newSgn && oldSgn > 0.0f;
 }
 
-void CReplayScript::createReplayVehicle(Hash model, Vector3 pos) {
+void CReplayScript::createReplayVehicle(Hash model, CReplayData* activeReplay, Vector3 pos) {
     if (ENTITY::DOES_ENTITY_EXIST(mReplayVehicle)) {
         ENTITY::DELETE_ENTITY(&mReplayVehicle);
         mReplayVehicle = 0;
     }
-    if (model == 0) {
+    if (model == 0 || activeReplay == nullptr) {
         return;
     }
 
@@ -367,4 +372,7 @@ void CReplayScript::createReplayVehicle(Hash model, Vector3 pos) {
     ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, false, false);
     ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, 0, false);
     ENTITY::SET_ENTITY_COLLISION(mReplayVehicle, false, false);
+
+    VehicleModData modData = mActiveReplay->VehicleMods;
+    VehicleModData::ApplyTo(mReplayVehicle, modData);
 }

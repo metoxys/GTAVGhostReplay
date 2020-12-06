@@ -73,7 +73,7 @@ protected:
     void updateReplay();
     void updateTrackDefine();
     bool passedLineThisTick(SLineDef line, Vector3 oldPos, Vector3 newPos);
-    void createReplayVehicle(Hash model, Vector3 pos);
+    void createReplayVehicle(Hash model, CReplayData* activeReplay, Vector3 pos);
 
     const CScriptSettings& mSettings;
     std::vector<CReplayData>& mReplays;

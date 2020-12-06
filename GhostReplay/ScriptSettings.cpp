@@ -21,7 +21,9 @@ void CScriptSettings::Load() {
     SI_Error result = ini.LoadFile(mSettingsFile.c_str());
     CHECK_LOG_SI_ERROR(result, "load");
 
-    Main.Enable = ini.GetBoolValue("Main", "Enable", true);
+    Main.LinesVisible = ini.GetBoolValue("Main", "LinesVisible", Main.LinesVisible);
+    Main.AutoGhost = ini.GetBoolValue("Main", "AutoGhost", Main.AutoGhost);
+    Main.DeltaMillis = ini.GetLongValue("Main", "DeltaMillis", Main.DeltaMillis);
 }
 
 void CScriptSettings::Save() {
@@ -30,9 +32,10 @@ void CScriptSettings::Save() {
     SI_Error result = ini.LoadFile(mSettingsFile.c_str());
     CHECK_LOG_SI_ERROR(result, "load");
 
-    ini.SetBoolValue("Main", "Enable", Main.Enable);
+   ini.SetBoolValue("Main", "LinesVisible", Main.LinesVisible);
+   ini.SetBoolValue("Main", "AutoGhost", Main.AutoGhost);
+   ini.SetLongValue("Main", "DeltaMillis", Main.DeltaMillis);
 
     result = ini.SaveFile(mSettingsFile.c_str());
     CHECK_LOG_SI_ERROR(result, "save");
 }
-

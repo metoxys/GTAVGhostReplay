@@ -9,9 +9,9 @@ public:
     void Save();
 
     struct {
-        bool Enable = true;
+        bool LinesVisible = true;
         bool AutoGhost = true;
-        unsigned long long DeltaMillis = 0;
+        long DeltaMillis = 0;
     } Main;
 
 private:

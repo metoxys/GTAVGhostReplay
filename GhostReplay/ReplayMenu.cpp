@@ -44,6 +44,8 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         }
 
         mbCtx.MenuOption("Unsaved runs", "unsavedrunsmenu");
+
+        mbCtx.MenuOption("Settings", "settingsmenu");
     });
 
     /* mainmenu -> tracksetupmenu */
@@ -219,6 +221,20 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         if (mbCtx.Option("Clear unsaved runs")) {
             context.ClearUnsavedRuns();
         }
+    });
+
+    /* mainmenu -> settingsmenu */
+    submenus.emplace_back("settingsmenu", [](NativeMenu::Menu& mbCtx, CReplayScript& context) {
+        mbCtx.Title("Settings");
+        mbCtx.Subtitle("");
+
+        mbCtx.BoolOption("Lines visible", GhostReplay::GetSettings().Main.LinesVisible);
+        mbCtx.BoolOption("Auto save faster ghost", GhostReplay::GetSettings().Main.AutoGhost);
+        int deltaMillis = GhostReplay::GetSettings().Main.DeltaMillis;
+        if (mbCtx.IntOptionCb("Time between recorded nodes", deltaMillis, 0, 1000, 1, MenuUtils::GetKbInt)) {
+            GhostReplay::GetSettings().Main.DeltaMillis = deltaMillis;
+        }
+
     });
 
     return submenus;

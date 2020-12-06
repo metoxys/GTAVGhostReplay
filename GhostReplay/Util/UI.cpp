@@ -5,6 +5,7 @@
 #include <vector>
 
 namespace {
+    const size_t maxStringLength = 99;
     int notificationId;
 
     float GetStringWidth(const std::string& text, float scale, int font) {
@@ -75,6 +76,10 @@ void UI::DrawSphere(Vector3 p, float scale, int r, int g, int b, int a) {
                           false, false, 2, false, nullptr, nullptr, false);
 }
 
+void UI::DrawLine(Vector3 pA, Vector3 pB, int r, int g, int b, int a) {
+    GRAPHICS::DRAW_LINE(pA.x, pA.y, pA.z, pB.x, pB.y, pB.z, r, g, b, a);
+}
+
 void UI::ShowText3D(Vector3 location, const std::vector<std::string>& textLines) {
     float height = 0.0125f;
 
@@ -95,5 +100,16 @@ void UI::ShowText3D(Vector3 location, const std::vector<std::string>& textLines)
     GRAPHICS::DRAW_RECT(0.027f, (height * static_cast<float>(i)) / 2.0f, szX, szY,
         0, 0, 0, 92, 0);
     GRAPHICS::CLEAR_DRAW_ORIGIN();
+}
+
+void UI::ShowHelpText(const std::string& message) {
+    HUD::BEGIN_TEXT_COMMAND_DISPLAY_HELP("CELL_EMAIL_BCON");
+
+    for (size_t i = 0; i < message.size(); i += maxStringLength) {
+        size_t npos = std::min(maxStringLength, static_cast<int>(message.size()) - i);
+        HUD::ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(message.substr(i, npos).c_str());
+    }
+
+    HUD::END_TEXT_COMMAND_DISPLAY_HELP(0, false, false, -1);
 }
 

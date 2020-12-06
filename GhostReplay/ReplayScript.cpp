@@ -98,6 +98,52 @@ void CReplayScript::SetReplay(const std::string& replayName) {
     logger.Write(ERROR, "SetReplay: No replay found with the name [%s]", replayName.c_str());
 }
 
+bool CReplayScript::StartLineDef(SLineDef& lineDef, const std::string& lineName) {
+    const std::string escapeKey = "BACKSPACE";
+
+    int progress = 0;
+
+    while(true) {
+        if (PAD::IS_CONTROL_JUST_RELEASED(0, eControl::ControlFrontendCancel)) {
+            return false;
+        }
+
+        auto coords = ENTITY::GET_ENTITY_COORDS(PLAYER::PLAYER_PED_ID(), true);
+
+        UI::DrawSphere(coords, 0.25f, 255, 255, 255, 255);
+
+        if (progress == 1) {
+            UI::DrawSphere(lineDef.A, 0.25f, 255, 255, 255, 255);
+            UI::DrawLine(lineDef.A, coords, 255, 255, 255, 255);
+        }
+
+        if (PAD::IS_CONTROL_JUST_RELEASED(0, eControl::ControlVehicleHorn)) {
+            switch (progress) {
+                case 0: {
+                    lineDef.A = coords;
+                    progress++;
+                    break;
+                }
+                case 1: {
+                    lineDef.B = coords;
+                    return true;
+                }
+                default: {
+                    return false;
+                }
+            }
+        }
+
+        std::string currentStepName = fmt::format("{} {} point", progress == 0 ? "left" : "right", lineName);
+
+        UI::ShowHelpText(fmt::format(
+            "Press [Horn] to register {} at your current location. "
+            "Press [{}] to cancel and exit.", 
+            currentStepName, escapeKey));
+        WAIT(0);
+    }
+}
+
 void CReplayScript::updateReplay() {
 
 }

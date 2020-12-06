@@ -185,3 +185,13 @@ Vector3T RotationToDirection(Vector3T rot) {
     dir.z = sin(num2);
     return dir;
 }
+
+inline bool operator==(const Vector3& lhs, const Vector3& rhs) {
+    return lhs.x == rhs.x &&
+           lhs.y == rhs.y &&
+           lhs.z == rhs.z;
+}
+
+inline bool operator!=(const Vector3& lhs, const Vector3& rhs) {
+    return !(lhs == rhs);
+}

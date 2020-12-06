@@ -50,6 +50,8 @@ public:
     void SetTrack(const std::string& trackName);
     void SetReplay(const std::string& replayName);
 
+    bool StartLineDef(SLineDef& lineDef, const std::string& lineName);
+
 protected:
     void updateReplay();
     void updateTrackDefine();

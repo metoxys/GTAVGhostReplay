@@ -15,6 +15,7 @@ CReplayData CReplayData::Read(const std::string& replayFile) {
     nlohmann::json replayJson;
     std::ifstream replayFileStream(replayFile.c_str());
     if (!replayFileStream.is_open()) {
+        logger.Write(ERROR, "[Replay] Failed to open %s", replayFile.c_str());
         return replayData;
     }
 
@@ -35,11 +36,12 @@ CReplayData CReplayData::Read(const std::string& replayFile) {
         replayData.Nodes.push_back(node);
     }
 
+    logger.Write(DEBUG, "[Replay] Parsed %s", replayFile.c_str());
     return replayData;
 }
 
 void CReplayData::Write() {
-    nlohmann::json replayJson;
+    nlohmann::ordered_json replayJson;
 
     replayJson["VehicleModel"] = VehicleModel;
     replayJson["DriverModel"] = DriverModel;
@@ -55,6 +57,16 @@ void CReplayData::Write() {
             { "RZ", Node.Rot.z },
             });
     }
-    std::ofstream replayFile(fmt::format("{}/{}.json", Constants::ModDir, Name));
+
+    const std::string replaysPath =
+        Paths::GetModuleFolder(Paths::GetOurModuleHandle()) +
+        Constants::ModDir +
+        "\\Replays";
+
+    const std::string replayFileName = fmt::format("{}\\{}.json", replaysPath, Name);
+
+    std::ofstream replayFile(replayFileName);
     replayFile << std::setw(2) << replayJson << std::endl;
+
+    logger.Write(INFO, "[Replay] Written %s", replayFileName.c_str());
 }

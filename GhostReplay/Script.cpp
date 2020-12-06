@@ -115,7 +115,7 @@ uint32_t GhostReplay::LoadReplays() {
 }
 
 uint32_t GhostReplay::LoadTracks() {
-    const std::string configsPath =
+    const std::string tracksPath =
         Paths::GetModuleFolder(Paths::GetOurModuleHandle()) +
         Constants::ModDir +
         "\\Tracks";
@@ -124,12 +124,12 @@ uint32_t GhostReplay::LoadTracks() {
 
     tracks.clear();
 
-    if (!(fs::exists(fs::path(configsPath)) && fs::is_directory(fs::path(configsPath)))) {
-        logger.Write(ERROR, "Directory [%s] not found!", configsPath.c_str());
+    if (!(fs::exists(fs::path(tracksPath)) && fs::is_directory(fs::path(tracksPath)))) {
+        logger.Write(ERROR, "Directory [%s] not found!", tracksPath.c_str());
         return 0;
     }
 
-    for (const auto& file : fs::directory_iterator(configsPath)) {
+    for (const auto& file : fs::directory_iterator(tracksPath)) {
         if (Util::to_lower(fs::path(file).extension().string()) != ".json") {
             logger.Write(DEBUG, "Skipping [%s] - not .json", file.path().c_str());
             continue;

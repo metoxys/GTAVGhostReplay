@@ -195,3 +195,20 @@ inline bool operator==(const Vector3& lhs, const Vector3& rhs) {
 inline bool operator!=(const Vector3& lhs, const Vector3& rhs) {
     return !(lhs == rhs);
 }
+
+inline Vector3 vlerp(Vector3 a, Vector3 b, float f) {
+    return a + f * (b - a);
+}
+
+inline float GetAngleABC(Vector3 a, Vector3 b, Vector3 c)
+{
+    Vector3 ab = { b.x - a.x, 0, b.y - a.y };
+    Vector3 cb = { b.x - c.x, 0, b.y - c.y };
+
+    float dot = (ab.x * cb.x + ab.y * cb.y); // dot product
+    float cross = (ab.x * cb.y - ab.y * cb.x); // cross product
+
+    float alpha = atan2(cross, dot);
+
+    return alpha;// (int)floor(alpha * 180. / pi + 0.5);
+}

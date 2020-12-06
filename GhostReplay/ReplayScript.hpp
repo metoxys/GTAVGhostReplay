@@ -66,6 +66,8 @@ public:
 protected:
     void updateReplay();
     void updateTrackDefine();
+    bool passedLineThisTick(SLineDef line, Vector3 oldPos, Vector3 newPos);
+    void createReplayVehicle(Hash model, Vector3 pos);
 
     const CScriptSettings& mSettings;
     std::vector<CReplayData>& mReplays;
@@ -77,4 +79,14 @@ protected:
     EScriptMode mScriptMode;
     EReplayState mReplayState;
     ERecordState mRecordState;
+    unsigned long long replayStart = 0;
+    unsigned long long recordStart = 0;
+
+    Vector3 mLastPos;
+    std::vector<SReplayNode>::iterator mLastNode;
+
+    Vehicle mReplayVehicle;
+
+    std::vector<CReplayData> mUnsavedRuns;
+    CReplayData mCurrentRun;
 };

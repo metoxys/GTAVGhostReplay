@@ -16,14 +16,6 @@
 
 using VExt = VehicleExtensions;
 
-Vehicle replayVehicle;
-unsigned long long replayStart = 0;
-unsigned long long recordStart = 0;
-Vector3 prevPos;
-
-CReplayData currentRun;
-std::vector<CReplayData> unsavedRuns;
-
 CReplayScript::CReplayScript(
     CScriptSettings& settings,
     std::vector<CReplayData>& replays,
@@ -35,8 +27,10 @@ CReplayScript::CReplayScript(
     , mActiveTrack(nullptr)
     , mScriptMode(EScriptMode::ReplayActive)
     , mReplayState(EReplayState::Idle)
-    , mRecordState(ERecordState::Idle) {
-    prevPos = Vector3{};
+    , mRecordState(ERecordState::Idle)
+    , mLastPos(Vector3{})
+    , mReplayVehicle(0)
+    , mCurrentRun(){
 }
 
 CReplayScript::~CReplayScript() = default;
@@ -88,6 +82,8 @@ void CReplayScript::SetTrack(const std::string& trackName) {
     for (auto& track : mTracks) {
         if (track.Name == trackName) {
             mActiveTrack = &track;
+            mReplayState = EReplayState::Idle;
+            mRecordState = ERecordState::Idle;
             return;
         }
     }
@@ -98,12 +94,12 @@ void CReplayScript::SetReplay(const std::string& replayName) {
     for (auto& replay : mReplays) {
         if (replay.Name == replayName) {
             mActiveReplay = &replay;
-            auto zeroNode = replay.Nodes[0];
-            replayVehicle = VEHICLE::CREATE_VEHICLE(replay.VehicleModel,
-                zeroNode.Pos.x, zeroNode.Pos.y, zeroNode.Pos.z, 0, false, true, false);
-            //ENTITY::SET_ENTITY_VISIBLE(replayVehicle, false, false);
-            ENTITY::SET_ENTITY_COMPLETELY_DISABLE_COLLISION(replayVehicle, true, true);
 
+            createReplayVehicle(replay.VehicleModel, replay.Nodes[0].Pos);
+
+            mLastNode = replay.Nodes.begin();
+            mReplayState = EReplayState::Idle;
+            mRecordState = ERecordState::Idle;
             return;
         }
     }
@@ -156,27 +152,6 @@ bool CReplayScript::StartLineDef(SLineDef& lineDef, const std::string& lineName)
     }
 }
 
-Vector3 vlerp(Vector3 a, Vector3 b, float f) {
-    return a + f * (b - a);
-}
-
-float GetAngleABC(Vector3 a, Vector3 b, Vector3 c)
-{
-    Vector3 ab = { b.x - a.x, 0, b.y - a.y };
-    Vector3 cb = { b.x - c.x, 0, b.y - c.y };
-
-    float dot = (ab.x * cb.x + ab.y * cb.y); // dot product
-    float cross = (ab.x * cb.y - ab.y * cb.x); // cross product
-
-    float alpha = atan2(cross, dot);
-
-    return alpha;// (int)floor(alpha * 180. / pi + 0.5);
-}
-
-bool passedLineThisTick(SLineDef line, Vector3 oldPos, Vector3 newPos) {
-    return sgn(GetAngleABC(line.A, line.B, oldPos)) != sgn(GetAngleABC(line.A, line.B, newPos));
-}
-
 void CReplayScript::updateReplay() {
     Vehicle vehicle = PED::GET_VEHICLE_PED_IS_IN(PLAYER::PLAYER_PED_ID(), false);
     if (!ENTITY::DOES_ENTITY_EXIST(vehicle) || !mActiveTrack)
@@ -186,17 +161,16 @@ void CReplayScript::updateReplay() {
     Vector3 nowRot = ENTITY::GET_ENTITY_ROTATION(vehicle, 0);
 
     unsigned long long gameTime = MISC::GET_GAME_TIMER();
-    bool startPassedThisTick = passedLineThisTick(mActiveTrack->StartLine, prevPos, nowPos);
-    bool finishPassedThisTick = passedLineThisTick(mActiveTrack->FinishLine, prevPos, nowPos);
+    bool startPassedThisTick = passedLineThisTick(mActiveTrack->StartLine, mLastPos, nowPos);
+    bool finishPassedThisTick = passedLineThisTick(mActiveTrack->FinishLine, mLastPos, nowPos);
 
     // Prevents default coords from activating record/replay
-    if (prevPos == Vector3{} || startPassedThisTick && finishPassedThisTick) {
+    if (mLastPos == Vector3{} || startPassedThisTick && finishPassedThisTick) {
         startPassedThisTick = false;
         finishPassedThisTick = false;
     }
 
-    prevPos = nowPos;
-
+    mLastPos = nowPos;
 
     Vector3 emptyVec{};
     if (mActiveTrack->StartLine.A != emptyVec &&
@@ -218,9 +192,9 @@ void CReplayScript::updateReplay() {
             if (startPassedThisTick) {
                 mReplayState = EReplayState::Playing;
                 replayStart = gameTime;
-                ENTITY::SET_ENTITY_VISIBLE(replayVehicle, true, true);
-                ENTITY::SET_ENTITY_ALPHA(replayVehicle, 127, false);
-                ENTITY::SET_ENTITY_COLLISION(replayVehicle, false, false);
+                ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, true, true);
+                ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, 127, false);
+                ENTITY::SET_ENTITY_COLLISION(mReplayVehicle, false, false);
                 UI::Notify("Replay started", false);
             }
             break;
@@ -229,9 +203,10 @@ void CReplayScript::updateReplay() {
             if (!mActiveReplay)
                 break;
             auto replayTime = gameTime - replayStart;
-            auto nodeCurr = std::find_if(mActiveReplay->Nodes.begin(), mActiveReplay->Nodes.end(), [replayTime](const SReplayNode& node) {
+            auto nodeCurr = std::find_if(mLastNode, mActiveReplay->Nodes.end(), [replayTime](const SReplayNode& node) {
                 return node.Timestamp >= replayTime;
             });
+            mLastNode = nodeCurr;
 
             if (nodeCurr == mActiveReplay->Nodes.end()) {
                 mReplayState = EReplayState::Finished;
@@ -245,8 +220,8 @@ void CReplayScript::updateReplay() {
 
             Vector3 pos = vlerp(nodeCurr->Pos, nodeNext->Pos, progress);
             Vector3 rot = nodeCurr->Rot;
-            ENTITY::SET_ENTITY_COORDS(replayVehicle, pos.x, pos.y, pos.z, false, false, false, false);
-            ENTITY::SET_ENTITY_ROTATION(replayVehicle, rot.x, rot.y, rot.z, 0, false);
+            ENTITY::SET_ENTITY_COORDS(mReplayVehicle, pos.x, pos.y, pos.z, false, false, false, false);
+            ENTITY::SET_ENTITY_ROTATION(mReplayVehicle, rot.x, rot.y, rot.z, 0, false);
 
             if (finishPassedThisTick) {
                 mReplayState = EReplayState::Finished;
@@ -256,7 +231,8 @@ void CReplayScript::updateReplay() {
         }
         case EReplayState::Finished: {
             mReplayState = EReplayState::Idle;
-            ENTITY::SET_ENTITY_VISIBLE(replayVehicle, false, false);
+            ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, false, false);
+            mLastNode = mActiveReplay->Nodes.begin();
             break;
         }
     }
@@ -266,8 +242,8 @@ void CReplayScript::updateReplay() {
             if (startPassedThisTick) {
                 mRecordState = ERecordState::Recording;
                 recordStart = gameTime;
-                currentRun.Nodes.clear();
-                currentRun.VehicleModel = ENTITY::GET_ENTITY_MODEL(vehicle);
+                mCurrentRun.Nodes.clear();
+                mCurrentRun.VehicleModel = ENTITY::GET_ENTITY_MODEL(vehicle);
                 UI::Notify("Record started", false);
             }
             break;
@@ -277,14 +253,14 @@ void CReplayScript::updateReplay() {
             node.Timestamp = gameTime - recordStart;
             node.Pos = nowPos;
             node.Rot = nowRot;
-            currentRun.Nodes.push_back(node);
+            mCurrentRun.Nodes.push_back(node);
 
             if (finishPassedThisTick) {
                 mRecordState = ERecordState::Finished;
-                unsavedRuns.push_back(currentRun);
+                mUnsavedRuns.push_back(mCurrentRun);
                 // TODO: Impatience! Remove.
-                currentRun.Name = fmt::format("{}", recordStart);
-                currentRun.Write();
+                mCurrentRun.Name = fmt::format("{}", recordStart);
+                mCurrentRun.Write();
                 UI::Notify("Record stopped (temp: also saved)", false);
             }
             break;
@@ -298,4 +274,24 @@ void CReplayScript::updateReplay() {
 
 void CReplayScript::updateTrackDefine() {
 
+}
+
+bool CReplayScript::passedLineThisTick(SLineDef line, Vector3 oldPos, Vector3 newPos) {
+    float oldSgn = sgn(GetAngleABC(line.A, line.B, oldPos));
+    float newSgn = sgn(GetAngleABC(line.A, line.B, newPos));
+    return oldSgn != newSgn && oldSgn > 0.0f;
+}
+
+void CReplayScript::createReplayVehicle(Hash model, Vector3 pos) {
+    if (ENTITY::DOES_ENTITY_EXIST(mReplayVehicle)) {
+        ENTITY::DELETE_ENTITY(&mReplayVehicle);
+        mReplayVehicle = 0;
+    }
+
+    mReplayVehicle = VEHICLE::CREATE_VEHICLE(model,
+        pos.x, pos.y, pos.z, 0, false, true, false);
+
+    ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, false, false);
+    ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, 0, false);
+    ENTITY::SET_ENTITY_COLLISION(mReplayVehicle, false, false);
 }

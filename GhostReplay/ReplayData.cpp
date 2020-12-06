@@ -21,6 +21,7 @@ CReplayData CReplayData::Read(const std::string& replayFile) {
 
     replayFileStream >> replayJson;
 
+    replayData.Name = std::filesystem::path(replayFile).stem().string();
     replayData.VehicleModel = replayJson["VehicleModel"];
     replayData.DriverModel = replayJson["DriverModel"];
 

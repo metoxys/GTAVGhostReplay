@@ -9,9 +9,20 @@
 #include <string>
 
 enum class EScriptMode {
-    Idle,
     DefineTrack,
     ReplayActive,
+};
+
+enum class EReplayState {
+    Idle,
+    Playing,
+    Finished,
+};
+
+enum class ERecordState {
+    Idle,
+    Recording,
+    Finished,
 };
 
 class CReplayScript {
@@ -64,4 +75,6 @@ protected:
     CTrackData* mActiveTrack;
 
     EScriptMode mScriptMode;
+    EReplayState mReplayState;
+    ERecordState mRecordState;
 };

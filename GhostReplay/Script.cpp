@@ -41,6 +41,7 @@ void GhostReplay::ScriptMain() {
     logger.Write(INFO, "Settings loaded");
 
     GhostReplay::LoadReplays();
+    GhostReplay::LoadTracks();
 
     scriptInst = std::make_shared<CReplayScript>(*settings, replays, tracks);
 
@@ -52,6 +53,7 @@ void GhostReplay::ScriptMain() {
             // OnInit
             settings->Load();
             GhostReplay::LoadReplays();
+            GhostReplay::LoadTracks();
         },
         []() {
             // OnExit

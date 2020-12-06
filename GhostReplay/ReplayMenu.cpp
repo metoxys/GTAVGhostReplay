@@ -116,7 +116,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             }
 
             if (mbCtx.Option("Exit track setup mode")) {
-                context.SetScriptMode(EScriptMode::Idle);
+                context.SetScriptMode(EScriptMode::ReplayActive);
             }
         }
     });

@@ -3,15 +3,15 @@
 #include <string>
 
 struct SLineDef {
-    Vector3 A;
-    Vector3 B;
+    Vector3 A{};
+    Vector3 B{};
 };
 
 class CTrackData {
 public:
     static CTrackData Read(const std::string& trackFile);
 
-    CTrackData() = default;
+    CTrackData();
     void Write();
 
     std::string Name;

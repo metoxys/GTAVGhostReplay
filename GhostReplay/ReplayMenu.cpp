@@ -61,6 +61,8 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 if (activeTrack) {
                     activeTrack->Name = newName;
                     UI::Notify(fmt::format("Renamed track to {}", newName), false);
+                    GhostReplay::LoadTracks();
+                    context.SetTrack(newName);
                 }
                 else {
                     CTrackData newTrack;

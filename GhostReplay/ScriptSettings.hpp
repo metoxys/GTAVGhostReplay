@@ -11,6 +11,7 @@ public:
     struct {
         bool Enable = true;
         bool AutoGhost = true;
+        unsigned long long DeltaMillis = 0;
     } Main;
 
 private:

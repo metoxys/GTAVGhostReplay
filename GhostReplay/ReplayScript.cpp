@@ -278,9 +278,22 @@ void CReplayScript::updateReplay() {
             node.Timestamp = gameTime - recordStart;
             node.Pos = nowPos;
             node.Rot = nowRot;
-            mCurrentRun.Nodes.push_back(node);
+
+            bool saved = false;
+            unsigned long long lastNodeTime = 0;
+            if (!mCurrentRun.Nodes.empty()) {
+                lastNodeTime = mCurrentRun.Nodes.back().Timestamp;
+            }
+            if (node.Timestamp >= lastNodeTime + mSettings.Main.DeltaMillis) {
+                mCurrentRun.Nodes.push_back(node);
+                saved = true;
+            }
 
             if (finishPassedThisTick) {
+                if (!saved) {
+                    mCurrentRun.Nodes.push_back(node);
+                }
+
                 mRecordState = ERecordState::Finished;
                 if (mSettings.Main.AutoGhost &&
                     (!mActiveReplay || mActiveReplay->Nodes.back().Timestamp > node.Timestamp)) {

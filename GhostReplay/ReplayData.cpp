@@ -10,6 +10,20 @@
 #include <fstream>
 #include <thread>
 
+void to_json(nlohmann::json& j, const Vector3& vector3) {
+    j = nlohmann::json{
+        { "X", vector3.x },
+        { "Y", vector3.y },
+        { "Z", vector3.z },
+    };
+}
+
+void from_json(const nlohmann::json& j, Vector3& vector3) {
+    j.at("X").get_to(vector3.x);
+    j.at("Y").get_to(vector3.y);
+    j.at("Z").get_to(vector3.z);
+}
+
 CReplayData CReplayData::Read(const std::string& replayFile) {
     CReplayData replayData{};
 
@@ -31,15 +45,22 @@ CReplayData CReplayData::Read(const std::string& replayFile) {
         for (auto& jsonNode : replayJson["Nodes"]) {
             SReplayNode node{};
             node.Timestamp = jsonNode["T"];
-            node.Pos.x = jsonNode["PX"];
-            node.Pos.y = jsonNode["PY"];
-            node.Pos.z = jsonNode["PZ"];
-            node.Rot.x = jsonNode["RX"];
-            node.Rot.y = jsonNode["RY"];
-            node.Rot.z = jsonNode["RZ"];
-            node.Vel.x = jsonNode.value("VX", 0.0f);
-            node.Vel.y = jsonNode.value("VY", 0.0f);
-            node.Vel.z = jsonNode.value("VZ", 0.0f);
+            if (jsonNode.find("PX") == jsonNode.end()) {
+                node.Pos = jsonNode["Pos"];
+                node.Rot = jsonNode["Rot"];
+                node.Vel = jsonNode["Vel"];
+            }
+            else {
+                node.Pos.x = jsonNode["PX"];
+                node.Pos.y = jsonNode["PY"];
+                node.Pos.z = jsonNode["PZ"];
+                node.Rot.x = jsonNode["RX"];
+                node.Rot.y = jsonNode["RY"];
+                node.Rot.z = jsonNode["RZ"];
+                node.Vel.x = jsonNode.value("VX", 0.0f);
+                node.Vel.y = jsonNode.value("VY", 0.0f);
+                node.Vel.z = jsonNode.value("VZ", 0.0f);
+            }
             node.WheelRotations = jsonNode.value("WheelRotations", std::vector<float>());
             node.SteeringAngle = jsonNode.value("Steering", 0.0f);
             node.Throttle = jsonNode.value("Throttle", 0.0f);
@@ -71,15 +92,9 @@ void CReplayData::Write() {
     for (auto& Node : Nodes) {
         replayJson["Nodes"].push_back({
             { "T", Node.Timestamp },
-            { "PX", Node.Pos.x },
-            { "PY", Node.Pos.y },
-            { "PZ", Node.Pos.z },
-            { "RX", Node.Rot.x },
-            { "RY", Node.Rot.y },
-            { "RZ", Node.Rot.z },
-            { "VX", Node.Vel.x },
-            { "VY", Node.Vel.y },
-            { "VZ", Node.Vel.z },
+            { "Pos", Node.Pos },
+            { "Rot", Node.Rot },
+            { "Vel", Node.Vel },
             { "WheelRotations", Node.WheelRotations },
             { "Steering", Node.SteeringAngle },
             { "Throttle", Node.Throttle },

@@ -260,10 +260,10 @@ void CReplayScript::updateReplay() {
             ENTITY::SET_ENTITY_COORDS(mReplayVehicle, pos.x, pos.y, pos.z, false, false, false, false);
             ENTITY::SET_ENTITY_ROTATION(mReplayVehicle, rot.x, rot.y, rot.z, 0, false);
 
+            VExt::SetSteeringAngle(mReplayVehicle, nodeCurr->SteeringAngle);
             VExt::SetThrottle(mReplayVehicle, nodeCurr->Throttle);
             VExt::SetThrottleP(mReplayVehicle, nodeCurr->Throttle);
             VExt::SetBrakeP(mReplayVehicle, nodeCurr->Brake);
-            VExt::SetSteeringAngle(mReplayVehicle, nodeCurr->SteeringAngle);
 
             if (nodeCurr->Gear >= 0 && nodeCurr->RPM > 0.0f) {
                 VExt::SetGearCurr(mReplayVehicle, static_cast<uint16_t>(nodeCurr->Gear));
@@ -311,9 +311,9 @@ void CReplayScript::updateReplay() {
             node.Timestamp = gameTime - recordStart;
             node.Pos = nowPos;
             node.Rot = nowRot;
+            node.SteeringAngle = VExt::GetSteeringAngle(vehicle);
             node.Throttle = VExt::GetThrottleP(vehicle);
             node.Brake = VExt::GetBrakeP(vehicle);
-            node.SteeringAngle = VExt::GetSteeringAngle(vehicle);
 
             node.Gear = VExt::GetGearCurr(vehicle);
             node.RPM = VExt::GetCurrentRPM(vehicle);

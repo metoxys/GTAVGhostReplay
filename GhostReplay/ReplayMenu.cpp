@@ -7,14 +7,13 @@
 #include "ReplayData.hpp"
 
 #include "ScriptMenuUtils.h"
+#include "ReplayScriptUtils.hpp"
 
 #include "Util/UI.hpp"
 #include "Util/Math.hpp"
 #include "Util/String.hpp"
 
 #include <fmt/format.h>
-
-#include "ReplayScriptUtils.hpp"
 
 std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
     std::vector<CScriptMenu<CReplayScript>::CSubmenu> submenus;
@@ -85,7 +84,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                     context.SetTrack(newName);
                 }
                 else {
-                    CTrackData newTrack;
+                    CTrackData newTrack("");
                     newTrack.Name = newName;
                     newTrack.Write();
                     GhostReplay::LoadTracks();
@@ -159,14 +158,40 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             return;
         }
 
-        for (const auto& track : context.GetTracks()) {
+        for (auto& track : context.GetTracks()) {
             bool currentTrack = false;
             if (context.ActiveTrack())
                 currentTrack = context.ActiveTrack()->Name == track.Name;
-            std::string selector = currentTrack ? "> " : "";
+            std::string selector = currentTrack ? "-> " : "";
+            std::string deleteCol = track.MarkedForDeletion ? "~r~" : "";
 
-            std::string optionName = fmt::format("{}{}", selector, track.Name);
-            if (mbCtx.Option(optionName)) {
+            std::vector<std::string> description{
+                "Press select to toggle track selection.",
+            };
+
+            if (!track.MarkedForDeletion) {
+                description.emplace_back("Press left arrow to delete.");
+            }
+            else {
+                description.emplace_back("Press right arrow to unmark deletion.");
+                description.emplace_back("~r~Press left to confirm deletion.");
+                description.emplace_back("~r~~h~THIS IS PERMANENT");
+            }
+
+            auto clearDeleteFlag = [&]() {
+                track.MarkedForDeletion = false;
+            };
+            auto deleteFlag = [&]() {
+                if (track.MarkedForDeletion) {
+                    context.DeleteTrack(track);
+                }
+                else {
+                    track.MarkedForDeletion = true;
+                }
+            };
+
+            std::string optionName = fmt::format("{}{}{}", deleteCol, selector, track.Name);
+            if (mbCtx.OptionPlus(optionName, {}, nullptr, clearDeleteFlag, deleteFlag, "", description)) {
                 if (!currentTrack)
                     context.SetTrack(track.Name);
                 else

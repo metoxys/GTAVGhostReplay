@@ -1,10 +1,9 @@
 #pragma once
+#include "VehicleMod.h"
+
 #include <inc/types.h>
 #include <string>
 #include <vector>
-#include <map>
-
-#include "VehicleMod.h"
 
 struct SReplayNode {
     unsigned long long Timestamp;
@@ -32,6 +31,8 @@ public:
     void Write();
     void WriteAsync();
 
+    bool MarkedForDeletion;
+
     std::string Name;
     std::string Track;
 
@@ -42,4 +43,6 @@ public:
     // The menu shall be used to select the one that applies, so multiple CReplayData recordings can be
     // chosen from.
     std::vector<SReplayNode> Nodes;
+private:
+    std::string mFileName;
 };

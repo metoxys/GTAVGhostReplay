@@ -24,6 +24,16 @@ namespace {
 
     std::vector<CReplayData> replays;
     std::vector<CTrackData> tracks;
+
+    void clearFileFlags() {
+        for (auto& track : tracks) {
+            track.MarkedForDeletion = false;
+        }
+
+        for (auto& replay : replays) {
+            replay.MarkedForDeletion = false;
+        }
+    }
 }
 
 void GhostReplay::ScriptMain() {
@@ -59,6 +69,7 @@ void GhostReplay::ScriptMain() {
             // OnExit
             scriptInst->SetScriptMode(EScriptMode::ReplayActive);
             settings->Save();
+            ::clearFileFlags();
         },
         BuildMenu()
     );

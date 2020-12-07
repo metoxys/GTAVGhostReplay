@@ -34,11 +34,11 @@ public:
     virtual ~CReplayScript();
     virtual void Tick();
 
-    const std::vector<CReplayData>& GetReplays() const {
+    std::vector<CReplayData>& GetReplays() {
         return mCompatibleReplays;
     }
 
-    const std::vector<CTrackData>& GetTracks() const {
+    std::vector<CTrackData>& GetTracks() {
         return mTracks;
     }
 
@@ -68,6 +68,7 @@ public:
     std::vector<CReplayData>::const_iterator EraseUnsavedRun(std::vector<CReplayData>::const_iterator runIt);
 
     bool StartLineDef(SLineDef& lineDef, const std::string& lineName);
+    void DeleteTrack(const CTrackData& track);
 
 protected:
     void updateReplay();

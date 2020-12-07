@@ -193,6 +193,29 @@ bool CReplayScript::StartLineDef(SLineDef& lineDef, const std::string& lineName)
     }
 }
 
+void CReplayScript::DeleteTrack(const CTrackData& track) {
+    auto trackIt = std::find_if(mTracks.begin(), mTracks.end(), [&](const CTrackData& x) {
+        return x.FileName() == track.FileName();
+    });
+
+    if (trackIt == mTracks.end()) {
+        logger.Write(ERROR, "Attempted to delete track [%s] but didn't find it in the list? Filename: [%s]",
+            track.Name.c_str(), track.FileName().c_str());
+        UI::Notify(fmt::format("Failed to delete {}", track.Name));
+        return;
+    }
+
+    if (mActiveTrack) {
+        if (mActiveTrack->FileName() == track.FileName()) {
+            SetTrack("");
+        }
+    }
+    track.Delete();
+    mTracks.erase(trackIt);
+    logger.Write(INFO, "Deleted track [%s], Filename: [%s]",
+        track.Name.c_str(), track.FileName().c_str());
+}
+
 void CReplayScript::updateReplay() {
     Vehicle vehicle = PED::GET_VEHICLE_PED_IS_IN(PLAYER::PLAYER_PED_ID(), false);
     if (!ENTITY::DOES_ENTITY_EXIST(vehicle) || !mActiveTrack)

@@ -10,7 +10,7 @@
 #include <fstream>
 
 CTrackData CTrackData::Read(const std::string& trackFile) {
-    CTrackData trackData{};
+    CTrackData trackData(trackFile);
 
     nlohmann::json trackJson;
     std::ifstream replayFileStream(trackFile.c_str());
@@ -49,9 +49,12 @@ CTrackData CTrackData::Read(const std::string& trackFile) {
     }
 }
 
-CTrackData::CTrackData()
-    : StartLine(SLineDef{})
-    , FinishLine(SLineDef{}) { }
+CTrackData::CTrackData(std::string fileName)
+    : MarkedForDeletion(false)
+    , StartLine(SLineDef{})
+    , FinishLine(SLineDef{})
+    , mFileName(std::move(fileName)) {
+}
 
 void CTrackData::Write() {
     nlohmann::ordered_json trackJson;
@@ -86,4 +89,9 @@ void CTrackData::Write() {
     trackFile << std::setw(2) << trackJson << std::endl;
 
     logger.Write(INFO, "[Track] Written %s", trackFileName.c_str());
+    mFileName = trackFileName;
+}
+
+void CTrackData::Delete() const {
+    std::filesystem::remove(std::filesystem::path(mFileName));
 }

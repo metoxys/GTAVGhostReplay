@@ -11,11 +11,17 @@ class CTrackData {
 public:
     static CTrackData Read(const std::string& trackFile);
 
-    CTrackData();
+    CTrackData(std::string fileName);
     void Write();
+    std::string FileName() const { return mFileName; }
+    void Delete() const;
+
+    bool MarkedForDeletion;
 
     std::string Name;
     SLineDef StartLine;
     SLineDef FinishLine;
+private:
+    std::string mFileName;
 };
 

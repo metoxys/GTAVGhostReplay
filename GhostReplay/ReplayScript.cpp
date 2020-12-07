@@ -122,6 +122,15 @@ void CReplayScript::SetReplay(const std::string& replayName) {
             return;
         }
     }
+
+    // createReplayVehicle should've notified already if we're here.
+    if (mReplayVehicle == 0) {
+        mActiveReplay = nullptr;
+        mLastNode = std::vector<SReplayNode>::iterator();
+        mReplayState = EReplayState::Idle;
+        mRecordState = ERecordState::Idle;
+        return;
+    }
     logger.Write(ERROR, "SetReplay: No replay found with the name [%s]", replayName.c_str());
 }
 
@@ -359,11 +368,36 @@ bool CReplayScript::passedLineThisTick(SLineDef line, Vector3 oldPos, Vector3 ne
 
 void CReplayScript::createReplayVehicle(Hash model, CReplayData* activeReplay, Vector3 pos) {
     if (ENTITY::DOES_ENTITY_EXIST(mReplayVehicle)) {
+        ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, false, false);
         ENTITY::DELETE_ENTITY(&mReplayVehicle);
         mReplayVehicle = 0;
     }
     if (model == 0 || activeReplay == nullptr) {
         return;
+    }
+
+    if (!(STREAMING::IS_MODEL_IN_CDIMAGE(model) && STREAMING::IS_MODEL_A_VEHICLE(model))) {
+        // Vehicle doesn't exist
+        UI::Notify("Error: Couldn't load model. Falling back to default (Sultan).", false);
+
+        model = MISC::GET_HASH_KEY("sultan");
+        if (!(STREAMING::IS_MODEL_IN_CDIMAGE(model) && STREAMING::IS_MODEL_A_VEHICLE(model))) {
+            UI::Notify("Error: Failed to load default model.", false);
+            return;
+        }
+    }
+    STREAMING::REQUEST_MODEL(model);
+    auto startTime = GetTickCount64();
+
+    while (!STREAMING::HAS_MODEL_LOADED(model)) {
+        WAIT(0);
+        if (GetTickCount64() > startTime + 5000) {
+            // Couldn't load model
+            WAIT(0);
+            STREAMING::SET_MODEL_AS_NO_LONGER_NEEDED(model);
+            UI::Notify("Error: Couldn't load model.", false);
+            return;
+        }
     }
 
     mReplayVehicle = VEHICLE::CREATE_VEHICLE(model,

@@ -35,7 +35,7 @@ public:
     virtual void Tick();
 
     const std::vector<CReplayData>& GetReplays() const {
-        return mReplays;
+        return mCompatibleReplays;
     }
 
     const std::vector<CTrackData>& GetTracks() const {
@@ -75,9 +75,11 @@ protected:
     bool passedLineThisTick(SLineDef line, Vector3 oldPos, Vector3 newPos);
     void createReplayVehicle(Hash model, CReplayData* activeReplay, Vector3 pos);
     bool isFastestLap(const std::string& trackName, Hash vehicleModel, unsigned long long timestamp);
+    std::vector<CReplayData> getCompatibleReplays(const std::string& trackName);
 
     const CScriptSettings& mSettings;
     std::vector<CReplayData>& mReplays;
+    std::vector<CReplayData> mCompatibleReplays;
     std::vector<CTrackData>& mTracks;
 
     CReplayData* mActiveReplay;

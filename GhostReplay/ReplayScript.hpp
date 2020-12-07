@@ -74,6 +74,7 @@ protected:
     void updateTrackDefine();
     bool passedLineThisTick(SLineDef line, Vector3 oldPos, Vector3 newPos);
     void createReplayVehicle(Hash model, CReplayData* activeReplay, Vector3 pos);
+    bool isFastestLap(const std::string& trackName, Hash vehicleModel, unsigned long long timestamp);
 
     const CScriptSettings& mSettings;
     std::vector<CReplayData>& mReplays;

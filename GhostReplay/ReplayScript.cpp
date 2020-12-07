@@ -233,7 +233,7 @@ void CReplayScript::updateReplay() {
                 ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, 127, false);
                 ENTITY::SET_ENTITY_COLLISION(mReplayVehicle, false, true);
                 VEHICLE::SET_VEHICLE_ENGINE_ON(mReplayVehicle, true, true, false);
-                UI::Notify("Replay started", false);
+                //UI::Notify("Replay started", false);
             }
             break;
         }
@@ -248,7 +248,7 @@ void CReplayScript::updateReplay() {
 
             if (nodeCurr == mActiveReplay->Nodes.end()) {
                 mReplayState = EReplayState::Finished;
-                UI::Notify("Replay finished", false);
+                //UI::Notify("Replay finished", false);
                 break;
             }
 
@@ -287,7 +287,7 @@ void CReplayScript::updateReplay() {
 
             if (finishPassedThisTick) {
                 mReplayState = EReplayState::Finished;
-                UI::Notify("Player finished", false);
+                //UI::Notify("Player finished", false);
             }
             break;
         }
@@ -310,8 +310,7 @@ void CReplayScript::updateReplay() {
 
                 VehicleModData modData = VehicleModData::LoadFrom(vehicle);
                 mCurrentRun.VehicleMods = modData;
-
-                UI::Notify("Record started", false);
+                //UI::Notify("Record started", false);
             }
             break;
         }
@@ -350,9 +349,20 @@ void CReplayScript::updateReplay() {
                     mCurrentRun.Nodes.push_back(node);
                 }
 
+                bool fastestLap = false;
+                bool fasterLap = false;
+
+                if (mActiveReplay) {
+                    fasterLap = node.Timestamp < mActiveReplay->Nodes.back().Timestamp;
+                }
+                if (fasterLap) {
+                    fastestLap = isFastestLap(mCurrentRun.Track, 0, node.Timestamp);
+                }
+
+                std::string lapInfo;
+
                 mRecordState = ERecordState::Finished;
-                if (mSettings.Main.AutoGhost &&
-                    (!mActiveReplay || mActiveReplay->Nodes.back().Timestamp > node.Timestamp)) {
+                if (mSettings.Main.AutoGhost && (!mActiveReplay || fasterLap)) {
                     mCurrentRun.Name = Util::FormatReplayName(
                         node.Timestamp,
                         mCurrentRun.Track,
@@ -364,7 +374,13 @@ void CReplayScript::updateReplay() {
                 else {
                     mUnsavedRuns.push_back(mCurrentRun);
                 }
-                UI::Notify("Record stopped", false);
+
+                lapInfo = fmt::format("Lap time: {}{}",
+                    fastestLap ? "~p~" : fasterLap ? "~g~" : "~y~",
+                    Util::FormatMillisTime(node.Timestamp));
+
+                // TODO: Movable UI element with current time & laptime & delta?
+                UI::Notify(lapInfo, false);
             }
             break;
         }
@@ -431,4 +447,15 @@ void CReplayScript::createReplayVehicle(Hash model, CReplayData* activeReplay, V
 
     VehicleModData modData = mActiveReplay->VehicleMods;
     VehicleModData::ApplyTo(mReplayVehicle, modData);
+}
+
+bool CReplayScript::isFastestLap(const std::string& trackName, Hash vehicleModel, unsigned long long timestamp) {
+    auto foundOne =  std::find_if(mReplays.begin(), mReplays.end(),
+        [trackName, vehicleModel, timestamp](const CReplayData& replay) {
+            return
+                replay.Track == trackName &&
+                (vehicleModel == 0 ? true : replay.VehicleModel == vehicleModel) &&
+                timestamp < replay.Nodes.back().Timestamp;
+    });
+    return foundOne != mReplays.end();
 }

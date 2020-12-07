@@ -1,12 +1,14 @@
 #include "UI.hpp"
+#include "../Constants.hpp"
 
 #include <inc/enums.h>
 #include <inc/natives.h>
+#include <fmt/format.h>
 #include <vector>
 
 namespace {
     const size_t maxStringLength = 99;
-    int notificationId;
+    int notificationId = 0;
 
     float GetStringWidth(const std::string& text, float scale, int font) {
         HUD::_BEGIN_TEXT_COMMAND_GET_WIDTH("STRING");
@@ -17,7 +19,7 @@ namespace {
     }
 }
 
-void UI::Notify(const std::string& message, int* prevNotification) {
+void showNotification(const std::string& message, int* prevNotification) {
     if (prevNotification != nullptr && *prevNotification != 0) {
         HUD::THEFEED_REMOVE_ITEM(*prevNotification);
     }
@@ -31,12 +33,16 @@ void UI::Notify(const std::string& message, int* prevNotification) {
     }
 }
 
+void UI::Notify(const std::string& message) {
+    Notify(message, true);
+}
+
 void UI::Notify(const std::string& message, bool removePrevious) {
     int* notifHandleAddr = nullptr;
     if (removePrevious) {
         notifHandleAddr = &notificationId;
     }
-    Notify(message, notifHandleAddr);
+    showNotification(fmt::format("{}\n{}", Constants::NotificationPrefix, message), notifHandleAddr);
 }
 
 void UI::ShowText(float x, float y, float scale, const std::string& text) {
@@ -57,7 +63,7 @@ std::string UI::GetKeyboardResult() {
     while (MISC::UPDATE_ONSCREEN_KEYBOARD() == 0)
         WAIT(0);
     if (!MISC::GET_ONSCREEN_KEYBOARD_RESULT()) {
-        UI::Notify("Cancelled input", true);
+        UI::Notify("Cancelled input", false);
         return std::string();
     }
     auto result = MISC::GET_ONSCREEN_KEYBOARD_RESULT();

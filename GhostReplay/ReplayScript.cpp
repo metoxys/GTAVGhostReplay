@@ -84,6 +84,8 @@ void CReplayScript::Tick() {
 }
 
 void CReplayScript::SetTrack(const std::string& trackName) {
+    SetReplay("");
+
     if (trackName.empty()) {
         mActiveTrack = nullptr;
         mReplayState = EReplayState::Idle;
@@ -93,7 +95,6 @@ void CReplayScript::SetTrack(const std::string& trackName) {
 
     for (auto& track : mTracks) {
         if (track.Name == trackName) {
-            createReplayVehicle(0, nullptr, Vector3{});
             mActiveTrack = &track;
             mReplayState = EReplayState::Idle;
             mRecordState = ERecordState::Idle;
@@ -109,6 +110,7 @@ void CReplayScript::SetReplay(const std::string& replayName) {
         mLastNode = std::vector<SReplayNode>::iterator();
         mReplayState = EReplayState::Idle;
         mRecordState = ERecordState::Idle;
+        createReplayVehicle(0, nullptr, Vector3{});
         return;
     }
 

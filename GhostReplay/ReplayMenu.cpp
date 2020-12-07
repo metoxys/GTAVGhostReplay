@@ -58,6 +58,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             { "Refresh tracks and ghosts if they are changed outside the script." } )) {
             GhostReplay::LoadTracks();
             GhostReplay::LoadReplays();
+            context.SetTrack("");
             UI::Notify("Tracks and replays refreshed", false);
         }
 

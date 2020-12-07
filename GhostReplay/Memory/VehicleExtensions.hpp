@@ -165,6 +165,11 @@ public:
     static std::vector<float> GetWheelRotationSpeeds(Vehicle handle);
     // For forward, use negative speed.
     static void SetWheelRotationSpeed(Vehicle handle, uint8_t index, float value);
+
+    // Unit: rad
+    static std::vector<float> GetWheelRotations(Vehicle handle);
+    static void SetWheelRotation(Vehicle handle, uint8_t index, float value);
+
     // Unit: m/s, at the tyres. This probably doesn't work well for popped tyres.
     static std::vector<float> GetTyreSpeeds(Vehicle handle);
 

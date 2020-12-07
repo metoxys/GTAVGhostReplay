@@ -10,10 +10,14 @@ struct SReplayNode {
     unsigned long long Timestamp;
     Vector3 Pos;
     Vector3 Rot;
+    Vector3 Vel;
+    std::vector<float> WheelRotations;
+
     float SteeringAngle;
     float Throttle;
     float Brake;
 
+    int Gear;
     float RPM;
 
     bool LowBeams;

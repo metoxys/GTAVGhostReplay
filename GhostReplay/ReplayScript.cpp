@@ -195,6 +195,7 @@ void CReplayScript::updateReplay() {
 
     Vector3 nowPos = ENTITY::GET_ENTITY_COORDS(vehicle, true);
     Vector3 nowRot = ENTITY::GET_ENTITY_ROTATION(vehicle, 0);
+    Vector3 nowVel = ENTITY::GET_ENTITY_VELOCITY(vehicle);
 
     unsigned long long gameTime = MISC::GET_GAME_TIMER();
     bool startPassedThisTick = passedLineThisTick(mActiveTrack->StartLine, mLastPos, nowPos);
@@ -230,7 +231,7 @@ void CReplayScript::updateReplay() {
                 replayStart = gameTime;
                 ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, true, true);
                 ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, 127, false);
-                ENTITY::SET_ENTITY_COLLISION(mReplayVehicle, false, false);
+                ENTITY::SET_ENTITY_COLLISION(mReplayVehicle, false, true);
                 VEHICLE::SET_VEHICLE_ENGINE_ON(mReplayVehicle, true, true, false);
                 UI::Notify("Replay started", false);
             }
@@ -257,8 +258,16 @@ void CReplayScript::updateReplay() {
 
             Vector3 pos = vlerp(nodeCurr->Pos, nodeNext->Pos, progress);
             Vector3 rot = nodeCurr->Rot;
+            Vector3 vel = nodeCurr->Vel;
             ENTITY::SET_ENTITY_COORDS(mReplayVehicle, pos.x, pos.y, pos.z, false, false, false, false);
             ENTITY::SET_ENTITY_ROTATION(mReplayVehicle, rot.x, rot.y, rot.z, 0, false);
+            ENTITY::SET_ENTITY_VELOCITY(mReplayVehicle, vel.x, vel.y, vel.z);
+
+            if (VExt::GetNumWheels(mReplayVehicle) == nodeCurr->WheelRotations.size()) {
+                for (uint8_t idx = 0; idx < VExt::GetNumWheels(mReplayVehicle); ++idx) {
+                    VExt::SetWheelRotation(mReplayVehicle, idx, nodeCurr->WheelRotations[idx]);
+                }
+            }
 
             VExt::SetSteeringAngle(mReplayVehicle, nodeCurr->SteeringAngle);
             VExt::SetThrottle(mReplayVehicle, nodeCurr->Throttle);
@@ -311,6 +320,9 @@ void CReplayScript::updateReplay() {
             node.Timestamp = gameTime - recordStart;
             node.Pos = nowPos;
             node.Rot = nowRot;
+            node.Vel = nowVel;
+            node.WheelRotations = VExt::GetWheelRotations(vehicle);
+
             node.SteeringAngle = VExt::GetSteeringAngle(vehicle);
             node.Throttle = VExt::GetThrottleP(vehicle);
             node.Brake = VExt::GetBrakeP(vehicle);

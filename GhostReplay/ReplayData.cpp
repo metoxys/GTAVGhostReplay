@@ -37,9 +37,15 @@ CReplayData CReplayData::Read(const std::string& replayFile) {
             node.Rot.x = jsonNode["RX"];
             node.Rot.y = jsonNode["RY"];
             node.Rot.z = jsonNode["RZ"];
+            node.Vel.x = jsonNode.value("VX", 0.0f);
+            node.Vel.y = jsonNode.value("VY", 0.0f);
+            node.Vel.z = jsonNode.value("VZ", 0.0f);
+            node.WheelRotations = jsonNode.value("WheelRotations", std::vector<float>());
+            node.SteeringAngle = jsonNode.value("Steering", 0.0f);
             node.Throttle = jsonNode.value("Throttle", 0.0f);
             node.Brake = jsonNode.value("Brake", 0.0f);
-            node.SteeringAngle = jsonNode.value("Steering", 0.0f);
+            node.Gear = jsonNode.value("Gear", -1);
+            node.RPM = jsonNode.value("RPM", -1.0f);
             node.LowBeams = jsonNode.value("LowBeams", false);
             node.HighBeams = jsonNode.value("HighBeams", false);
 
@@ -71,9 +77,15 @@ void CReplayData::Write() {
             { "RX", Node.Rot.x },
             { "RY", Node.Rot.y },
             { "RZ", Node.Rot.z },
+            { "VX", Node.Vel.x },
+            { "VY", Node.Vel.y },
+            { "VZ", Node.Vel.z },
+            { "WheelRotations", Node.WheelRotations },
+            { "Steering", Node.SteeringAngle },
             { "Throttle", Node.Throttle },
             { "Brake", Node.Brake },
-            { "Steering", Node.SteeringAngle },
+            { "Gear", Node.Gear },
+            { "RPM", Node.RPM },
             { "LowBeams", Node.LowBeams },
             { "HighBeams", Node.HighBeams },
         });

@@ -60,6 +60,7 @@ namespace {
     int wheelHealthOffset = 0;
     int wheelSuspensionCompressionOffset = 0;
     int wheelSteeringAngleOffset = 0;
+    int wheelAngleOffset = 0;
     int wheelAngularVelocityOffset = 0;
     int wheelTractionVectorLengthOffset = 0;
     int wheelPowerOffset = 0;
@@ -252,6 +253,9 @@ void VehicleExtensions::Init() {
     addr = mem::FindPattern("\x45\x0f\x57\xc9\xf3\x0f\x11\x83\x60\x01\x00\x00\xf3\x0f\x5c", "xxx?xxx???xxxxx");
     wheelSuspensionCompressionOffset = addr == 0 ? 0 : *(int*)(addr + 8);
     logger.Write(wheelSuspensionCompressionOffset == 0 ? WARN : DEBUG, "Wheel Suspension Compression Offset: 0x%X", wheelSuspensionCompressionOffset);
+
+    wheelAngleOffset = addr == 0 ? 0 : (*(int*)(addr + 8)) + 0x8;
+    logger.Write(wheelAngleOffset == 0 ? WARN : DEBUG, "Wheel Angle Velocity Offset: 0x%X", wheelAngleOffset);
 
     wheelAngularVelocityOffset = addr == 0 ? 0 : (*(int*)(addr + 8)) + 0xc;
     logger.Write(wheelAngularVelocityOffset == 0 ? WARN : DEBUG, "Wheel Angular Velocity Offset: 0x%X", wheelAngularVelocityOffset);
@@ -870,6 +874,30 @@ void VehicleExtensions::SetWheelRotationSpeed(Vehicle handle, uint8_t index, flo
 
     auto wheelAddr = *reinterpret_cast<uint64_t*>(wheelPtr + 0x008 * index);
     *reinterpret_cast<float*>(wheelAddr + wheelAngularVelocityOffset) = value;
+}
+
+std::vector<float> VehicleExtensions::GetWheelRotations(Vehicle handle) {
+    auto wheelPtr = GetWheelsPtr(handle);
+    auto numWheels = GetNumWheels(handle);
+    std::vector<float> rotations(numWheels);
+
+    if (wheelAngleOffset == 0) return rotations;
+
+    for (auto i = 0; i < numWheels; i++) {
+        auto wheelAddr = *reinterpret_cast<uint64_t*>(wheelPtr + 0x008 * i);
+        rotations[i] = *reinterpret_cast<float*>(wheelAddr + wheelAngleOffset);
+    }
+    return rotations;
+}
+
+void VehicleExtensions::SetWheelRotation(Vehicle handle, uint8_t index, float value) {
+    if (index > GetNumWheels(handle)) return;
+    if (wheelAngleOffset == 0) return;
+
+    auto wheelPtr = GetWheelsPtr(handle);
+
+    auto wheelAddr = *reinterpret_cast<uint64_t*>(wheelPtr + 0x008 * index);
+    *reinterpret_cast<float*>(wheelAddr + wheelAngleOffset) = value;
 }
 
 std::vector<float> VehicleExtensions::GetTyreSpeeds(Vehicle handle) {

@@ -199,8 +199,6 @@ void CReplayScript::updateReplay() {
         return;
 
     Vector3 nowPos = ENTITY::GET_ENTITY_COORDS(vehicle, true);
-    Vector3 nowRot = ENTITY::GET_ENTITY_ROTATION(vehicle, 0);
-    Vector3 nowVel = ENTITY::GET_ENTITY_VELOCITY(vehicle);
 
     unsigned long long gameTime = MISC::GET_GAME_TIMER();
     bool startPassedThisTick = passedLineThisTick(mActiveTrack->StartLine, mLastPos, nowPos);
@@ -229,6 +227,11 @@ void CReplayScript::updateReplay() {
         UI::DrawLine(mActiveTrack->FinishLine.A, mActiveTrack->FinishLine.B, 255, 255, 255, 255);
     }
 
+    updatePlayback(gameTime, startPassedThisTick, finishPassedThisTick);
+    updateRecord(gameTime, startPassedThisTick, finishPassedThisTick);
+}
+
+void CReplayScript::updatePlayback(unsigned long long gameTime, bool startPassedThisTick, bool finishPassedThisTick) {
     switch (mReplayState) {
         case EReplayState::Idle: {
             if (startPassedThisTick) {
@@ -248,7 +251,7 @@ void CReplayScript::updateReplay() {
             auto replayTime = gameTime - replayStart;
             auto nodeCurr = std::find_if(mLastNode, mActiveReplay->Nodes.end(), [replayTime](const SReplayNode& node) {
                 return node.Timestamp >= replayTime;
-            });
+                });
             mLastNode = nodeCurr;
 
             if (nodeCurr == mActiveReplay->Nodes.end()) {
@@ -303,6 +306,19 @@ void CReplayScript::updateReplay() {
             break;
         }
     }
+}
+
+void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedThisTick, bool finishPassedThisTick) {
+    Vehicle vehicle = PED::GET_VEHICLE_PED_IS_IN(PLAYER::PLAYER_PED_ID(), false);
+    if (!ENTITY::DOES_ENTITY_EXIST(vehicle) || !mActiveTrack) {
+        mRecordState = ERecordState::Idle;
+        mCurrentRun = CReplayData();
+        return;
+    }
+
+    Vector3 nowPos = ENTITY::GET_ENTITY_COORDS(vehicle, true);
+    Vector3 nowRot = ENTITY::GET_ENTITY_ROTATION(vehicle, 0);
+    Vector3 nowVel = ENTITY::GET_ENTITY_VELOCITY(vehicle);
 
     switch (mRecordState) {
         case ERecordState::Idle: {
@@ -350,6 +366,7 @@ void CReplayScript::updateReplay() {
             }
 
             if (finishPassedThisTick) {
+                mRecordState = ERecordState::Finished;
                 if (!saved) {
                     mCurrentRun.Nodes.push_back(node);
                 }
@@ -366,7 +383,6 @@ void CReplayScript::updateReplay() {
 
                 std::string lapInfo;
 
-                mRecordState = ERecordState::Finished;
                 if (mSettings.Main.AutoGhost && (!mActiveReplay || fasterLap)) {
                     mCurrentRun.Name = Util::FormatReplayName(
                         node.Timestamp,
@@ -391,6 +407,7 @@ void CReplayScript::updateReplay() {
         }
         case ERecordState::Finished: {
             mRecordState = ERecordState::Idle;
+            mCurrentRun = CReplayData();
             break;
         }
     }

@@ -54,6 +54,13 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
         mbCtx.MenuOption("Unsaved runs", "unsavedrunsmenu");
 
+        if (mbCtx.Option("Refresh tracks and ghosts", 
+            { "Refresh tracks and ghosts if they are changed outside the script." } )) {
+            GhostReplay::LoadTracks();
+            GhostReplay::LoadReplays();
+            UI::Notify("Tracks and replays refreshed", false);
+        }
+
         mbCtx.MenuOption("Settings", "settingsmenu");
     });
 

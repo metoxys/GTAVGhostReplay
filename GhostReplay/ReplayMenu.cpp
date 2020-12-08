@@ -201,15 +201,28 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
             if (highlighted) {
                 auto compatibleReplays = context.GetCompatibleReplays(track.Name);
+                CReplayData fastestReplayInfo = context.GetFastestReplay(track.Name, 0);
+                std::string lapRecordString = "No times set";
+                if (!fastestReplayInfo.Name.empty()) {
+                    lapRecordString = fmt::format("{} ({})",
+                        Util::FormatMillisTime(fastestReplayInfo.Nodes.back().Timestamp),
+                        Util::GetVehicleName(fastestReplayInfo.VehicleModel));
+                }
+
                 std::vector<std::string> extras{
-                    fmt::format("Replays for this track: {}", compatibleReplays.size())
+                    fmt::format("Replays for this track: {}", compatibleReplays.size()),
+                    fmt::format("Lap record: {}", lapRecordString),
                 };
 
+                std::sort(compatibleReplays.begin(), compatibleReplays.end(), 
+                    [](const CReplayData& a, const CReplayData& b) {
+                        return a.Nodes.back().Timestamp < b.Nodes.back().Timestamp;
+                    });
+
                 for (const auto& replay : compatibleReplays) {
-                    extras.push_back(fmt::format("{}", replay.Name));
-                    extras.push_back(fmt::format("    Car: {}", Util::GetVehicleName(replay.VehicleModel)));
-                    extras.push_back(fmt::format("    Time: {}", Util::FormatMillisTime(replay.Nodes.back().Timestamp)));
-                    extras.push_back(fmt::format("\n"));
+                    extras.push_back(fmt::format("{} ({})", 
+                        Util::FormatMillisTime(replay.Nodes.back().Timestamp),
+                        Util::GetVehicleName(replay.VehicleModel)));
                 }
                 mbCtx.OptionPlusPlus(extras, "Track");
             }

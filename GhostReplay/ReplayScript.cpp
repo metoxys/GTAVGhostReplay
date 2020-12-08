@@ -156,6 +156,35 @@ std::vector<CReplayData> CReplayScript::GetCompatibleReplays(const std::string& 
     return replays;
 }
 
+bool CReplayScript::IsFastestLap(const std::string& trackName, Hash vehicleModel, unsigned long long timestamp) {
+    auto foundOne = std::find_if(mReplays.begin(), mReplays.end(),
+        [trackName, vehicleModel, timestamp](const CReplayData& replay) {
+            return
+                replay.Track == trackName &&
+                (vehicleModel == 0 ? true : replay.VehicleModel == vehicleModel) &&
+                timestamp < replay.Nodes.back().Timestamp;
+        });
+    return foundOne != mReplays.end();
+}
+
+CReplayData CReplayScript::GetFastestReplay(const std::string& trackName, Hash vehicleModel) {
+    CReplayData fastestReplay("");
+
+    for (auto& replay : mReplays) {
+        if (replay.Track != trackName)
+            continue;
+
+        if (vehicleModel != 0 && replay.VehicleModel != vehicleModel)
+            continue;
+
+        if (fastestReplay.Nodes.empty() ||
+            replay.Nodes.back().Timestamp < fastestReplay.Nodes.back().Timestamp) {
+            fastestReplay = replay;
+        }
+    }
+    return fastestReplay;
+}
+
 bool CReplayScript::StartLineDef(SLineDef& lineDef, const std::string& lineName) {
     const std::string escapeKey = "BACKSPACE";
 
@@ -445,7 +474,7 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
                     fasterLap = node.Timestamp < mActiveReplay->Nodes.back().Timestamp;
                 }
                 if (fasterLap) {
-                    fastestLap = isFastestLap(mCurrentRun.Track, 0, node.Timestamp);
+                    fastestLap = IsFastestLap(mCurrentRun.Track, 0, node.Timestamp);
                 }
 
                 std::string lapInfo;
@@ -551,15 +580,4 @@ void CReplayScript::createReplayVehicle(Hash model, CReplayData* activeReplay, V
 
     VehicleModData modData = mActiveReplay->VehicleMods;
     VehicleModData::ApplyTo(mReplayVehicle, modData);
-}
-
-bool CReplayScript::isFastestLap(const std::string& trackName, Hash vehicleModel, unsigned long long timestamp) {
-    auto foundOne =  std::find_if(mReplays.begin(), mReplays.end(),
-        [trackName, vehicleModel, timestamp](const CReplayData& replay) {
-            return
-                replay.Track == trackName &&
-                (vehicleModel == 0 ? true : replay.VehicleModel == vehicleModel) &&
-                timestamp < replay.Nodes.back().Timestamp;
-    });
-    return foundOne != mReplays.end();
 }

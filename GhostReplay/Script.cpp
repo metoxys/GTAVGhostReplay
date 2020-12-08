@@ -95,18 +95,18 @@ uint32_t GhostReplay::LoadReplays() {
         Constants::ModDir +
         "\\Replays";
 
-    logger.Write(DEBUG, "Clearing and reloading replays");
+    logger.Write(DEBUG, "[Replay] Clearing and reloading replays");
 
     replays.clear();
 
     if (!(fs::exists(fs::path(replaysPath)) && fs::is_directory(fs::path(replaysPath)))) {
-        logger.Write(ERROR, "Directory [%s] not found!", replaysPath.c_str());
+        logger.Write(ERROR, "[Replay] Directory [%s] not found!", replaysPath.c_str());
         return 0;
     }
 
     for (const auto& file : fs::directory_iterator(replaysPath)) {
         if (Util::to_lower(fs::path(file).extension().string()) != ".json") {
-            logger.Write(DEBUG, "Skipping [%s] - not .json", fs::path(file).string().c_str());
+            logger.Write(DEBUG, "[Replay] Skipping [%s] - not .json", fs::path(file).string().c_str());
             continue;
         }
 
@@ -114,11 +114,11 @@ uint32_t GhostReplay::LoadReplays() {
         if (!replay.Nodes.empty())
             replays.push_back(replay);
         else
-            logger.Write(WARN, "Skipping [%s] - not a valid file", file.path().c_str());
+            logger.Write(WARN, "[Replay] Skipping [%s] - not a valid file", file.path().c_str());
 
-        logger.Write(DEBUG, "Loaded replay [%s]", replay.Name.c_str());
+        logger.Write(DEBUG, "[Replay] Loaded replay [%s]", replay.Name.c_str());
     }
-    logger.Write(INFO, "Replays loaded: %d", replays.size());
+    logger.Write(INFO, "[Replay] Replays loaded: %d", replays.size());
 
     return static_cast<unsigned>(replays.size());
 }
@@ -129,18 +129,18 @@ uint32_t GhostReplay::LoadTracks() {
         Constants::ModDir +
         "\\Tracks";
 
-    logger.Write(DEBUG, "Clearing and reloading tracks");
+    logger.Write(DEBUG, "[Track] Clearing and reloading tracks");
 
     tracks.clear();
 
     if (!(fs::exists(fs::path(tracksPath)) && fs::is_directory(fs::path(tracksPath)))) {
-        logger.Write(ERROR, "Directory [%s] not found!", tracksPath.c_str());
+        logger.Write(ERROR, "[Track] Directory [%s] not found!", tracksPath.c_str());
         return 0;
     }
 
     for (const auto& file : fs::directory_iterator(tracksPath)) {
         if (Util::to_lower(fs::path(file).extension().string()) != ".json") {
-            logger.Write(DEBUG, "Skipping [%s] - not .json", fs::path(file).string().c_str());
+            logger.Write(DEBUG, "[Track] Skipping [%s] - not .json", fs::path(file).string().c_str());
             continue;
         }
 
@@ -148,11 +148,11 @@ uint32_t GhostReplay::LoadTracks() {
         if (!track.Name.empty())
             tracks.push_back(track);
         else
-            logger.Write(WARN, "Skipping [%s] - not a valid file", file.path().c_str());
+            logger.Write(WARN, "[Track] Skipping [%s] - not a valid file", file.path().c_str());
 
-        logger.Write(DEBUG, "Loaded track [%s]", track.Name.c_str());
+        logger.Write(DEBUG, "[Track] Loaded track [%s]", track.Name.c_str());
     }
-    logger.Write(INFO, "Tracks loaded: %d", tracks.size());
+    logger.Write(INFO, "[Track] Tracks loaded: %d", tracks.size());
 
     return static_cast<unsigned>(tracks.size());
 }

@@ -208,9 +208,9 @@ void CReplayScript::DeleteTrack(const CTrackData& track) {
     });
 
     if (trackIt == mTracks.end()) {
-        logger.Write(ERROR, "Attempted to delete track [%s] but didn't find it in the list? Filename: [%s]",
+        logger.Write(ERROR, "[Track] Attempted to delete track [%s] but didn't find it in the list? Filename: [%s]",
             track.Name.c_str(), track.FileName().c_str());
-        UI::Notify(fmt::format("Failed to delete {}", track.Name));
+        UI::Notify(fmt::format("[Track] Failed to delete {}", track.Name));
         return;
     }
 
@@ -221,7 +221,7 @@ void CReplayScript::DeleteTrack(const CTrackData& track) {
     }
     track.Delete();
     mTracks.erase(trackIt);
-    logger.Write(INFO, "Deleted track [%s], Filename: [%s]",
+    logger.Write(INFO, "[Track] Deleted track [%s], Filename: [%s]",
         track.Name.c_str(), track.FileName().c_str());
 }
 

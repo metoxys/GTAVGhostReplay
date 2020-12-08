@@ -390,10 +390,8 @@ void CReplayScript::updatePlayback(unsigned long long gameTime, bool startPassed
 
             Vector3 pos = vlerp(nodeCurr->Pos, nodeNext->Pos, progress);
             Vector3 rot = nodeCurr->Rot;
-            Vector3 vel = nodeCurr->Vel;
             ENTITY::SET_ENTITY_COORDS(mReplayVehicle, pos.x, pos.y, pos.z, false, false, false, false);
             ENTITY::SET_ENTITY_ROTATION(mReplayVehicle, rot.x, rot.y, rot.z, 0, false);
-            ENTITY::SET_ENTITY_VELOCITY(mReplayVehicle, vel.x, vel.y, vel.z);
 
             if (VExt::GetNumWheels(mReplayVehicle) == nodeCurr->WheelRotations.size()) {
                 for (uint8_t idx = 0; idx < VExt::GetNumWheels(mReplayVehicle); ++idx) {
@@ -442,7 +440,6 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
 
     Vector3 nowPos = ENTITY::GET_ENTITY_COORDS(vehicle, true);
     Vector3 nowRot = ENTITY::GET_ENTITY_ROTATION(vehicle, 0);
-    Vector3 nowVel = ENTITY::GET_ENTITY_VELOCITY(vehicle);
 
     switch (mRecordState) {
         case ERecordState::Idle: {
@@ -464,7 +461,6 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
             node.Timestamp = gameTime - recordStart;
             node.Pos = nowPos;
             node.Rot = nowRot;
-            node.Vel = nowVel;
             node.WheelRotations = VExt::GetWheelRotations(vehicle);
 
             node.SteeringAngle = VExt::GetSteeringAngle(vehicle);

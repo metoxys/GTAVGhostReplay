@@ -316,11 +316,22 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 unsavedRun.Track,
                 Util::GetVehicleName(unsavedRun.VehicleModel));
 
-            if (mbCtx.Option(fmt::format("Save [{}]", runName))) {
+            std::vector<std::string> ghostDetails = {
+                "Select to save ghost.",
+                fmt::format("Track: {}", unsavedRun.Track),
+                fmt::format("Car: {}", Util::GetVehicleName(unsavedRun.VehicleModel)),
+                fmt::format("Time: {}", Util::FormatMillisTime(unsavedRun.Nodes.back().Timestamp))
+            };
+
+            if (mbCtx.Option(fmt::format("{}", runName), ghostDetails)) {
                 unsavedRun.Name = runName;
-                unsavedRun.Write();
+
+                CReplayData::WriteAsync(unsavedRun);
+                GhostReplay::AddReplay(unsavedRun);
+                context.AddCompatibleReplay(unsavedRun);
+
                 unsavedRunIt = context.EraseUnsavedRun(unsavedRunIt);
-                GhostReplay::LoadReplays();
+                //GhostReplay::LoadReplays();
             }
             else {
                 ++unsavedRunIt;

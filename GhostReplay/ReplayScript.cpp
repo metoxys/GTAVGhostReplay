@@ -156,6 +156,10 @@ std::vector<CReplayData> CReplayScript::GetCompatibleReplays(const std::string& 
     return replays;
 }
 
+void CReplayScript::AddCompatibleReplay(const CReplayData& value) {
+    mCompatibleReplays.push_back(value);
+}
+
 bool CReplayScript::IsFastestLap(const std::string& trackName, Hash vehicleModel, unsigned long long timestamp) {
     auto foundOne = std::find_if(mReplays.begin(), mReplays.end(),
         [trackName, vehicleModel, timestamp](const CReplayData& replay) {

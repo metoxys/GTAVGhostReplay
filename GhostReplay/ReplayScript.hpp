@@ -66,7 +66,10 @@ public:
     void SetReplay(const std::string& replayName);
     void ClearUnsavedRuns();
     std::vector<CReplayData>::const_iterator EraseUnsavedRun(std::vector<CReplayData>::const_iterator runIt);
+
     std::vector<CReplayData> GetCompatibleReplays(const std::string& trackName);
+    void AddCompatibleReplay(const CReplayData& value);
+
     bool IsFastestLap(const std::string& trackName, Hash vehicleModel, unsigned long long timestamp);
     CReplayData GetFastestReplay(const std::string& trackName, Hash vehicleModel);
 

@@ -290,11 +290,17 @@ void CReplayScript::DeleteReplay(const CReplayData& replay) {
 }
 
 void CReplayScript::updateReplay() {
-    Vehicle vehicle = PED::GET_VEHICLE_PED_IS_IN(PLAYER::PLAYER_PED_ID(), false);
-    if (!ENTITY::DOES_ENTITY_EXIST(vehicle) || !mActiveTrack)
+    if (!mActiveTrack)
         return;
 
-    Vector3 nowPos = ENTITY::GET_ENTITY_COORDS(vehicle, true);
+    Vehicle vehicle = PED::GET_VEHICLE_PED_IS_IN(PLAYER::PLAYER_PED_ID(), false);
+    Vector3 nowPos;
+    if (ENTITY::DOES_ENTITY_EXIST(vehicle)) {
+        nowPos = ENTITY::GET_ENTITY_COORDS(vehicle, true);
+    }
+    else {
+        nowPos = mLastPos;
+    }
 
     unsigned long long gameTime = MISC::GET_GAME_TIMER();
     bool startPassedThisTick = passedLineThisTick(mActiveTrack->StartLine, mLastPos, nowPos);

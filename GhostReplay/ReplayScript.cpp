@@ -341,7 +341,7 @@ void CReplayScript::updatePlayback(unsigned long long gameTime, bool startPassed
                 replayStart = gameTime;
                 ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, true, true);
                 ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, mSettings.Replay.VehicleAlpha, false);
-                ENTITY::SET_ENTITY_COLLISION(mReplayVehicle, false, true);
+                ENTITY::SET_ENTITY_COLLISION(mReplayVehicle, false, false);
                 VEHICLE::SET_VEHICLE_ENGINE_ON(mReplayVehicle, true, true, false);
                 //UI::Notify("Replay started", false);
             }

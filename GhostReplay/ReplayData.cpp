@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <fstream>
 #include <thread>
+#include <utility>
 
 void to_json(nlohmann::json& j, const Vector3& vector3) {
     j = nlohmann::json{
@@ -138,9 +139,10 @@ void CReplayData::Write() {
     mFileName = replayFileName;
 }
 
-void CReplayData::WriteAsync() {
-    std::thread([this]() {
-        Write();
+void CReplayData::WriteAsync(const CReplayData& replayData) {
+    std::thread([replayData]() {
+        CReplayData myCopy = replayData;
+        myCopy.Write();
     }).detach();
 }
 

@@ -484,7 +484,7 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
                         node.Timestamp,
                         mCurrentRun.Track,
                         Util::GetVehicleName(mCurrentRun.VehicleModel));
-                    mCurrentRun.WriteAsync();
+                    CReplayData::WriteAsync(mCurrentRun);
                     GhostReplay::AddReplay(mCurrentRun);
                     mCompatibleReplays.push_back(mCurrentRun);
                     SetReplay(mCurrentRun.Name);

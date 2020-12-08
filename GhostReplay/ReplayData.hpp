@@ -28,10 +28,10 @@ struct SReplayNode {
 class CReplayData {
 public:
     static CReplayData Read(const std::string& replayFile);
+    static void WriteAsync(const CReplayData& replayData);
 
     CReplayData(std::string fileName);
     void Write();
-    void WriteAsync();
     std::string FileName() const { return mFileName; }
     void Delete() const;
 

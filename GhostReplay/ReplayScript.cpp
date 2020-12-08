@@ -24,11 +24,13 @@ using VExt = VehicleExtensions;
 CReplayScript::CReplayScript(
     CScriptSettings& settings,
     std::vector<CReplayData>& replays,
-    std::vector<CTrackData>& tracks)
+    std::vector<CTrackData>& tracks,
+    std::vector<CImage>& trackImages)
     : mSettings(settings)
     , mReplays(replays)
     , mCompatibleReplays()
     , mTracks(tracks)
+    , mTrackImages(trackImages)
     , mActiveReplay(nullptr)
     , mActiveTrack(nullptr)
     , mScriptMode(EScriptMode::ReplayActive)
@@ -291,6 +293,22 @@ void CReplayScript::DeleteReplay(const CReplayData& replay) {
     mCompatibleReplays.erase(replayCompIt);
     logger.Write(INFO, "[Replay] Deleted replay [%s], Filename: [%s]",
         replay.Name.c_str(), replay.FileName().c_str());
+}
+
+std::string CReplayScript::GetTrackImageMenuString(const std::string& trackName) {
+    std::string extra;
+
+    auto imgIt = std::find_if(mTrackImages.begin(), mTrackImages.end(), [trackName](const CImage& img) {
+        return img.Name == trackName;
+    });
+
+    if (imgIt != mTrackImages.end()) {
+        extra = fmt::format("{}W{}H{}",
+            imgIt->TextureID,
+            imgIt->ResX,
+            imgIt->ResY);
+    }
+    return extra;
 }
 
 void CReplayScript::updateReplay() {

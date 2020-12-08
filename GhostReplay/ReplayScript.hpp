@@ -8,6 +8,8 @@
 #include <vector>
 #include <string>
 
+#include "Image.hpp"
+
 enum class EScriptMode {
     DefineTrack,
     ReplayActive,
@@ -30,7 +32,8 @@ public:
     CReplayScript(
         CScriptSettings& settings,
         std::vector<CReplayData>& replays,
-        std::vector<CTrackData>& tracks);
+        std::vector<CTrackData>& tracks,
+        std::vector<CImage>& trackImages);
     virtual ~CReplayScript();
     virtual void Tick();
 
@@ -77,6 +80,8 @@ public:
     void DeleteTrack(const CTrackData& track);
     void DeleteReplay(const CReplayData& replay);
 
+    std::string GetTrackImageMenuString(const std::string& trackName);
+
 protected:
     void updateReplay();
     void updatePlayback(unsigned long long gameTime, bool startPassedThisTick, bool finishPassedThisTick);
@@ -89,6 +94,7 @@ protected:
     std::vector<CReplayData>& mReplays;
     std::vector<CReplayData> mCompatibleReplays;
     std::vector<CTrackData>& mTracks;
+    std::vector<CImage>& mTrackImages;
 
     CReplayData* mActiveReplay;
     CTrackData* mActiveTrack;

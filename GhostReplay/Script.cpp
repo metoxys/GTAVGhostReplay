@@ -24,6 +24,7 @@ namespace {
 
     std::vector<CReplayData> replays;
     std::vector<CTrackData> tracks;
+    std::vector<CImage> trackImages;
 
     void clearFileFlags() {
         for (auto& track : tracks) {
@@ -52,8 +53,9 @@ void GhostReplay::ScriptMain() {
 
     GhostReplay::LoadReplays();
     GhostReplay::LoadTracks();
+    GhostReplay::LoadTrackImages();
 
-    scriptInst = std::make_shared<CReplayScript>(*settings, replays, tracks);
+    scriptInst = std::make_shared<CReplayScript>(*settings, replays, tracks, trackImages);
 
     VehicleExtensions::Init();
     Compatibility::Setup();
@@ -155,6 +157,49 @@ uint32_t GhostReplay::LoadTracks() {
     logger.Write(INFO, "[Track] Tracks loaded: %d", tracks.size());
 
     return static_cast<unsigned>(tracks.size());
+}
+
+uint32_t GhostReplay::LoadTrackImages() {
+    const std::string tracksPath =
+        Paths::GetModuleFolder(Paths::GetOurModuleHandle()) +
+        Constants::ModDir +
+        "\\Tracks";
+
+    logger.Write(DEBUG, "[TrackImg] Clearing and reloading track images");
+
+    trackImages.clear();
+
+    if (!(fs::exists(fs::path(tracksPath)) && fs::is_directory(fs::path(tracksPath)))) {
+        logger.Write(ERROR, "[TrackImg] Directory [%s] not found!", tracksPath.c_str());
+        return 0;
+    }
+
+    for (const auto& file : fs::directory_iterator(tracksPath)) {
+        auto stem = fs::path(file).stem().string();
+        auto okExts = Img::GetAllowedExtensions();
+        auto ext = Util::to_lower(fs::path(file).extension().string());
+        if (std::find(okExts.begin(), okExts.end(), ext) == okExts.end()) {
+            logger.Write(DEBUG, "[TrackImg] Skipping [%s] - not .png, .jpg or .jpeg", fs::path(file).string().c_str());
+            continue;
+        }
+
+        std::string fileName = fs::path(file).string();
+        unsigned width;
+        unsigned height;
+        if (!Img::GetIMGDimensions(fileName, &width, &height)) {
+            logger.Write(WARN, "[TrackImg] [%s] Couldn't determine image size, using default 480x270.",
+                fs::path(file).string().c_str());
+            width = 480;
+            height = 270;
+        }
+        int handle = createTexture(fileName.c_str());
+        trackImages.emplace_back(handle, stem, width, height);
+
+        logger.Write(DEBUG, "[TrackImg] Loaded track image [%s]", stem.c_str());
+    }
+    logger.Write(INFO, "[TrackImg] Track images loaded: %d", trackImages.size());
+
+    return static_cast<unsigned>(trackImages.size());
 }
 
 void GhostReplay::AddReplay(CReplayData replay) {

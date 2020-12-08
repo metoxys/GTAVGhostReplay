@@ -59,6 +59,13 @@
     <ClCompile Include="TrackData.cpp" />
     <ClCompile Include="ReplayScriptUtils.cpp" />
     <ClCompile Include="SettingsCommon.cpp" />
+    <ClCompile Include="Image.cpp" />
+    <ClCompile Include="..\thirdparty\jpegsize\jpegsize.cpp">
+      <Filter>ThirdParty\jpegsize</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\lodepng\lodepng.cpp">
+      <Filter>ThirdParty\lodepng</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Util">
@@ -81,6 +88,12 @@
     </Filter>
     <Filter Include="Menu %28Generic%29">
       <UniqueIdentifier>{a63f42e5-fef3-4537-a62b-1ead2e96c87a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\lodepng">
+      <UniqueIdentifier>{863ebd5f-8818-4df8-b276-9760c2402902}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\jpegsize">
+      <UniqueIdentifier>{cbe1c59b-26ff-481e-9d42-12ce1323a4b2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -153,5 +166,12 @@
     <ClInclude Include="TrackData.hpp" />
     <ClInclude Include="ReplayScriptUtils.hpp" />
     <ClInclude Include="SettingsCommon.h" />
+    <ClInclude Include="Image.hpp" />
+    <ClInclude Include="..\thirdparty\jpegsize\jpegsize.h">
+      <Filter>ThirdParty\jpegsize</Filter>
+    </ClInclude>
+    <ClInclude Include="..\thirdparty\lodepng\lodepng.h">
+      <Filter>ThirdParty\lodepng</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

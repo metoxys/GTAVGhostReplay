@@ -94,7 +94,12 @@
     <ClCompile Include="..\thirdparty\GTAVMenuBase\menumemutils.cpp" />
     <ClCompile Include="..\thirdparty\GTAVMenuBase\menusettings.cpp" />
     <ClCompile Include="..\thirdparty\GTAVMenuBase\menuutils.cpp" />
+    <ClCompile Include="..\thirdparty\jpegsize\jpegsize.cpp" />
+    <ClCompile Include="..\thirdparty\lodepng\lodepng.cpp">
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
     <ClCompile Include="Compatibility.cpp" />
+    <ClCompile Include="Image.cpp" />
     <ClCompile Include="ReplayData.cpp" />
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="Memory\NativeMemory.cpp" />
@@ -121,7 +126,10 @@
     <ClInclude Include="..\thirdparty\GTAVMenuBase\menumemutils.hpp" />
     <ClInclude Include="..\thirdparty\GTAVMenuBase\menusettings.h" />
     <ClInclude Include="..\thirdparty\GTAVMenuBase\menuutils.h" />
+    <ClInclude Include="..\thirdparty\jpegsize\jpegsize.h" />
+    <ClInclude Include="..\thirdparty\lodepng\lodepng.h" />
     <ClInclude Include="Compatibility.h" />
+    <ClInclude Include="Image.hpp" />
     <ClInclude Include="ReplayData.hpp" />
     <ClInclude Include="Constants.hpp" />
     <ClInclude Include="Memory\NativeMemory.hpp" />

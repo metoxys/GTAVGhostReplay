@@ -57,6 +57,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             { "Refresh tracks and ghosts if they are changed outside the script." } )) {
             GhostReplay::LoadTracks();
             GhostReplay::LoadReplays();
+            GhostReplay::LoadTrackImages();
             context.SetTrack("");
             UI::Notify("Tracks and replays refreshed", false);
         }
@@ -209,7 +210,16 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                         Util::GetVehicleName(fastestReplayInfo.VehicleModel));
                 }
 
+                auto imgStr = context.GetTrackImageMenuString(track.Name);
+                if (!imgStr.empty()) {
+                    imgStr = fmt::format("{}{}", mbCtx.ImagePrefix, imgStr);
+                }
+                else {
+                    imgStr = "No preview";
+                }
+
                 std::vector<std::string> extras{
+                    imgStr,
                     fmt::format("Replays for this track: {}", compatibleReplays.size()),
                     fmt::format("Lap record: {}", lapRecordString),
                 };
@@ -224,7 +234,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                         Util::FormatMillisTime(replay.Nodes.back().Timestamp),
                         Util::GetVehicleName(replay.VehicleModel)));
                 }
-                mbCtx.OptionPlusPlus(extras, "Track");
+                mbCtx.OptionPlusPlus(extras, "Info");
             }
         }
     });

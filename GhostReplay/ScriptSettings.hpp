@@ -9,10 +9,19 @@ public:
     void Save();
 
     struct {
-        bool LinesVisible = true;
-        bool AutoGhost = true;
-        long DeltaMillis = 0;
+        bool NotifyLaps = true;
     } Main;
+
+    struct {
+        bool AutoGhost = true;
+        int DeltaMillis = 0;
+    } Record;
+
+    struct {
+        int VehicleAlpha = 127;
+        std::string FallbackModel = "sultan";
+        bool ForceFallbackModel = false;
+    } Replay;
 
 private:
     std::string mSettingsFile;

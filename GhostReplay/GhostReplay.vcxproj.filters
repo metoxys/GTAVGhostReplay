@@ -58,6 +58,7 @@
     </ClCompile>
     <ClCompile Include="TrackData.cpp" />
     <ClCompile Include="ReplayScriptUtils.cpp" />
+    <ClCompile Include="SettingsCommon.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Util">
@@ -151,5 +152,6 @@
     </ClInclude>
     <ClInclude Include="TrackData.hpp" />
     <ClInclude Include="ReplayScriptUtils.hpp" />
+    <ClInclude Include="SettingsCommon.h" />
   </ItemGroup>
 </Project>

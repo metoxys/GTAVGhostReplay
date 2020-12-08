@@ -324,13 +324,64 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         mbCtx.Title("Settings");
         mbCtx.Subtitle("");
 
-        mbCtx.BoolOption("Lines visible", GhostReplay::GetSettings().Main.LinesVisible);
-        mbCtx.BoolOption("Auto save faster ghost", GhostReplay::GetSettings().Main.AutoGhost);
-        int deltaMillis = GhostReplay::GetSettings().Main.DeltaMillis;
-        if (mbCtx.IntOptionCb("Time between recorded nodes", deltaMillis, 0, 1000, 1, MenuUtils::GetKbInt)) {
-            GhostReplay::GetSettings().Main.DeltaMillis = deltaMillis;
+        mbCtx.BoolOption("Notify laptimes", GetSettings().Main.NotifyLaps,
+            { "Show a notification when finishing a lap.",
+              "Yellow: Normal",
+              "Green: Faster than the ghost lap.",
+              "Purple: All-time fastest lap." });
+
+        mbCtx.MenuOption("Recording options", "recordoptionsmenu");
+        mbCtx.MenuOption("Replay/ghost options", "replayoptionsmenu");
+    });
+
+    /* mainmenu -> settingsmenu -> recordoptionsmenu */
+    submenus.emplace_back("recordoptionsmenu", [](NativeMenu::Menu& mbCtx, CReplayScript& context) {
+        mbCtx.Title("Recording options");
+        mbCtx.Subtitle("");
+
+        mbCtx.BoolOption("Automatically save faster laps", GetSettings().Record.AutoGhost,
+            { "Laps faster than the current playing ghost file, are saved to disk automatically." });
+
+        std::vector<std::string> timestepDescr{
+            "The minimum time in milliseconds between each ghost recording sample.",
+            "The lower, the more accurate the ghost playback will be, but might increase file size "
+                "and impact performance.",
+        };
+        int deltaMillis = GetSettings().Record.DeltaMillis;
+        if (mbCtx.IntOptionCb("Recording timestep", deltaMillis, 0, 1000, 1, MenuUtils::GetKbInt, timestepDescr)) {
+            GetSettings().Record.DeltaMillis = deltaMillis;
+        }
+    });
+
+    /* mainmenu -> settingsmenu -> replayoptionsmenu */
+    submenus.emplace_back("replayoptionsmenu", [](NativeMenu::Menu& mbCtx, CReplayScript& context) {
+        mbCtx.Title("Replay options");
+        mbCtx.Subtitle("");
+
+        std::vector<std::string> replayAlphaDescr{
+            "The transparency of the ghost vehicle."
+            "0: completely invisible.",
+            "255: completely visible.",
+        };
+        int replayAlpha = GetSettings().Replay.VehicleAlpha;
+        if (mbCtx.IntOptionCb("Ghost alpha", replayAlpha, 0, 255, 1, MenuUtils::GetKbInt, replayAlphaDescr)) {
+            GetSettings().Replay.VehicleAlpha = replayAlpha;
         }
 
+        std::string fallbackOpt =
+            fmt::format("Fallback vehicle model: {}", GetSettings().Replay.FallbackModel);
+        std::vector<std::string> fallbackDescr{
+            "When the vehicle model from a replay file is missing, replace it with this model."
+        };
+        if (mbCtx.Option(fallbackOpt, fallbackDescr)) {
+            std::string value = GetSettings().Replay.FallbackModel;
+            if (MenuUtils::GetKbString(value)) {
+                GetSettings().Replay.FallbackModel = value;
+            }
+        }
+
+        mbCtx.BoolOption("Force fallback model", GetSettings().Replay.ForceFallbackModel, 
+            { "Always use the fallback model." });
     });
 
     return submenus;

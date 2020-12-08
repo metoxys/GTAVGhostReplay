@@ -305,7 +305,7 @@ void CReplayScript::updatePlayback(unsigned long long gameTime, bool startPassed
                 mReplayState = EReplayState::Playing;
                 replayStart = gameTime;
                 ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, true, true);
-                ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, 127, false);
+                ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, mSettings.Replay.VehicleAlpha, false);
                 ENTITY::SET_ENTITY_COLLISION(mReplayVehicle, false, true);
                 VEHICLE::SET_VEHICLE_ENGINE_ON(mReplayVehicle, true, true, false);
                 //UI::Notify("Replay started", false);
@@ -427,7 +427,7 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
             if (!mCurrentRun.Nodes.empty()) {
                 lastNodeTime = mCurrentRun.Nodes.back().Timestamp;
             }
-            if (node.Timestamp >= lastNodeTime + mSettings.Main.DeltaMillis) {
+            if (node.Timestamp >= lastNodeTime + mSettings.Record.DeltaMillis) {
                 mCurrentRun.Nodes.push_back(node);
                 saved = true;
             }
@@ -450,7 +450,7 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
 
                 std::string lapInfo;
 
-                if (mSettings.Main.AutoGhost && (!mActiveReplay || fasterLap)) {
+                if (mSettings.Record.AutoGhost && (!mActiveReplay || fasterLap)) {
                     mCurrentRun.Name = Util::FormatReplayName(
                         node.Timestamp,
                         mCurrentRun.Track,
@@ -468,7 +468,10 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
                     Util::FormatMillisTime(node.Timestamp));
 
                 // TODO: Movable UI element with current time & laptime & delta?
-                UI::Notify(lapInfo, false);
+
+                if (mSettings.Main.NotifyLaps) {
+                    UI::Notify(lapInfo, false);
+                }
             }
             break;
         }
@@ -503,13 +506,23 @@ void CReplayScript::createReplayVehicle(Hash model, CReplayData* activeReplay, V
         return;
     }
 
+    const char* fallbackModelName = mSettings.Replay.FallbackModel.c_str();
+
+    if (mSettings.Replay.ForceFallbackModel)
+        model = MISC::GET_HASH_KEY(fallbackModelName);
+
     if (!(STREAMING::IS_MODEL_IN_CDIMAGE(model) && STREAMING::IS_MODEL_A_VEHICLE(model))) {
         // Vehicle doesn't exist
-        UI::Notify("Error: Couldn't load model. Falling back to default (Sultan).", false);
+        std::string msg =
+            fmt::format("Error: Couldn't find model 0x{:08X}. Falling back to ({}).", model, fallbackModelName);
+        UI::Notify(msg, false);
+        logger.Write(ERROR, fmt::format("[Replay] {}", msg));
 
-        model = MISC::GET_HASH_KEY("sultan");
+        model = MISC::GET_HASH_KEY(fallbackModelName);
         if (!(STREAMING::IS_MODEL_IN_CDIMAGE(model) && STREAMING::IS_MODEL_A_VEHICLE(model))) {
-            UI::Notify("Error: Failed to load default model.", false);
+            msg = "Error: Failed to find fallback model.";
+            UI::Notify(msg, false);
+            logger.Write(ERROR, fmt::format("[Replay] {}", msg));
             return;
         }
     }
@@ -522,7 +535,9 @@ void CReplayScript::createReplayVehicle(Hash model, CReplayData* activeReplay, V
             // Couldn't load model
             WAIT(0);
             STREAMING::SET_MODEL_AS_NO_LONGER_NEEDED(model);
-            UI::Notify("Error: Couldn't load model.", false);
+            std::string msg = fmt::format("Error: Failed to load model 0x{:08X}.", model);
+            UI::Notify(msg, false);
+            logger.Write(ERROR, fmt::format("[Replay] {}", msg));
             return;
         }
     }

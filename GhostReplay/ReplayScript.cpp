@@ -486,6 +486,7 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
                         Util::GetVehicleName(mCurrentRun.VehicleModel));
                     mCurrentRun.WriteAsync();
                     GhostReplay::AddReplay(mCurrentRun);
+                    mCompatibleReplays.push_back(mCurrentRun);
                     SetReplay(mCurrentRun.Name);
                 }
                 else {

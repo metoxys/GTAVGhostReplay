@@ -100,7 +100,7 @@ void CReplayScript::SetTrack(const std::string& trackName) {
             mActiveTrack = &track;
             mReplayState = EReplayState::Idle;
             mRecordState = ERecordState::Idle;
-            mCompatibleReplays = getCompatibleReplays(trackName);
+            mCompatibleReplays = GetCompatibleReplays(trackName);
             return;
         }
     }
@@ -145,6 +145,15 @@ void CReplayScript::ClearUnsavedRuns() {
 
 std::vector<CReplayData>::const_iterator CReplayScript::EraseUnsavedRun(std::vector<CReplayData>::const_iterator runIt) {
     return mUnsavedRuns.erase(runIt);
+}
+
+std::vector<CReplayData> CReplayScript::GetCompatibleReplays(const std::string& trackName) {
+    std::vector<CReplayData> replays;
+    for (auto& replay : mReplays) {
+        if (replay.Track == trackName)
+            replays.push_back(replay);
+    }
+    return replays;
 }
 
 bool CReplayScript::StartLineDef(SLineDef& lineDef, const std::string& lineName) {
@@ -503,13 +512,4 @@ bool CReplayScript::isFastestLap(const std::string& trackName, Hash vehicleModel
                 timestamp < replay.Nodes.back().Timestamp;
     });
     return foundOne != mReplays.end();
-}
-
-std::vector<CReplayData> CReplayScript::getCompatibleReplays(const std::string& trackName) {
-    std::vector<CReplayData> replays;
-    for (auto& replay : mReplays) {
-        if (replay.Track == trackName)
-            replays.push_back(replay);
-    }
-    return replays;
 }

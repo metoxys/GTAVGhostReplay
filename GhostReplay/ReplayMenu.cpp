@@ -191,11 +191,27 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             };
 
             std::string optionName = fmt::format("{}{}{}", deleteCol, selector, track.Name);
-            if (mbCtx.OptionPlus(optionName, {}, nullptr, clearDeleteFlag, deleteFlag, "", description)) {
+            bool highlighted;
+            if (mbCtx.OptionPlus(optionName, {}, &highlighted, clearDeleteFlag, deleteFlag, "", description)) {
                 if (!currentTrack)
                     context.SetTrack(track.Name);
                 else
                     context.SetTrack("");
+            }
+
+            if (highlighted) {
+                auto compatibleReplays = context.GetCompatibleReplays(track.Name);
+                std::vector<std::string> extras{
+                    fmt::format("Replays for this track: {}", compatibleReplays.size())
+                };
+
+                for (const auto& replay : compatibleReplays) {
+                    extras.push_back(fmt::format("{}", replay.Name));
+                    extras.push_back(fmt::format("    Car: {}", Util::GetVehicleName(replay.VehicleModel)));
+                    extras.push_back(fmt::format("    Time: {}", Util::FormatMillisTime(replay.Nodes.back().Timestamp)));
+                    extras.push_back(fmt::format("\n"));
+                }
+                mbCtx.OptionPlusPlus(extras, "Track");
             }
         }
     });

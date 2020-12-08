@@ -66,6 +66,7 @@ public:
     void SetReplay(const std::string& replayName);
     void ClearUnsavedRuns();
     std::vector<CReplayData>::const_iterator EraseUnsavedRun(std::vector<CReplayData>::const_iterator runIt);
+    std::vector<CReplayData> GetCompatibleReplays(const std::string& trackName);
 
     bool StartLineDef(SLineDef& lineDef, const std::string& lineName);
     void DeleteTrack(const CTrackData& track);
@@ -78,7 +79,6 @@ protected:
     bool passedLineThisTick(SLineDef line, Vector3 oldPos, Vector3 newPos);
     void createReplayVehicle(Hash model, CReplayData* activeReplay, Vector3 pos);
     bool isFastestLap(const std::string& trackName, Hash vehicleModel, unsigned long long timestamp);
-    std::vector<CReplayData> getCompatibleReplays(const std::string& trackName);
 
     const CScriptSettings& mSettings;
     std::vector<CReplayData>& mReplays;

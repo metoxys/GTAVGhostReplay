@@ -483,6 +483,9 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
                 if (mActiveReplay) {
                     fasterLap = node.Timestamp < mActiveReplay->Nodes.back().Timestamp;
                 }
+                else {
+                    fasterLap = true;
+                }
                 if (fasterLap) {
                     fastestLap = IsFastestLap(mCurrentRun.Track, 0, node.Timestamp);
                 }

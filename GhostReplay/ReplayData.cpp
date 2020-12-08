@@ -25,7 +25,7 @@ void from_json(const nlohmann::json& j, Vector3& vector3) {
 }
 
 CReplayData CReplayData::Read(const std::string& replayFile) {
-    CReplayData replayData{};
+    CReplayData replayData(replayFile);
 
     nlohmann::json replayJson;
     std::ifstream replayFileStream(replayFile.c_str());
@@ -81,6 +81,11 @@ CReplayData CReplayData::Read(const std::string& replayFile) {
     }
 }
 
+CReplayData::CReplayData(std::string fileName)
+    : MarkedForDeletion(false)
+    , VehicleModel(0)
+    , mFileName(std::move(fileName)) {}
+
 void CReplayData::Write() {
     nlohmann::json replayJson;
 
@@ -130,10 +135,15 @@ void CReplayData::Write() {
     replayFile << std::setw(2) << replayJson << std::endl;
 
     logger.Write(INFO, "[Replay] Written %s", replayFileName.c_str());
+    mFileName = replayFileName;
 }
 
 void CReplayData::WriteAsync() {
     std::thread([this]() {
         Write();
     }).detach();
+}
+
+void CReplayData::Delete() const {
+    std::filesystem::remove(std::filesystem::path(mFileName));
 }

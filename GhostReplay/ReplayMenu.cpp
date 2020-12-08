@@ -231,26 +231,57 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             return;
         }
 
-        for (const auto& replay : context.GetReplays()) {
+        for (auto& replay : context.GetReplays()) {
             bool currentReplay = false;
             if (context.ActiveReplay())
                 currentReplay = context.ActiveReplay()->Name == replay.Name;
             std::string selector = currentReplay ? "-> " : "";
+            std::string deleteCol = replay.MarkedForDeletion ? "~r~" : "";
 
-            std::string optionName = fmt::format("{}{}", selector, replay.Name);
-            std::vector<std::string> details
+            std::vector<std::string> description{
+                "Press select to toggle replay selection.",
+            };
+
+            if (!replay.MarkedForDeletion) {
+                description.emplace_back("Press left arrow to delete.");
+            }
+            else {
+                description.emplace_back("Press right arrow to unmark deletion.");
+                description.emplace_back("~r~Press left to confirm deletion.");
+                description.emplace_back("~r~~h~THIS IS PERMANENT");
+            }
+
+            auto clearDeleteFlag = [&]() {
+                replay.MarkedForDeletion = false;
+            };
+
+            bool triggerBreak = false;
+            auto deleteFlag = [&]() {
+                if (replay.MarkedForDeletion) {
+                    context.DeleteReplay(replay);
+                    triggerBreak = true;
+                }
+                else {
+                    replay.MarkedForDeletion = true;
+                }
+            };
+
+            std::string optionName = fmt::format("{}{}{}", deleteCol, selector, replay.Name);
+            std::vector<std::string> extras
             {
                 fmt::format("Track: {}", replay.Track),
                 fmt::format("Car: {}", Util::GetVehicleName(replay.VehicleModel)),
                 fmt::format("Time: {}",  Util::FormatMillisTime(replay.Nodes.back().Timestamp))
             };
 
-            if (mbCtx.Option(optionName, details)) {
+            if (mbCtx.OptionPlus(optionName, extras, nullptr, clearDeleteFlag, deleteFlag, "Ghost", description)) {
                 if (!currentReplay)
                     context.SetReplay(replay.Name);
                 else
                     context.SetReplay("");
             }
+            if (triggerBreak)
+                break;
         }
     });
 

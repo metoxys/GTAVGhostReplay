@@ -36,7 +36,7 @@ CReplayScript::CReplayScript(
     , mRecordState(ERecordState::Idle)
     , mLastPos(Vector3{})
     , mReplayVehicle(0)
-    , mCurrentRun(){
+    , mCurrentRun(""){
 }
 
 CReplayScript::~CReplayScript() = default;
@@ -225,6 +225,41 @@ void CReplayScript::DeleteTrack(const CTrackData& track) {
         track.Name.c_str(), track.FileName().c_str());
 }
 
+void CReplayScript::DeleteReplay(const CReplayData& replay) {
+    auto replayIt = std::find_if(mReplays.begin(), mReplays.end(), [&](const CReplayData& x) {
+        return x.FileName() == replay.FileName();
+    });
+    // Because it's a copy, let's just update this in parallel.
+    auto replayCompIt = std::find_if(mCompatibleReplays.begin(), mCompatibleReplays.end(), [&](const CReplayData& x) {
+        return x.FileName() == replay.FileName();
+    });
+
+    if (replayIt == mReplays.end()) {
+        logger.Write(ERROR, "[Replay] Attempted to delete replay [%s] but didn't find it in the list? Filename: [%s]",
+            replay.Name.c_str(), replay.FileName().c_str());
+        UI::Notify(fmt::format("[Replay] Failed to delete {}", replay.Name));
+        return;
+    }
+
+    if (replayCompIt == mCompatibleReplays.end()) {
+        logger.Write(ERROR, "[Replay] Attempted to delete replay [%s] but didn't find it in the compatible list? Filename: [%s]",
+            replay.Name.c_str(), replay.FileName().c_str());
+        UI::Notify(fmt::format("[Replay] Failed to delete {}", replay.Name));
+        return;
+    }
+
+    if (mActiveReplay) {
+        if (mActiveReplay->FileName() == replay.FileName()) {
+            SetReplay("");
+        }
+    }
+    replay.Delete();
+    mReplays.erase(replayIt);
+    mCompatibleReplays.erase(replayCompIt);
+    logger.Write(INFO, "[Replay] Deleted replay [%s], Filename: [%s]",
+        replay.Name.c_str(), replay.FileName().c_str());
+}
+
 void CReplayScript::updateReplay() {
     Vehicle vehicle = PED::GET_VEHICLE_PED_IS_IN(PLAYER::PLAYER_PED_ID(), false);
     if (!ENTITY::DOES_ENTITY_EXIST(vehicle) || !mActiveTrack)
@@ -344,7 +379,7 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
     Vehicle vehicle = PED::GET_VEHICLE_PED_IS_IN(PLAYER::PLAYER_PED_ID(), false);
     if (!ENTITY::DOES_ENTITY_EXIST(vehicle) || !mActiveTrack) {
         mRecordState = ERecordState::Idle;
-        mCurrentRun = CReplayData();
+        mCurrentRun = CReplayData("");
         return;
     }
 
@@ -439,7 +474,7 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
         }
         case ERecordState::Finished: {
             mRecordState = ERecordState::Idle;
-            mCurrentRun = CReplayData();
+            mCurrentRun = CReplayData("");
             break;
         }
     }

@@ -70,6 +70,7 @@ public:
 
     bool StartLineDef(SLineDef& lineDef, const std::string& lineName);
     void DeleteTrack(const CTrackData& track);
+    void DeleteReplay(const CReplayData& replay);
 
 protected:
     void updateReplay();

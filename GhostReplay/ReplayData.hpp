@@ -1,4 +1,6 @@
 #pragma once
+#include <mutex>
+
 #include "VehicleMod.h"
 
 #include <inc/types.h>
@@ -27,9 +29,11 @@ class CReplayData {
 public:
     static CReplayData Read(const std::string& replayFile);
 
-    CReplayData() = default;
+    CReplayData(std::string fileName);
     void Write();
     void WriteAsync();
+    std::string FileName() const { return mFileName; }
+    void Delete() const;
 
     bool MarkedForDeletion;
 

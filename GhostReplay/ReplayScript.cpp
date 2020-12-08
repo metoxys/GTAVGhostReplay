@@ -163,14 +163,12 @@ void CReplayScript::AddCompatibleReplay(const CReplayData& value) {
 }
 
 bool CReplayScript::IsFastestLap(const std::string& trackName, Hash vehicleModel, unsigned long long timestamp) {
-    auto foundOne = std::find_if(mReplays.begin(), mReplays.end(),
-        [trackName, vehicleModel, timestamp](const CReplayData& replay) {
-            return
-                replay.Track == trackName &&
-                (vehicleModel == 0 ? true : replay.VehicleModel == vehicleModel) &&
-                timestamp < replay.Nodes.back().Timestamp;
-        });
-    return foundOne != mReplays.end();
+    CReplayData fastestReplay = GetFastestReplay(trackName, vehicleModel);
+
+    if (!fastestReplay.Name.empty())
+        return timestamp < fastestReplay.Nodes.back().Timestamp;
+
+    return false;
 }
 
 CReplayData CReplayScript::GetFastestReplay(const std::string& trackName, Hash vehicleModel) {

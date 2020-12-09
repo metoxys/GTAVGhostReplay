@@ -61,22 +61,32 @@ namespace Math {
     }
 }
 
-template <typename T>
-T lerp(T a, T b, T f) {
+template <typename T, typename T2>
+T lerp(T a, T b, T2 f) {
     return a + f * (b - a);
 }
 
-// Loops back on lim, centered around 0 (e.g. -175.5 - 1 -> +175.5)
 template <typename T>
-T lerp(T a, T b, T f, T lim) {
-    auto result = a + f * (b - a);
-    if (result > lim)
-      return result - (lim + lim);
+T wrap(T x, T min, T max) {
+    T delta = (max - min);
+    x = fmod(x + max, delta);
+    if (x < 0)
+        x += delta;
+    return x + min;
+}
 
-    if (result <= -lim)
-      return result + (lim + lim);
+// Loops back on lim, centered around 0 (e.g. -175.5 - 1 -> +175.5)
+template <typename T, typename T2>
+T lerp(T a, T b, T2 f, T2 min, T2 max) {
+    return a + f * wrap(b - a, min, max);
+}
 
-    return result;
+inline Vector3 lerp(Vector3 a, Vector3 b, float f, float min, float max) {
+    return Vector3{
+        lerp(a.x, b.x, f, min, max), 0,
+        lerp(a.y, b.y, f, min, max), 0,
+        lerp(a.z, b.z, f, min, max), 0,
+    };
 }
 
 template <typename Vector3T>
@@ -207,10 +217,6 @@ inline bool operator==(const Vector3& lhs, const Vector3& rhs) {
 
 inline bool operator!=(const Vector3& lhs, const Vector3& rhs) {
     return !(lhs == rhs);
-}
-
-inline Vector3 vlerp(Vector3 a, Vector3 b, float f) {
-    return a + f * (b - a);
 }
 
 inline float GetAngleABC(Vector3 a, Vector3 b, Vector3 c)

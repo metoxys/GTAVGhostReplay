@@ -388,14 +388,15 @@ void CReplayScript::updatePlayback(unsigned long long gameTime, bool startPassed
             float progress = ((float)replayTime - (float)nodeCurr->Timestamp) / 
                 ((float)nodeNext->Timestamp - (float)nodeCurr->Timestamp);
 
-            Vector3 pos = vlerp(nodeCurr->Pos, nodeNext->Pos, progress);
-            Vector3 rot = nodeCurr->Rot;
+            Vector3 pos = lerp(nodeCurr->Pos, nodeNext->Pos, progress);
+            Vector3 rot = lerp(nodeCurr->Rot, nodeNext->Rot, progress, -180.0f, 180.0f);
             ENTITY::SET_ENTITY_COORDS(mReplayVehicle, pos.x, pos.y, pos.z, false, false, false, false);
             ENTITY::SET_ENTITY_ROTATION(mReplayVehicle, rot.x, rot.y, rot.z, 0, false);
 
             if (VExt::GetNumWheels(mReplayVehicle) == nodeCurr->WheelRotations.size()) {
                 for (uint8_t idx = 0; idx < VExt::GetNumWheels(mReplayVehicle); ++idx) {
-                    VExt::SetWheelRotation(mReplayVehicle, idx, nodeCurr->WheelRotations[idx]);
+                    float wheelRot = lerp(nodeCurr->WheelRotations[idx], nodeNext->WheelRotations[idx], progress);
+                    VExt::SetWheelRotation(mReplayVehicle, idx, wheelRot);
                 }
             }
 

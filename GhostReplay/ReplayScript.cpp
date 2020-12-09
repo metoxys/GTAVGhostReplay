@@ -430,6 +430,7 @@ void CReplayScript::updatePlayback(unsigned long long gameTime, bool startPassed
         }
         case EReplayState::Finished: {
             mReplayState = EReplayState::Idle;
+            ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, 0, true);
             ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, false, false);
             mLastNode = mActiveReplay->Nodes.begin();
             break;

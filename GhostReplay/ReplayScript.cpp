@@ -386,13 +386,14 @@ void CReplayScript::updatePlayback(unsigned long long gameTime, bool startPassed
 
             mLastNode = nodeCurr;
 
-            if (nodeCurr == mActiveReplay->Nodes.end()) {
+            bool lastNode = nodeCurr == std::prev(mActiveReplay->Nodes.end());
+            if (nodeCurr == mActiveReplay->Nodes.end() || lastNode) {
                 mReplayState = EReplayState::Finished;
                 //UI::Notify("Replay finished", false);
                 break;
             }
 
-            auto nodeNext = nodeCurr == std::prev(mActiveReplay->Nodes.end()) ? nodeCurr : std::next(nodeCurr);
+            auto nodeNext = lastNode ? nodeCurr : std::next(nodeCurr);
 
             float progress = ((float)replayTime - (float)nodeCurr->Timestamp) / 
                 ((float)nodeNext->Timestamp - (float)nodeCurr->Timestamp);
@@ -435,6 +436,7 @@ void CReplayScript::updatePlayback(unsigned long long gameTime, bool startPassed
             mReplayState = EReplayState::Idle;
             ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, 0, true);
             ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, false, false);
+            VExt::SetCurrentRPM(mReplayVehicle, 0.0f);
             mLastNode = mActiveReplay->Nodes.begin();
             break;
         }

@@ -371,9 +371,10 @@ void CReplayScript::updatePlayback(unsigned long long gameTime, bool startPassed
             if (!mActiveReplay)
                 break;
             auto replayTime = gameTime - replayStart;
-            auto nodeCurr = std::find_if(mLastNode, mActiveReplay->Nodes.end(), [replayTime](const SReplayNode& node) {
-                return node.Timestamp >= replayTime;
-                });
+            auto nodeCurr = std::upper_bound(mLastNode, mActiveReplay->Nodes.end(), SReplayNode{ replayTime });
+            if (nodeCurr != mActiveReplay->Nodes.begin())
+                nodeCurr = std::prev(nodeCurr);
+
             mLastNode = nodeCurr;
 
             if (nodeCurr == mActiveReplay->Nodes.end()) {
@@ -384,7 +385,8 @@ void CReplayScript::updatePlayback(unsigned long long gameTime, bool startPassed
 
             auto nodeNext = nodeCurr == std::prev(mActiveReplay->Nodes.end()) ? nodeCurr : std::next(nodeCurr);
 
-            float progress = ((float)replayTime - (float)nodeCurr->Timestamp) / ((float)nodeNext->Timestamp - (float)nodeCurr->Timestamp);
+            float progress = ((float)replayTime - (float)nodeCurr->Timestamp) / 
+                ((float)nodeNext->Timestamp - (float)nodeCurr->Timestamp);
 
             Vector3 pos = vlerp(nodeCurr->Pos, nodeNext->Pos, progress);
             Vector3 rot = nodeCurr->Rot;

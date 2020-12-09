@@ -327,7 +327,7 @@ void CReplayScript::updateReplay() {
     bool finishPassedThisTick = passedLineThisTick(mActiveTrack->FinishLine, mLastPos, nowPos);
 
     // Prevents default coords from activating record/replay
-    if (mLastPos == Vector3{} || startPassedThisTick && finishPassedThisTick) {
+    if (mLastPos == Vector3{}) {
         startPassedThisTick = false;
         finishPassedThisTick = false;
     }
@@ -354,6 +354,11 @@ void CReplayScript::updateReplay() {
 }
 
 void CReplayScript::updatePlayback(unsigned long long gameTime, bool startPassedThisTick, bool finishPassedThisTick) {
+    if (!mActiveReplay) {
+        mReplayState = EReplayState::Idle;
+        return;
+    }
+
     switch (mReplayState) {
         case EReplayState::Idle: {
             if (startPassedThisTick) {
@@ -363,13 +368,14 @@ void CReplayScript::updatePlayback(unsigned long long gameTime, bool startPassed
                 ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, mSettings.Replay.VehicleAlpha, false);
                 ENTITY::SET_ENTITY_COLLISION(mReplayVehicle, false, false);
                 VEHICLE::SET_VEHICLE_ENGINE_ON(mReplayVehicle, true, true, false);
-                //UI::Notify("Replay started", false);
+                mLastNode = mActiveReplay->Nodes.begin();
             }
-            break;
+            else {
+                break;
+            }
+            [[fallthrough]];
         }
         case EReplayState::Playing: {
-            if (!mActiveReplay)
-                break;
             auto replayTime = gameTime - replayStart;
             auto nodeCurr = std::upper_bound(mLastNode, mActiveReplay->Nodes.end(), SReplayNode{ replayTime });
             if (nodeCurr != mActiveReplay->Nodes.begin())
@@ -455,7 +461,10 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
                 mCurrentRun.VehicleMods = modData;
                 //UI::Notify("Record started", false);
             }
-            break;
+            else {
+                break;
+            }
+            [[fallthrough]];
         }
         case ERecordState::Recording: {
             SReplayNode node{};

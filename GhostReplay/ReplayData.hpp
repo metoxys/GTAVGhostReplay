@@ -21,7 +21,7 @@ struct SReplayNode {
     bool LowBeams;
     bool HighBeams;
 
-    bool operator<(const SReplayNode other) const {
+    bool operator<(const SReplayNode& other) const {
         return Timestamp < other.Timestamp;
     }
 };

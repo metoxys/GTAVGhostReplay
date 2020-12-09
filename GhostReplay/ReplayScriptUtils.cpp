@@ -2,6 +2,10 @@
 #include <inc/natives.h>
 #include <fmt/format.h>
 
+#include <chrono>
+#include <iomanip>
+#include <sstream>
+
 namespace {
     const std::string illegalChars = "\\/:?\"<>|";
 }
@@ -40,4 +44,21 @@ std::string Util::GetVehicleName(Hash model) {
         displayName = name;
     }
     return displayName;
+}
+
+std::string Util::GetTimestampReadable(unsigned long long unixTimestampMs) {
+    const auto durationSinceEpoch = std::chrono::milliseconds(unixTimestampMs);
+    const std::chrono::time_point<std::chrono::system_clock> tp_after_duration(durationSinceEpoch);
+    time_t time_after_duration = std::chrono::system_clock::to_time_t(tp_after_duration);
+
+    std::stringstream timess;
+    struct tm newtime {};
+    auto err = localtime_s(&newtime, &time_after_duration);
+
+    if (err != 0) {
+        return "Invalid timestamp";
+    }
+
+    timess << std::put_time(&newtime, "%Y %b %d, %H:%M:%S");
+    return fmt::format("{}", timess.str());
 }

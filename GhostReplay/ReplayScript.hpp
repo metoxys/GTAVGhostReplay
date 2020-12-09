@@ -66,7 +66,7 @@ public:
     }
 
     void SetTrack(const std::string& trackName);
-    void SetReplay(const std::string& replayName);
+    void SetReplay(const std::string& replayName, unsigned long long timestamp = 0);
     void ClearUnsavedRuns();
     std::vector<CReplayData>::const_iterator EraseUnsavedRun(std::vector<CReplayData>::const_iterator runIt);
 

@@ -109,7 +109,7 @@ void CReplayScript::SetTrack(const std::string& trackName) {
     logger.Write(ERROR, "SetTrack: No track found with the name [%s]", trackName.c_str());
 }
 
-void CReplayScript::SetReplay(const std::string& replayName) {
+void CReplayScript::SetReplay(const std::string& replayName, unsigned long long timestamp) {
     if (replayName.empty()) {
         mActiveReplay = nullptr;
         mLastNode = std::vector<SReplayNode>::iterator();
@@ -120,7 +120,10 @@ void CReplayScript::SetReplay(const std::string& replayName) {
     }
 
     for (auto& replay : mReplays) {
-        if (replay.Name == replayName) {
+        bool nameOK = replay.Name == replayName;
+        bool timeOK = timestamp == 0 ? true : replay.Timestamp == timestamp;
+
+        if (nameOK && timeOK) {
             mActiveReplay = &replay;
             mLastNode = replay.Nodes.begin();
             mReplayState = EReplayState::Idle;
@@ -454,6 +457,8 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
             if (startPassedThisTick) {
                 mRecordState = ERecordState::Recording;
                 recordStart = gameTime;
+                mCurrentRun.Timestamp = std::chrono::duration_cast<std::chrono::milliseconds>
+                    (std::chrono::system_clock::now().time_since_epoch()).count();
                 mCurrentRun.Track = mActiveTrack->Name;
                 mCurrentRun.Nodes.clear();
                 mCurrentRun.VehicleModel = ENTITY::GET_ENTITY_MODEL(vehicle);
@@ -525,7 +530,7 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
                     CReplayData::WriteAsync(mCurrentRun);
                     GhostReplay::AddReplay(mCurrentRun);
                     mCompatibleReplays.push_back(mCurrentRun);
-                    SetReplay(mCurrentRun.Name);
+                    SetReplay(mCurrentRun.Name, mCurrentRun.Timestamp);
                 }
                 else {
                     mUnsavedRuns.push_back(mCurrentRun);

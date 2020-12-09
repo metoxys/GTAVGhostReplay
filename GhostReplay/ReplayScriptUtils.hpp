@@ -10,4 +10,5 @@ namespace Util {
         const std::string& trackName,
         const std::string& vehicleName);
     std::string GetVehicleName(Hash model);
+    std::string GetTimestampReadable(unsigned long long unixTimestampMs);
 }

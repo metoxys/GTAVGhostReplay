@@ -38,6 +38,7 @@ public:
 
     bool MarkedForDeletion;
 
+    unsigned long long Timestamp;
     std::string Name;
     std::string Track;
 

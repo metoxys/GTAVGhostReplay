@@ -38,6 +38,7 @@ CReplayData CReplayData::Read(const std::string& replayFile) {
     try {
         replayFileStream >> replayJson;
 
+        replayData.Timestamp = replayJson.value("Timestamp", 0ull);
         replayData.Name = replayJson["Name"];
         replayData.Track = replayJson["Track"];
         replayData.VehicleModel = replayJson["VehicleModel"];
@@ -80,12 +81,14 @@ CReplayData CReplayData::Read(const std::string& replayFile) {
 
 CReplayData::CReplayData(std::string fileName)
     : MarkedForDeletion(false)
+    , Timestamp(0)
     , VehicleModel(0)
     , mFileName(std::move(fileName)) {}
 
 void CReplayData::Write() {
     nlohmann::json replayJson;
 
+    replayJson["Timestamp"] = Timestamp;
     replayJson["Name"] = Name;
     replayJson["Track"] = Track;
     replayJson["VehicleModel"] = VehicleModel;

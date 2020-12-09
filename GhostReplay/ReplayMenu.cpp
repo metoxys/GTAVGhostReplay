@@ -258,8 +258,11 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
         for (auto& replay : context.GetReplays()) {
             bool currentReplay = false;
-            if (context.ActiveReplay())
-                currentReplay = context.ActiveReplay()->Name == replay.Name;
+            if (context.ActiveReplay()) {
+                currentReplay =
+                    context.ActiveReplay()->Name == replay.Name &&
+                    context.ActiveReplay()->Timestamp == replay.Timestamp;
+            }
             std::string selector = currentReplay ? "-> " : "";
             std::string deleteCol = replay.MarkedForDeletion ? "~r~" : "";
 
@@ -295,16 +298,24 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 Util::FormatMillisTime(replay.Nodes.back().Timestamp),
                 Util::GetVehicleName(replay.VehicleModel));
             std::string optionName = fmt::format("{}{}{}", deleteCol, selector, optionNameRaw);
+            std::string datetime;
+            if (replay.Timestamp == 0) {
+                datetime = "No date";
+            }
+            else {
+                datetime = Util::GetTimestampReadable(replay.Timestamp);
+            }
             std::vector<std::string> extras
             {
                 fmt::format("Track: {}", replay.Track),
                 fmt::format("Car: {}", Util::GetVehicleName(replay.VehicleModel)),
-                fmt::format("Time: {}",  Util::FormatMillisTime(replay.Nodes.back().Timestamp))
+                fmt::format("Time: {}",  Util::FormatMillisTime(replay.Nodes.back().Timestamp)),
+                fmt::format("Lap recorded: {}", datetime),
             };
 
             if (mbCtx.OptionPlus(optionName, extras, nullptr, clearDeleteFlag, deleteFlag, "Ghost", description)) {
                 if (!currentReplay)
-                    context.SetReplay(replay.Name);
+                    context.SetReplay(replay.Name, replay.Timestamp);
                 else
                     context.SetReplay("");
             }

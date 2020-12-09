@@ -234,7 +234,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                         Util::FormatMillisTime(replay.Nodes.back().Timestamp),
                         Util::GetVehicleName(replay.VehicleModel)));
                 }
-                mbCtx.OptionPlusPlus(extras, "Info");
+                mbCtx.OptionPlusPlus(extras, track.Name);
             }
         }
     });
@@ -242,15 +242,17 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
     /* mainmenu -> ghostselectmenu */
     submenus.emplace_back("ghostselectmenu", [](NativeMenu::Menu& mbCtx, CReplayScript& context) {
         mbCtx.Title("Ghosts");
-        mbCtx.Subtitle("");
 
-        if (context.GetReplays().empty()) {
-            mbCtx.Option("No ghosts");
+        if (!context.ActiveTrack()) {
+            mbCtx.Subtitle("");
+            mbCtx.Option("No track selected", { "A track needs to be selected before a ghost can be chosen." });
             return;
         }
 
-        if (!context.ActiveTrack()) {
-            mbCtx.Option("No track selected", { "A track needs to be selected before a ghost can be chosen." });
+        mbCtx.Subtitle(context.ActiveTrack()->Name);
+
+        if (context.GetReplays().empty()) {
+            mbCtx.Option("No ghosts");
             return;
         }
 
@@ -289,7 +291,10 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 }
             };
 
-            std::string optionName = fmt::format("{}{}{}", deleteCol, selector, replay.Name);
+            std::string optionNameRaw = fmt::format("{} - {}",
+                Util::FormatMillisTime(replay.Nodes.back().Timestamp),
+                Util::GetVehicleName(replay.VehicleModel));
+            std::string optionName = fmt::format("{}{}{}", deleteCol, selector, optionNameRaw);
             std::vector<std::string> extras
             {
                 fmt::format("Track: {}", replay.Track),

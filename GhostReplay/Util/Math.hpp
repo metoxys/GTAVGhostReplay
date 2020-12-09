@@ -66,6 +66,19 @@ T lerp(T a, T b, T f) {
     return a + f * (b - a);
 }
 
+// Loops back on lim, centered around 0 (e.g. -175.5 - 1 -> +175.5)
+template <typename T>
+T lerp(T a, T b, T f, T lim) {
+    auto result = a + f * (b - a);
+    if (result > lim)
+      return result - (lim + lim);
+
+    if (result <= -lim)
+      return result + (lim + lim);
+
+    return result;
+}
+
 template <typename Vector3T>
 auto Length(Vector3T vec) {
     return std::sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);

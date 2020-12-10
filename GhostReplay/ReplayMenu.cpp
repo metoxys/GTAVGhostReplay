@@ -13,10 +13,19 @@
 #include "Util/Math.hpp"
 #include "Util/String.hpp"
 
+#include <menukeyboard.h>
 #include <fmt/format.h>
 
 namespace GhostReplay {
     std::vector<std::string> FormatTrackData(NativeMenu::Menu& mbCtx, CReplayScript& context, const CTrackData& track);
+    bool EvaluateInput(std::string& searchFor);
+    void UpdateTrackFilter(CReplayScript& context);
+
+    bool trackSearchSelected = false;
+    std::string trackSelectSearch;
+
+    std::vector<CTrackData> filteredTracks;
+    std::vector<CTrackData> filteredARSTracks;
 }
 
 std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
@@ -45,7 +54,10 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             };
         }
 
-        mbCtx.MenuOption(fmt::format("Track: {}", currentTrackName), "trackselectmenu");
+        if (mbCtx.MenuOption(fmt::format("Track: {}", currentTrackName), "trackselectmenu")) {
+            UpdateTrackFilter(context);
+        }
+
         mbCtx.MenuOption(fmt::format("Ghost: {}", currentGhostName), "ghostselectmenu", ghostDetails);
 
         if (mbCtx.MenuOption("Track setup", "tracksetupmenu")) {
@@ -170,7 +182,22 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             return;
         }
 
-        for (auto& track : context.GetTracks()) {
+        if (trackSearchSelected) {
+            if (EvaluateInput(trackSelectSearch)) {
+                UpdateTrackFilter(context);
+            }
+        }
+
+        std::vector<std::string> searchExtra {
+            "Type to search. Use Delete for backspace.",
+            "Searching for:",
+            trackSelectSearch
+        };
+        if (mbCtx.OptionPlus("Search...", searchExtra, &trackSearchSelected, nullptr, nullptr, "Search")) {
+            UpdateTrackFilter(context);
+        }
+
+        for (auto& track : filteredTracks) {
             bool currentTrack = false;
             if (context.ActiveTrack())
                 currentTrack = context.ActiveTrack()->Name == track.Name;
@@ -217,7 +244,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             }
         }
 
-        for (auto& track : context.GetARSTracks()) {
+        for (auto& track : filteredARSTracks) {
             bool currentTrack = false;
             if (context.ActiveTrack())
                 currentTrack = context.ActiveTrack()->Name == track.Name;
@@ -478,4 +505,57 @@ std::vector<std::string> GhostReplay::FormatTrackData(NativeMenu::Menu& mbCtx, C
             Util::GetVehicleName(replay.VehicleModel)));
     }
     return extras;
+}
+
+bool GhostReplay::EvaluateInput(std::string& searchFor) {
+    using namespace NativeMenu;
+    HUD::SET_PAUSE_MENU_ACTIVE(false);
+    PAD::DISABLE_ALL_CONTROL_ACTIONS(2);
+
+    for (char c = ' '; c < '~'; c++) {
+        int key = str2key(std::string(1, c));
+        if (key == -1) continue;
+        if (IsKeyJustUp(key)) {
+            searchFor += c;
+            return true;
+        }
+    }
+
+    if ((IsKeyDown(str2key("LSHIFT")) || IsKeyDown(str2key("RSHIFT"))) && IsKeyJustUp(str2key("VK_OEM_MINUS"))) {
+        searchFor += '_';
+        return true;
+    }
+    if (IsKeyJustUp(str2key("VK_OEM_MINUS"))) {
+        searchFor += '-';
+        return true;
+    }
+    if (IsKeyJustUp(str2key("SPACE"))) {
+        searchFor += ' ';
+        return true;
+    }
+    if (IsKeyJustUp(str2key("DELETE")) && !searchFor.empty()) {
+        searchFor.pop_back();
+        return true;
+    }
+
+    return false;
+}
+
+void GhostReplay::UpdateTrackFilter(CReplayScript& context) {
+    filteredTracks.clear();
+    filteredARSTracks.clear();
+
+    for (const auto& track : context.GetTracks()) {
+        if (Util::FindSubstring(track.Name, trackSelectSearch) != -1 ||
+            Util::FindSubstring(track.Description, trackSelectSearch) != -1) {
+            filteredTracks.push_back(track);
+        }
+    }
+
+    for (const auto& track : context.GetARSTracks()) {
+        if (Util::FindSubstring(track.Name, trackSelectSearch) != -1 ||
+            Util::FindSubstring(track.Description, trackSelectSearch) != -1) {
+            filteredARSTracks.push_back(track);
+        }
+    }
 }

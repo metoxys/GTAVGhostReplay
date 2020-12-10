@@ -41,7 +41,7 @@ namespace Util {
 
     // find substring (case insensitive)
     template<typename T>
-    int FindSubstring(const T& str1, const T& str2, const std::locale& loc = std::locale())
+    long long FindSubstring(const T& str1, const T& str2, const std::locale& loc = std::locale())
     {
         typename T::const_iterator it = std::search(str1.begin(), str1.end(),
             str2.begin(), str2.end(), my_equal<typename T::value_type>(loc));

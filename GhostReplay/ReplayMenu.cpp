@@ -20,12 +20,18 @@ namespace GhostReplay {
     std::vector<std::string> FormatTrackData(NativeMenu::Menu& mbCtx, CReplayScript& context, const CTrackData& track);
     bool EvaluateInput(std::string& searchFor);
     void UpdateTrackFilter(CReplayScript& context);
+    void UpdateReplayFilter(CReplayScript& context);
 
     bool trackSearchSelected = false;
     std::string trackSelectSearch;
 
     std::vector<CTrackData> filteredTracks;
     std::vector<CTrackData> filteredARSTracks;
+
+    bool replaySearchSelected = false;
+    std::string replaySelectSearch;
+
+    std::vector<CReplayData> filteredReplays;
 }
 
 std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
@@ -58,7 +64,9 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             UpdateTrackFilter(context);
         }
 
-        mbCtx.MenuOption(fmt::format("Ghost: {}", currentGhostName), "ghostselectmenu", ghostDetails);
+        if (mbCtx.MenuOption(fmt::format("Ghost: {}", currentGhostName), "ghostselectmenu", ghostDetails)) {
+            UpdateReplayFilter(context);
+        }
 
         if (mbCtx.MenuOption("Track setup", "tracksetupmenu")) {
             context.SetScriptMode(EScriptMode::DefineTrack);
@@ -193,7 +201,8 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             "Searching for:",
             trackSelectSearch
         };
-        if (mbCtx.OptionPlus("Search...", searchExtra, &trackSearchSelected, nullptr, nullptr, "Search")) {
+        if (mbCtx.OptionPlus("Search...", searchExtra, &trackSearchSelected, nullptr, nullptr, "Search",
+            { "Matches track name and description." })) {
             UpdateTrackFilter(context);
         }
 
@@ -288,7 +297,23 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             return;
         }
 
-        for (auto& replay : context.GetReplays()) {
+        if (replaySearchSelected) {
+            if (EvaluateInput(replaySelectSearch)) {
+                UpdateReplayFilter(context);
+            }
+        }
+
+        std::vector<std::string> searchExtra{
+            "Type to search. Use Delete for backspace.",
+            "Searching for:",
+            replaySelectSearch
+        };
+        if (mbCtx.OptionPlus("Search...", searchExtra, &replaySearchSelected, nullptr, nullptr, "Search",
+            { "Matches replay name, vehicle name, track time and recording time." })) {
+            UpdateReplayFilter(context);
+        }
+
+        for (auto& replay : filteredReplays) {
             bool currentReplay = false;
             if (context.ActiveReplay()) {
                 currentReplay =
@@ -320,6 +345,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 if (replay.MarkedForDeletion) {
                     context.DeleteReplay(replay);
                     triggerBreak = true;
+                    UpdateReplayFilter(context);
                 }
                 else {
                     replay.MarkedForDeletion = true;
@@ -374,11 +400,20 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 unsavedRun.Track,
                 Util::GetVehicleName(unsavedRun.VehicleModel));
 
+            std::string datetime;
+            if (unsavedRun.Timestamp == 0) {
+                datetime = "No date";
+            }
+            else {
+                datetime = Util::GetTimestampReadable(unsavedRun.Timestamp);
+            }
+
             std::vector<std::string> ghostDetails = {
                 "Select to save ghost.",
                 fmt::format("Track: {}", unsavedRun.Track),
                 fmt::format("Car: {}", Util::GetVehicleName(unsavedRun.VehicleModel)),
-                fmt::format("Time: {}", Util::FormatMillisTime(unsavedRun.Nodes.back().Timestamp))
+                fmt::format("Time: {}", Util::FormatMillisTime(unsavedRun.Nodes.back().Timestamp)),
+                fmt::format("Lap recorded: {}", datetime),
             };
 
             if (mbCtx.Option(fmt::format("{}", runName), ghostDetails)) {
@@ -533,6 +568,23 @@ bool GhostReplay::EvaluateInput(std::string& searchFor) {
         searchFor += ' ';
         return true;
     }
+    if (IsKeyJustUp(str2key("VK_OEM_COMMA"))) {
+        searchFor += ',';
+        return true;
+    }
+    if (IsKeyJustUp(str2key("VK_OEM_PERIOD"))) {
+        searchFor += '.';
+        return true;
+    }
+    if ((IsKeyDown(str2key("LSHIFT")) || IsKeyDown(str2key("RSHIFT"))) && IsKeyJustUp(str2key("VK_OEM_1"))) {
+        searchFor += ':';
+        return true;
+    }
+    if (IsKeyJustUp(str2key("VK_OEM_1"))) {
+        searchFor += ';';
+        return true;
+    }
+
     if (IsKeyJustUp(str2key("DELETE")) && !searchFor.empty()) {
         searchFor.pop_back();
         return true;
@@ -556,6 +608,31 @@ void GhostReplay::UpdateTrackFilter(CReplayScript& context) {
         if (Util::FindSubstring(track.Name, trackSelectSearch) != -1 ||
             Util::FindSubstring(track.Description, trackSelectSearch) != -1) {
             filteredARSTracks.push_back(track);
+        }
+    }
+}
+
+void GhostReplay::UpdateReplayFilter(CReplayScript& context) {
+    filteredReplays.clear();
+
+    if (context.ActiveTrack() == nullptr)
+        return;
+
+    for (const auto& replay : context.GetCompatibleReplays(context.ActiveTrack()->Name)) {
+        std::string vehicleName = Util::GetVehicleName(replay.VehicleModel);
+        std::string tracktime = Util::FormatMillisTime(replay.Nodes.back().Timestamp);
+        std::string datetime;
+        if (replay.Timestamp == 0) {
+            datetime = "No date";
+        }
+        else {
+            datetime = Util::GetTimestampReadable(replay.Timestamp);
+        }
+        if (Util::FindSubstring(replay.Name, replaySelectSearch) != -1 ||
+            Util::FindSubstring(vehicleName, replaySelectSearch) != -1 ||
+            Util::FindSubstring(tracktime, replaySelectSearch) != -1 ||
+            Util::FindSubstring(datetime, replaySelectSearch) != -1) {
+            filteredReplays.push_back(replay);
         }
     }
 }

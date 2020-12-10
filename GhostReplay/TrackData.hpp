@@ -10,15 +10,17 @@ struct SLineDef {
 class CTrackData {
 public:
     static CTrackData Read(const std::string& trackFile);
+    static CTrackData ReadARS(const std::string& trackFile);
 
     CTrackData(std::string fileName);
     void Write();
-    std::string FileName() const { return mFileName; }
     void Delete() const;
+    std::string FileName() const { return mFileName; }
 
     bool MarkedForDeletion;
 
     std::string Name;
+    std::string Description;
     SLineDef StartLine;
     SLineDef FinishLine;
 private:

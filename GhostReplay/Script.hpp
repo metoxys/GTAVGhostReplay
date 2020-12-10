@@ -16,6 +16,7 @@ namespace GhostReplay {
     uint32_t LoadReplays();
     uint32_t LoadTracks();
     uint32_t LoadTrackImages();
+    uint32_t LoadARSTracks();
 
     void AddReplay(CReplayData replay);
 }

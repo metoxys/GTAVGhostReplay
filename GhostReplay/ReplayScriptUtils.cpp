@@ -62,3 +62,12 @@ std::string Util::GetTimestampReadable(unsigned long long unixTimestampMs) {
     timess << std::put_time(&newtime, "%Y %b %d, %H:%M:%S");
     return fmt::format("{}", timess.str());
 }
+
+Vector3 Util::GroundZ(Vector3 v, float off) {
+    float z;
+    if (MISC::GET_GROUND_Z_FOR_3D_COORD(v.x, v.y, v.z, &z, false, false)) {
+        v.z = z;
+    }
+    v.z += off;
+    return v;
+}

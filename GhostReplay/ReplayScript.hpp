@@ -2,13 +2,10 @@
 #include "ScriptSettings.hpp"
 #include "ReplayData.hpp"
 #include "TrackData.hpp"
-
-#include "Memory/VehicleExtensions.hpp"
+#include "Image.hpp"
 
 #include <vector>
 #include <string>
-
-#include "Image.hpp"
 
 enum class EScriptMode {
     DefineTrack,
@@ -33,7 +30,8 @@ public:
         CScriptSettings& settings,
         std::vector<CReplayData>& replays,
         std::vector<CTrackData>& tracks,
-        std::vector<CImage>& trackImages);
+        std::vector<CImage>& trackImages,
+        std::vector<CTrackData>& arsTracks);
     virtual ~CReplayScript();
     virtual void Tick();
 
@@ -43,6 +41,10 @@ public:
 
     std::vector<CTrackData>& GetTracks() {
         return mTracks;
+    }
+
+    std::vector<CTrackData>& GetARSTracks() {
+        return mArsTracks;
     }
 
     const std::vector<CReplayData>& GetUnsavedRuns() const{
@@ -95,6 +97,7 @@ protected:
     std::vector<CReplayData> mCompatibleReplays;
     std::vector<CTrackData>& mTracks;
     std::vector<CImage>& mTrackImages;
+    std::vector<CTrackData>& mArsTracks;
 
     CReplayData* mActiveReplay;
     CTrackData* mActiveTrack;

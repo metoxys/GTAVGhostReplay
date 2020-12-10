@@ -23,6 +23,7 @@ CTrackData CTrackData::Read(const std::string& trackFile) {
         replayFileStream >> trackJson;
 
         trackData.Name = trackJson["Name"];
+        trackData.Description = trackJson.value("Description", "None");
 
         trackData.StartLine.A.x = trackJson["StartLine"]["A"]["X"];
         trackData.StartLine.A.y = trackJson["StartLine"]["A"]["Y"];

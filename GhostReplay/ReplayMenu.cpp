@@ -56,6 +56,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         if (mbCtx.Option("Refresh tracks and ghosts", 
             { "Refresh tracks and ghosts if they are changed outside the script." } )) {
             GhostReplay::LoadTracks();
+            GhostReplay::LoadARSTracks();
             GhostReplay::LoadReplays();
             GhostReplay::LoadTrackImages();
             context.SetTrack("");
@@ -74,6 +75,12 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         std::string currentTrackName = "None";
         if (activeTrack)
             currentTrackName = activeTrack->Name;
+
+        if (activeTrack && activeTrack->FileName() == "ARS") {
+            mbCtx.Option(fmt::format("~r~ARS track: {}", currentTrackName),
+                { "Tracks from ARS cannot be edited." });
+            return;
+        }
 
         if (mbCtx.Option(fmt::format("Track name: {}", currentTrackName))) {
             std::string newName = currentTrackName == "None" ? "" : currentTrackName;
@@ -154,7 +161,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         mbCtx.Title("Tracks");
         mbCtx.Subtitle("");
 
-        if (context.GetTracks().empty()) {
+        if (context.GetTracks().empty() && context.GetARSTracks().empty()) {
             mbCtx.Option("No tracks");
             return;
         }
@@ -222,6 +229,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                     imgStr,
                     fmt::format("Replays for this track: {}", compatibleReplays.size()),
                     fmt::format("Lap record: {}", lapRecordString),
+                    fmt::format("Description: {}", track.Description),
                 };
 
                 std::sort(compatibleReplays.begin(), compatibleReplays.end(), 
@@ -237,6 +245,66 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 mbCtx.OptionPlusPlus(extras, track.Name);
             }
         }
+
+        // TODO: Unwanted delete function still left???
+        for (auto& track : context.GetARSTracks()) {
+            bool currentTrack = false;
+            if (context.ActiveTrack())
+                currentTrack = context.ActiveTrack()->Name == track.Name;
+            std::string selector = currentTrack ? "-> " : "";
+
+            std::vector<std::string> description{
+                "Press select to toggle track selection.",
+            };
+
+            std::string optionName = fmt::format("ARS: {}{}", selector, track.Name);
+            bool highlighted;
+            if (mbCtx.OptionPlus(optionName, {}, &highlighted, nullptr, nullptr, "", description)) {
+                if (!currentTrack)
+                    context.SetTrack(track.Name);
+                else
+                    context.SetTrack("");
+            }
+
+            if (highlighted) {
+                auto compatibleReplays = context.GetCompatibleReplays(track.Name);
+                CReplayData fastestReplayInfo = context.GetFastestReplay(track.Name, 0);
+                std::string lapRecordString = "No times set";
+                if (!fastestReplayInfo.Name.empty()) {
+                    lapRecordString = fmt::format("{} ({})",
+                        Util::FormatMillisTime(fastestReplayInfo.Nodes.back().Timestamp),
+                        Util::GetVehicleName(fastestReplayInfo.VehicleModel));
+                }
+
+                auto imgStr = context.GetTrackImageMenuString(track.Name);
+                if (!imgStr.empty()) {
+                    imgStr = fmt::format("{}{}", mbCtx.ImagePrefix, imgStr);
+                }
+                else {
+                    imgStr = "No preview";
+                }
+
+                std::vector<std::string> extras{
+                    imgStr,
+                    fmt::format("Replays for this track: {}", compatibleReplays.size()),
+                    fmt::format("Lap record: {}", lapRecordString),
+                    fmt::format("Description: {}", track.Description),
+                };
+
+                std::sort(compatibleReplays.begin(), compatibleReplays.end(),
+                    [](const CReplayData& a, const CReplayData& b) {
+                        return a.Nodes.back().Timestamp < b.Nodes.back().Timestamp;
+                    });
+
+                for (const auto& replay : compatibleReplays) {
+                    extras.push_back(fmt::format("{} ({})",
+                        Util::FormatMillisTime(replay.Nodes.back().Timestamp),
+                        Util::GetVehicleName(replay.VehicleModel)));
+                }
+                mbCtx.OptionPlusPlus(extras, track.Name);
+            }
+        }
+
     });
 
     /* mainmenu -> ghostselectmenu */

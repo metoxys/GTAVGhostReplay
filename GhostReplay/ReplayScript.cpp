@@ -4,6 +4,9 @@
 
 #include "Compatibility.h"
 #include "Constants.hpp"
+#include "ReplayScriptUtils.hpp"
+
+#include "Memory/VehicleExtensions.hpp"
 #include "Util/Math.hpp"
 #include "Util/Paths.hpp"
 #include "Util/Game.hpp"
@@ -17,20 +20,20 @@
 #include <filesystem>
 #include <algorithm>
 
-#include "ReplayScriptUtils.hpp"
-
 using VExt = VehicleExtensions;
 
 CReplayScript::CReplayScript(
     CScriptSettings& settings,
     std::vector<CReplayData>& replays,
     std::vector<CTrackData>& tracks,
-    std::vector<CImage>& trackImages)
+    std::vector<CImage>& trackImages,
+    std::vector<CTrackData>& arsTracks)
     : mSettings(settings)
     , mReplays(replays)
     , mCompatibleReplays()
     , mTracks(tracks)
     , mTrackImages(trackImages)
+    , mArsTracks(arsTracks)
     , mActiveReplay(nullptr)
     , mActiveTrack(nullptr)
     , mScriptMode(EScriptMode::ReplayActive)
@@ -106,6 +109,17 @@ void CReplayScript::SetTrack(const std::string& trackName) {
             return;
         }
     }
+
+    for (auto& track : mArsTracks) {
+        if (track.Name == trackName) {
+            mActiveTrack = &track;
+            mReplayState = EReplayState::Idle;
+            mRecordState = ERecordState::Idle;
+            mCompatibleReplays = GetCompatibleReplays(trackName);
+            return;
+        }
+    }
+
     logger.Write(ERROR, "SetTrack: No track found with the name [%s]", trackName.c_str());
 }
 
@@ -340,15 +354,15 @@ void CReplayScript::updateReplay() {
     Vector3 emptyVec{};
     if (mActiveTrack->StartLine.A != emptyVec &&
         mActiveTrack->StartLine.B != emptyVec) {
-        UI::DrawSphere(mActiveTrack->StartLine.A, 0.25f, 255, 255, 255, 255);
-        UI::DrawSphere(mActiveTrack->StartLine.B, 0.25f, 255, 255, 255, 255);
-        UI::DrawLine(mActiveTrack->StartLine.A, mActiveTrack->StartLine.B, 255, 255, 255, 255);
+        UI::DrawSphere(Util::GroundZ(mActiveTrack->StartLine.A, 0.2f), 0.25f, 0, 255, 0, 255);
+        UI::DrawSphere(Util::GroundZ(mActiveTrack->StartLine.B, 0.2f), 0.25f, 0, 255, 0, 255);
+        UI::DrawLine(mActiveTrack->StartLine.A, mActiveTrack->StartLine.B, 0, 255, 0, 255);
     }
 
     if (mActiveTrack->FinishLine.A != emptyVec &&
         mActiveTrack->FinishLine.B != emptyVec) {
-        UI::DrawSphere(mActiveTrack->FinishLine.A, 0.25f, 255, 255, 255, 255);
-        UI::DrawSphere(mActiveTrack->FinishLine.B, 0.25f, 255, 255, 255, 255);
+        UI::DrawSphere(Util::GroundZ(mActiveTrack->FinishLine.A, 0.2f), 0.25f, 255, 255, 255, 255);
+        UI::DrawSphere(Util::GroundZ(mActiveTrack->FinishLine.B, 0.2f), 0.25f, 255, 255, 255, 255);
         UI::DrawLine(mActiveTrack->FinishLine.A, mActiveTrack->FinishLine.B, 255, 255, 255, 255);
     }
 

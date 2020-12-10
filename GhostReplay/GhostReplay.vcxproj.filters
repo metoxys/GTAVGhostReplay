@@ -66,6 +66,10 @@
     <ClCompile Include="..\thirdparty\lodepng\lodepng.cpp">
       <Filter>ThirdParty\lodepng</Filter>
     </ClCompile>
+    <ClCompile Include="..\thirdparty\pugixml\src\pugixml.cpp">
+      <Filter>ThirdParty\pugixml</Filter>
+    </ClCompile>
+    <ClCompile Include="TrackDataARS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Util">
@@ -94,6 +98,9 @@
     </Filter>
     <Filter Include="ThirdParty\jpegsize">
       <UniqueIdentifier>{cbe1c59b-26ff-481e-9d42-12ce1323a4b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\pugixml">
+      <UniqueIdentifier>{8b5dd6f0-a80c-4ac2-9d1a-f6f1ebc4e91b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -172,6 +179,12 @@
     </ClInclude>
     <ClInclude Include="..\thirdparty\lodepng\lodepng.h">
       <Filter>ThirdParty\lodepng</Filter>
+    </ClInclude>
+    <ClInclude Include="..\thirdparty\pugixml\src\pugixml.hpp">
+      <Filter>ThirdParty\pugixml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\thirdparty\pugixml\src\pugiconfig.hpp">
+      <Filter>ThirdParty\pugixml</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

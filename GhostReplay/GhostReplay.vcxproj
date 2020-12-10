@@ -98,6 +98,7 @@
     <ClCompile Include="..\thirdparty\lodepng\lodepng.cpp">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
     </ClCompile>
+    <ClCompile Include="..\thirdparty\pugixml\src\pugixml.cpp" />
     <ClCompile Include="Compatibility.cpp" />
     <ClCompile Include="Image.cpp" />
     <ClCompile Include="ReplayData.cpp" />
@@ -112,6 +113,7 @@
     <ClCompile Include="Script.cpp" />
     <ClCompile Include="SettingsCommon.cpp" />
     <ClCompile Include="TrackData.cpp" />
+    <ClCompile Include="TrackDataARS.cpp" />
     <ClCompile Include="Util\FileVersion.cpp" />
     <ClCompile Include="Util\Logger.cpp" />
     <ClCompile Include="Util\Paths.cpp" />
@@ -128,6 +130,8 @@
     <ClInclude Include="..\thirdparty\GTAVMenuBase\menuutils.h" />
     <ClInclude Include="..\thirdparty\jpegsize\jpegsize.h" />
     <ClInclude Include="..\thirdparty\lodepng\lodepng.h" />
+    <ClInclude Include="..\thirdparty\pugixml\src\pugiconfig.hpp" />
+    <ClInclude Include="..\thirdparty\pugixml\src\pugixml.hpp" />
     <ClInclude Include="Compatibility.h" />
     <ClInclude Include="Image.hpp" />
     <ClInclude Include="ReplayData.hpp" />

@@ -231,3 +231,17 @@ inline float GetAngleABC(Vector3 a, Vector3 b, Vector3 c)
 
     return alpha;// (int)floor(alpha * 180. / pi + 0.5);
 }
+
+inline Vector3 GetPerpendicular(Vector3 a, Vector3 b, float length, bool counterclockwise) {
+    Vector3 ab = Normalize(b - a);
+    Vector3 abCw{};
+    if (counterclockwise) {
+        abCw.x = -ab.y;
+        abCw.y = ab.x;
+    }
+    else {
+        abCw.x = ab.y;
+        abCw.y = -ab.x;
+    }
+    return a + abCw * length;
+}

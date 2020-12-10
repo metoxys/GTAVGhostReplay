@@ -4,6 +4,7 @@
 #include "ScriptMenu.hpp"
 #include "Constants.hpp"
 #include "Compatibility.h"
+#include "Memory/VehicleExtensions.hpp"
 
 #include "Util/Logger.hpp"
 #include "Util/Paths.hpp"
@@ -24,6 +25,7 @@ namespace {
 
     std::vector<CReplayData> replays;
     std::vector<CTrackData> tracks;
+    std::vector<CTrackData> arsTracks;
     std::vector<CImage> trackImages;
 
     void clearFileFlags() {
@@ -53,9 +55,10 @@ void GhostReplay::ScriptMain() {
 
     GhostReplay::LoadReplays();
     GhostReplay::LoadTracks();
+    GhostReplay::LoadARSTracks();
     GhostReplay::LoadTrackImages();
 
-    scriptInst = std::make_shared<CReplayScript>(*settings, replays, tracks, trackImages);
+    scriptInst = std::make_shared<CReplayScript>(*settings, replays, tracks, trackImages, arsTracks);
 
     VehicleExtensions::Init();
     Compatibility::Setup();
@@ -116,7 +119,7 @@ uint32_t GhostReplay::LoadReplays() {
         if (!replay.Nodes.empty())
             replays.push_back(replay);
         else
-            logger.Write(WARN, "[Replay] Skipping [%s] - not a valid file", file.path().c_str());
+            logger.Write(WARN, "[Replay] Skipping [%s] - not a valid file", fs::path(file).string().c_str());
 
         logger.Write(DEBUG, "[Replay] Loaded replay [%s]", replay.Name.c_str());
     }
@@ -140,7 +143,7 @@ uint32_t GhostReplay::LoadTracks() {
         return 0;
     }
 
-    for (const auto& file : fs::directory_iterator(tracksPath)) {
+    for (const auto& file : fs::recursive_directory_iterator(tracksPath)) {
         if (Util::to_lower(fs::path(file).extension().string()) != ".json") {
             logger.Write(DEBUG, "[Track] Skipping [%s] - not .json", fs::path(file).string().c_str());
             continue;
@@ -150,7 +153,7 @@ uint32_t GhostReplay::LoadTracks() {
         if (!track.Name.empty())
             tracks.push_back(track);
         else
-            logger.Write(WARN, "[Track] Skipping [%s] - not a valid file", file.path().c_str());
+            logger.Write(WARN, "[Track] Skipping [%s] - not a valid file", fs::path(file).string().c_str());
 
         logger.Write(DEBUG, "[Track] Loaded track [%s]", track.Name.c_str());
     }
@@ -174,7 +177,7 @@ uint32_t GhostReplay::LoadTrackImages() {
         return 0;
     }
 
-    for (const auto& file : fs::directory_iterator(tracksPath)) {
+    for (const auto& file : fs::recursive_directory_iterator(tracksPath)) {
         auto stem = fs::path(file).stem().string();
         auto okExts = Img::GetAllowedExtensions();
         auto ext = Util::to_lower(fs::path(file).extension().string());
@@ -200,6 +203,39 @@ uint32_t GhostReplay::LoadTrackImages() {
     logger.Write(INFO, "[TrackImg] Track images loaded: %d", trackImages.size());
 
     return static_cast<unsigned>(trackImages.size());
+}
+
+uint32_t GhostReplay::LoadARSTracks() {
+    const std::string tracksPath =
+        Paths::GetRunningExecutableFolder() + "\\Scripts\\ARS\\Tracks";
+
+    logger.Write(DEBUG, "[Track-ARS] Clearing and reloading tracks");
+
+    arsTracks.clear();
+
+    if (!(fs::exists(fs::path(tracksPath)) && fs::is_directory(fs::path(tracksPath)))) {
+        logger.Write(ERROR, "[Track-ARS] Directory [%s] not found!", tracksPath.c_str());
+        return 0;
+    }
+
+    for (const auto& file : fs::recursive_directory_iterator(tracksPath)) {
+        if (Util::to_lower(fs::path(file).extension().string()) != ".xml") {
+            logger.Write(DEBUG, "[Track-ARS] Skipping [%s] - not .xml", fs::path(file).string().c_str());
+            continue;
+        }
+
+        CTrackData track = CTrackData::ReadARS(fs::path(file).string());
+        if (!track.Name.empty()) {
+            tracks.push_back(track);
+            logger.Write(DEBUG, "[Track-ARS] Loaded track [%s]", track.Name.c_str());
+        }
+        else {
+            logger.Write(WARN, "[Track-ARS] Skipping [%s] - not a valid file", fs::path(file).string().c_str());
+        }
+    }
+    logger.Write(INFO, "[Track-ARS] Tracks loaded: %d", tracks.size());
+
+    return static_cast<unsigned>(tracks.size());
 }
 
 void GhostReplay::AddReplay(CReplayData replay) {

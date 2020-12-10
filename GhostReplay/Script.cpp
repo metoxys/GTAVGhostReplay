@@ -226,16 +226,16 @@ uint32_t GhostReplay::LoadARSTracks() {
 
         CTrackData track = CTrackData::ReadARS(fs::path(file).string());
         if (!track.Name.empty()) {
-            tracks.push_back(track);
+            arsTracks.push_back(track);
             logger.Write(DEBUG, "[Track-ARS] Loaded track [%s]", track.Name.c_str());
         }
         else {
             logger.Write(WARN, "[Track-ARS] Skipping [%s] - not a valid file", fs::path(file).string().c_str());
         }
     }
-    logger.Write(INFO, "[Track-ARS] Tracks loaded: %d", tracks.size());
+    logger.Write(INFO, "[Track-ARS] Tracks loaded: %d", arsTracks.size());
 
-    return static_cast<unsigned>(tracks.size());
+    return static_cast<unsigned>(arsTracks.size());
 }
 
 void GhostReplay::AddReplay(CReplayData replay) {

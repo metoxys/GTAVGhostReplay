@@ -10,6 +10,7 @@ public:
 
     struct {
         bool NotifyLaps = true;
+        bool DrawStartFinish = true;
     } Main;
 
     struct {

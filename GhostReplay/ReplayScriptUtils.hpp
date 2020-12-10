@@ -12,4 +12,6 @@ namespace Util {
     std::string GetVehicleName(Hash model);
     std::string GetTimestampReadable(unsigned long long unixTimestampMs);
     Vector3 GroundZ(Vector3 v, float off);
+    int CreateParticleFxAtCoord(const char* assetName, const char* effectName, Vector3 coord, float r, float g, float b,
+                                float a);
 }

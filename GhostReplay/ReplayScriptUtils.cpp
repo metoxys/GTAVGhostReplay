@@ -71,3 +71,16 @@ Vector3 Util::GroundZ(Vector3 v, float off) {
     v.z += off;
     return v;
 }
+
+int Util::CreateParticleFxAtCoord(const char* assetName, const char* effectName, Vector3 coord, 
+    float r, float g, float b, float a) {
+    GRAPHICS::USE_PARTICLE_FX_ASSET(assetName);
+    int handle = GRAPHICS::START_PARTICLE_FX_LOOPED_AT_COORD(
+        effectName,
+        coord.x, coord.y, coord.z,
+        0.0f, 0.0f, 0.0f,
+        1.0f, false, false, false, false);
+    GRAPHICS::SET_PARTICLE_FX_LOOPED_ALPHA(handle, a);
+    GRAPHICS::SET_PARTICLE_FX_LOOPED_COLOUR(handle, r, g, b, true);
+    return handle;
+}

@@ -447,6 +447,10 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
               "Green: Faster than the ghost lap.",
               "Purple: All-time fastest lap." });
 
+        mbCtx.BoolOption("Draw start/finish", GetSettings().Main.DrawStartFinish,
+            { "Draws green flares for the track start, red flares for the track finish.",
+              "Setting applies next time a track is selected." });
+
         mbCtx.MenuOption("Recording options", "recordoptionsmenu");
         mbCtx.MenuOption("Replay/ghost options", "replayoptionsmenu");
     });

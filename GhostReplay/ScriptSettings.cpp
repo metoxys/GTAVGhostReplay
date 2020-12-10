@@ -29,6 +29,7 @@ void CScriptSettings::Load() {
     CHECK_LOG_SI_ERROR(result, "load");
 
     LOAD_VAL("Main", "NotifyLaps", Main.NotifyLaps);
+    LOAD_VAL("Main", "DrawStartFinish", Main.DrawStartFinish);
 
     LOAD_VAL("Record", "AutoGhost", Record.AutoGhost);
     LOAD_VAL("Record", "DeltaMillis", Record.DeltaMillis);
@@ -45,6 +46,7 @@ void CScriptSettings::Save() {
     CHECK_LOG_SI_ERROR(result, "load");
 
     SAVE_VAL("Main", "NotifyLaps", Main.NotifyLaps);
+    SAVE_VAL("Main", "DrawStartFinish", Main.DrawStartFinish);
 
     SAVE_VAL("Record", "AutoGhost", Record.AutoGhost);
     SAVE_VAL("Record", "DeltaMillis", Record.DeltaMillis);

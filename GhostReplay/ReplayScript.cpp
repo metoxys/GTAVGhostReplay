@@ -92,6 +92,7 @@ void CReplayScript::Tick() {
 void CReplayScript::SetTrack(const std::string& trackName) {
     SetReplay("");
     mCompatibleReplays.clear();
+    clearPtfx();
 
     if (trackName.empty()) {
         mActiveTrack = nullptr;
@@ -106,6 +107,7 @@ void CReplayScript::SetTrack(const std::string& trackName) {
             mReplayState = EReplayState::Idle;
             mRecordState = ERecordState::Idle;
             mCompatibleReplays = GetCompatibleReplays(trackName);
+            createPtfx(track);
             return;
         }
     }
@@ -116,6 +118,7 @@ void CReplayScript::SetTrack(const std::string& trackName) {
             mReplayState = EReplayState::Idle;
             mRecordState = ERecordState::Idle;
             mCompatibleReplays = GetCompatibleReplays(trackName);
+            createPtfx(track);
             return;
         }
     }
@@ -350,21 +353,6 @@ void CReplayScript::updateReplay() {
     }
 
     mLastPos = nowPos;
-
-    Vector3 emptyVec{};
-    if (mActiveTrack->StartLine.A != emptyVec &&
-        mActiveTrack->StartLine.B != emptyVec) {
-        UI::DrawSphere(Util::GroundZ(mActiveTrack->StartLine.A, 0.2f), 0.25f, 0, 255, 0, 255);
-        UI::DrawSphere(Util::GroundZ(mActiveTrack->StartLine.B, 0.2f), 0.25f, 0, 255, 0, 255);
-        UI::DrawLine(mActiveTrack->StartLine.A, mActiveTrack->StartLine.B, 0, 255, 0, 255);
-    }
-
-    if (mActiveTrack->FinishLine.A != emptyVec &&
-        mActiveTrack->FinishLine.B != emptyVec) {
-        UI::DrawSphere(Util::GroundZ(mActiveTrack->FinishLine.A, 0.2f), 0.25f, 255, 255, 255, 255);
-        UI::DrawSphere(Util::GroundZ(mActiveTrack->FinishLine.B, 0.2f), 0.25f, 255, 255, 255, 255);
-        UI::DrawLine(mActiveTrack->FinishLine.A, mActiveTrack->FinishLine.B, 255, 255, 255, 255);
-    }
 
     updatePlayback(gameTime, startPassedThisTick, finishPassedThisTick);
     updateRecord(gameTime, startPassedThisTick, finishPassedThisTick);
@@ -640,4 +628,47 @@ void CReplayScript::createReplayVehicle(Hash model, CReplayData* activeReplay, V
 
     VehicleModData modData = mActiveReplay->VehicleMods;
     VehicleModData::ApplyTo(mReplayVehicle, modData);
+}
+
+void CReplayScript::clearPtfx() {
+    for(int i : mPtfxHandles) {
+        GRAPHICS::STOP_PARTICLE_FX_LOOPED(i, 0);
+    }
+    mPtfxHandles.clear();
+}
+
+void CReplayScript::createPtfx(const CTrackData& trackData) {
+    const char* assetName = "scr_apartment_mp";
+    const char* effectName = "scr_finders_package_flare";
+    auto startTime = GetTickCount64();
+    STREAMING::REQUEST_NAMED_PTFX_ASSET(assetName);
+    while (!STREAMING::HAS_NAMED_PTFX_ASSET_LOADED(assetName)) {
+        WAIT(0);
+        if (GetTickCount64() > startTime + 5000) {
+            WAIT(0);
+            std::string msg = fmt::format("Error: Failed to load flare assets.");
+            UI::Notify(msg, false);
+            logger.Write(ERROR, fmt::format("[Replay] {}", msg));
+            return;
+        }
+    }
+
+    Vector3 emptyVec{};
+    if (trackData.StartLine.A != emptyVec &&
+        trackData.StartLine.B != emptyVec) {
+        Vector3 A = Util::GroundZ(trackData.StartLine.A, 0.1f);
+        Vector3 B = Util::GroundZ(trackData.StartLine.B, 0.1f);
+
+        mPtfxHandles.push_back(Util::CreateParticleFxAtCoord(assetName, effectName, A, 0.0f, 1.0f, 0.0f, 1.0f));
+        mPtfxHandles.push_back(Util::CreateParticleFxAtCoord(assetName, effectName, B, 0.0f, 1.0f, 0.0f, 1.0f));
+    }
+
+    if (trackData.FinishLine.A != emptyVec &&
+        trackData.FinishLine.B != emptyVec) {
+        Vector3 A = Util::GroundZ(trackData.FinishLine.A, 0.1f);
+        Vector3 B = Util::GroundZ(trackData.FinishLine.B, 0.1f);
+
+        mPtfxHandles.push_back(Util::CreateParticleFxAtCoord(assetName, effectName, A, 1.0f, 0.0f, 0.0f, 1.0f));
+        mPtfxHandles.push_back(Util::CreateParticleFxAtCoord(assetName, effectName, B, 1.0f, 0.0f, 0.0f, 1.0f));
+    }
 }

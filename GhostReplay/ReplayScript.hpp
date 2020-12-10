@@ -91,6 +91,8 @@ protected:
     void updateTrackDefine();
     bool passedLineThisTick(SLineDef line, Vector3 oldPos, Vector3 newPos);
     void createReplayVehicle(Hash model, CReplayData* activeReplay, Vector3 pos);
+    void clearPtfx();
+    void createPtfx(const CTrackData& trackData);
 
     const CScriptSettings& mSettings;
     std::vector<CReplayData>& mReplays;
@@ -115,4 +117,6 @@ protected:
 
     std::vector<CReplayData> mUnsavedRuns;
     CReplayData mCurrentRun;
+
+    std::vector<int> mPtfxHandles;
 };

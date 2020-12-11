@@ -46,6 +46,18 @@ std::string Util::GetVehicleName(Hash model) {
     return displayName;
 }
 
+std::string Util::GetVehicleMake(Hash model) {
+    if (getGameVersion() < 54)
+        return "";
+
+    const char* name = VEHICLE::_GET_MAKE_NAME_FROM_VEHICLE_MODEL(model);
+    std::string displayName = HUD::_GET_LABEL_TEXT(name);
+    if (displayName == "NULL") {
+        displayName = name;
+    }
+    return displayName;
+}
+
 std::string Util::GetTimestampReadable(unsigned long long unixTimestampMs) {
     const auto durationSinceEpoch = std::chrono::milliseconds(unixTimestampMs);
     const std::chrono::time_point<std::chrono::system_clock> tp_after_duration(durationSinceEpoch);

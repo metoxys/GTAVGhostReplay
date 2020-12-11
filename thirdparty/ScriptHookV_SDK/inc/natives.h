@@ -14008,6 +14008,7 @@ namespace VEHICLE {
 	// 
 	// 
 	static const char* GET_DISPLAY_NAME_FROM_VEHICLE_MODEL(Hash modelHash) { return invoke<const char*>(0xB215AAC32D25D019, modelHash); } // 0xB215AAC32D25D019 0xEC86DF39 b323
+	static const char* _GET_MAKE_NAME_FROM_VEHICLE_MODEL(Hash modelHash) { return invoke<const char*>(0xF7AF4F159FF99F97, modelHash); } // 0xF7AF4F159FF99F97 b1868
 	// The only example I can find of this function in the scripts, is this:
 	// 
 	// struct _s = VEHICLE::GET_VEHICLE_DEFORMATION_AT_POS(rPtr((A_0) + 4), 1.21f, 6.15f, 0.3f);

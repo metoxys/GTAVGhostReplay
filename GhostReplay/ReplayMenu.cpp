@@ -55,7 +55,9 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             currentGhostName = activeReplay->Name;
             ghostDetails = {
                 fmt::format("Track: {}", activeReplay->Track),
-                fmt::format("Car: {}", Util::GetVehicleName(activeReplay->VehicleModel)),
+                fmt::format("Car: {} {}",
+                    Util::GetVehicleMake(activeReplay->VehicleModel),
+                    Util::GetVehicleName(activeReplay->VehicleModel)),
                 fmt::format("Time: {}", Util::FormatMillisTime(activeReplay->Nodes.back().Timestamp))
             };
         }
@@ -390,7 +392,9 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             std::vector<std::string> extras
             {
                 fmt::format("Track: {}", replay.Track),
-                fmt::format("Car: {}", Util::GetVehicleName(replay.VehicleModel)),
+                fmt::format("Car: {} {}",
+                    Util::GetVehicleMake(replay.VehicleModel),
+                    Util::GetVehicleName(replay.VehicleModel)),
                 fmt::format("Time: {}",  Util::FormatMillisTime(replay.Nodes.back().Timestamp)),
                 fmt::format("Lap recorded: {}", datetime),
             };
@@ -435,7 +439,9 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             std::vector<std::string> ghostDetails = {
                 "Select to save ghost.",
                 fmt::format("Track: {}", unsavedRun.Track),
-                fmt::format("Car: {}", Util::GetVehicleName(unsavedRun.VehicleModel)),
+                fmt::format("Car: {} {}",
+                    Util::GetVehicleMake(unsavedRun.VehicleModel),
+                    Util::GetVehicleName(unsavedRun.VehicleModel)),
                 fmt::format("Time: {}", Util::FormatMillisTime(unsavedRun.Nodes.back().Timestamp)),
                 fmt::format("Lap recorded: {}", datetime),
             };

@@ -480,6 +480,10 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
             [[fallthrough]];
         }
         case ERecordState::Recording: {
+            if (ENTITY::GET_ENTITY_MODEL(vehicle) != mCurrentRun.VehicleModel) {
+                mRecordState = ERecordState::Finished;
+                break;
+            }
             SReplayNode node{};
             node.Timestamp = gameTime - recordStart;
             node.Pos = nowPos;

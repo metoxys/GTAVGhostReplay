@@ -218,11 +218,11 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             };
 
             if (!track.MarkedForDeletion) {
-                description.emplace_back("Press left arrow to delete.");
+                description.emplace_back("Press Left to delete.");
             }
             else {
-                description.emplace_back("Press right arrow to unmark deletion.");
-                description.emplace_back("~r~Press left to confirm deletion.");
+                description.emplace_back("Press Right to unmark deletion.");
+                description.emplace_back("~r~Press Left to confirm deletion.");
                 description.emplace_back("~r~~h~THIS IS PERMANENT");
             }
 
@@ -328,11 +328,11 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             };
 
             if (!replay.MarkedForDeletion) {
-                description.emplace_back("Press left arrow to delete.");
+                description.emplace_back("Press Left to delete.");
             }
             else {
-                description.emplace_back("Press right arrow to unmark deletion.");
-                description.emplace_back("~r~Press left to confirm deletion.");
+                description.emplace_back("Press Right to unmark deletion.");
+                description.emplace_back("~r~Press Left to confirm deletion.");
                 description.emplace_back("~r~~h~THIS IS PERMANENT");
             }
 

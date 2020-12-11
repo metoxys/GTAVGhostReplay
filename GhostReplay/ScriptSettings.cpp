@@ -37,6 +37,7 @@ void CScriptSettings::Load() {
     LOAD_VAL("Replay", "VehicleAlpha", Replay.VehicleAlpha);
     LOAD_VAL("Replay", "FallbackModel", Replay.FallbackModel);
     LOAD_VAL("Replay", "ForceFallbackModel", Replay.ForceFallbackModel);
+    LOAD_VAL("Replay", "AutoLoadGhost", Replay.AutoLoadGhost);
 }
 
 void CScriptSettings::Save() {
@@ -54,6 +55,7 @@ void CScriptSettings::Save() {
     SAVE_VAL("Replay", "VehicleAlpha", Replay.VehicleAlpha);
     SAVE_VAL("Replay", "FallbackModel", Replay.FallbackModel);
     SAVE_VAL("Replay", "ForceFallbackModel", Replay.ForceFallbackModel);
+    SAVE_VAL("Replay", "AutoLoadGhost", Replay.AutoLoadGhost);
 
     result = ini.SaveFile(mSettingsFile.c_str());
     CHECK_LOG_SI_ERROR(result, "save");

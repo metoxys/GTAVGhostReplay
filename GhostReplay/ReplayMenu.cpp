@@ -509,6 +509,9 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         mbCtx.Title("Replay options");
         mbCtx.Subtitle("");
 
+        mbCtx.BoolOption("Auto-load quickest ghost", GetSettings().Replay.AutoLoadGhost, 
+            { "Automatically loads the quickest ghost lap when a track is selected, for that specific car model." });
+
         std::vector<std::string> replayAlphaDescr{
             "The transparency of the ghost vehicle."
             "0: completely invisible.",

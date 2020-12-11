@@ -102,26 +102,35 @@ void CReplayScript::SetTrack(const std::string& trackName) {
         return;
     }
 
+    CTrackData* foundTrack = nullptr;
     for (auto& track : mTracks) {
         if (track.Name == trackName) {
-            mActiveTrack = &track;
-            mReplayState = EReplayState::Idle;
-            mRecordState = ERecordState::Idle;
-            mCompatibleReplays = GetCompatibleReplays(trackName);
-            createPtfx(track);
-            return;
+            foundTrack = &track;
+            break;
         }
     }
 
     for (auto& track : mArsTracks) {
         if (track.Name == trackName) {
-            mActiveTrack = &track;
-            mReplayState = EReplayState::Idle;
-            mRecordState = ERecordState::Idle;
-            mCompatibleReplays = GetCompatibleReplays(trackName);
-            createPtfx(track);
-            return;
+            foundTrack = &track;
+            break;
         }
+    }
+
+    if (foundTrack != nullptr) {
+        mActiveTrack = foundTrack;
+        mReplayState = EReplayState::Idle;
+        mRecordState = ERecordState::Idle;
+        mCompatibleReplays = GetCompatibleReplays(trackName);
+        createPtfx(*foundTrack);
+
+        if (mSettings.Replay.AutoLoadGhost) {
+            auto fastestReplay = GetFastestReplay(trackName, mCurrentRun.VehicleModel);
+            if (!fastestReplay.Name.empty()) {
+                SetReplay(fastestReplay.Name, fastestReplay.Timestamp);
+            }
+        }
+        return;
     }
 
     logger.Write(ERROR, "SetTrack: No track found with the name [%s]", trackName.c_str());

@@ -22,6 +22,7 @@ public:
         int VehicleAlpha = 127;
         std::string FallbackModel = "sultan";
         bool ForceFallbackModel = false;
+        bool AutoLoadGhost = true;
     } Replay;
 
 private:

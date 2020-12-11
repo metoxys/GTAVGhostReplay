@@ -38,7 +38,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
     std::vector<CScriptMenu<CReplayScript>::CSubmenu> submenus;
     /* mainmenu */
     submenus.emplace_back("mainmenu", [](NativeMenu::Menu& mbCtx, CReplayScript& context) {
-        mbCtx.Title("Ghost Car Replay");
+        mbCtx.Title("Ghost Car");
         mbCtx.Subtitle(std::string("~b~") + Constants::DisplayVersion);
 
         CReplayData* activeReplay = context.ActiveReplay();

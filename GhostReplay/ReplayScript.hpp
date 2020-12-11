@@ -83,6 +83,10 @@ public:
         mRecordState = recordState;
     }
 
+    Vehicle GetReplayVehicle() {
+        return mReplayVehicle;
+    }
+
     void SetTrack(const std::string& trackName);
     void SetReplay(const std::string& replayName, unsigned long long timestamp = 0);
     void ClearUnsavedRuns();

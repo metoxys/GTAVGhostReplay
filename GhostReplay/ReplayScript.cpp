@@ -392,7 +392,7 @@ void CReplayScript::updatePlayback(unsigned long long gameTime, bool startPassed
                 mReplayState = EReplayState::Playing;
                 replayStart = gameTime;
                 ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, true, true);
-                ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, mSettings.Replay.VehicleAlpha, false);
+                ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, map(mSettings.Replay.VehicleAlpha, 0, 100, 0, 255), false);
                 ENTITY::SET_ENTITY_COLLISION(mReplayVehicle, false, false);
                 VEHICLE::SET_VEHICLE_ENGINE_ON(mReplayVehicle, true, true, false);
                 mLastNode = mActiveReplay->Nodes.begin();

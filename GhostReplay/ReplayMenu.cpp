@@ -513,13 +513,20 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             { "Automatically loads the quickest ghost lap when a track is selected, for that specific car model." });
 
         std::vector<std::string> replayAlphaDescr{
-            "The transparency of the ghost vehicle."
+            "The transparency of the ghost vehicle. Applied on ghost lap start.",
             "0: completely invisible.",
-            "255: completely visible.",
+            "100: completely visible.",
         };
         int replayAlpha = GetSettings().Replay.VehicleAlpha;
-        if (mbCtx.IntOptionCb("Ghost alpha", replayAlpha, 0, 255, 1, MenuUtils::GetKbInt, replayAlphaDescr)) {
+        if (mbCtx.IntOptionCb("Ghost opacity %", replayAlpha, 0, 100, 20, MenuUtils::GetKbInt, replayAlphaDescr)) {
+            if (replayAlpha < 0)
+                replayAlpha = 0;
+            if (replayAlpha > 100)
+                replayAlpha = 100;
             GetSettings().Replay.VehicleAlpha = replayAlpha;
+            ENTITY::SET_ENTITY_ALPHA(
+                context.GetReplayVehicle(),
+                map(GetSettings().Replay.VehicleAlpha, 0, 100, 0, 255), false);
         }
 
         std::string fallbackOpt =

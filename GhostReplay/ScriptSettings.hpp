@@ -19,7 +19,7 @@ public:
     } Record;
 
     struct {
-        int VehicleAlpha = 127;
+        int VehicleAlpha = 40;
         std::string FallbackModel = "sultan";
         bool ForceFallbackModel = false;
         bool AutoLoadGhost = true;

@@ -85,6 +85,9 @@
     <PostBuildEvent>
       <Command>PostBuild.bat $(ProjectDir)$(OutDir) "D:\Games\Steam\steamapps\common\Grand Theft Auto V" $(TargetFileName)</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>Prebuild.bat $(ProjectDir)</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\thirdparty\fmt\src\format.cc" />

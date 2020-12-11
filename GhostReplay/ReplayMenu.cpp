@@ -2,6 +2,7 @@
 #include "Script.hpp"
 #include "ReplayScript.hpp"
 #include "Constants.hpp"
+#include "GitInfo.h"
 
 #include "TrackData.hpp"
 #include "ReplayData.hpp"
@@ -39,7 +40,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
     /* mainmenu */
     submenus.emplace_back("mainmenu", [](NativeMenu::Menu& mbCtx, CReplayScript& context) {
         mbCtx.Title("Ghost Car");
-        mbCtx.Subtitle(std::string("~b~") + Constants::DisplayVersion);
+        mbCtx.Subtitle(fmt::format("~b~{}{}", Constants::DisplayVersion, GIT_DIFF));
 
         CReplayData* activeReplay = context.ActiveReplay();
         CTrackData* activeTrack = context.ActiveTrack();

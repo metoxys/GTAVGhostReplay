@@ -1,20 +1,15 @@
 #include "Script.hpp"
 #include "Constants.hpp"
+#include "GitInfo.h"
 
-#include "Memory/VehicleExtensions.hpp"
 #include "Memory/Versions.hpp"
-#include "Util/FileVersion.hpp"
 #include "Util/Logger.hpp"
 #include "Util/Paths.hpp"
-
 #include <inc/main.h>
 
-#include <windows.h>
+#include <Windows.h>
 #include <Psapi.h>
-
 #include <filesystem>
-
-#include "Compatibility.h"
 
 namespace fs = std::filesystem;
 
@@ -33,7 +28,10 @@ BOOL APIENTRY DllMain(HMODULE hInstance, DWORD reason, LPVOID lpReserved) {
     switch (reason) {
         case DLL_PROCESS_ATTACH: {
             logger.Clear();
-            logger.Write(INFO, "GhostReplay %s (built %s %s)", Constants::DisplayVersion, __DATE__, __TIME__);
+            int gameVersion = getGameVersion();
+            logger.Write(INFO, "GhostReplay %s (built %s %s) (%s)",
+                Constants::DisplayVersion, __DATE__, __TIME__, GIT_HASH GIT_DIFF);
+            logger.Write(INFO, "Game version: %s (%d)", eGameVersionToString(gameVersion).c_str(), gameVersion);
 
             scriptRegister(hInstance, GhostReplay::ScriptMain);
 
@@ -41,7 +39,6 @@ BOOL APIENTRY DllMain(HMODULE hInstance, DWORD reason, LPVOID lpReserved) {
             break;
         }
         case DLL_PROCESS_DETACH: {
-            Compatibility::Release();
             scriptUnregister(hInstance);
             break;
         }

@@ -259,6 +259,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             auto deleteFlag = [&]() {
                 if (track.MarkedForDeletion) {
                     context.DeleteTrack(track);
+                    UpdateTrackFilter(context);
                 }
                 else {
                     track.MarkedForDeletion = true;

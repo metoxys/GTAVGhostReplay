@@ -68,6 +68,30 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             UpdateReplayFilter(context);
         }
 
+        bool replaying = context.GetReplayState() == EReplayState::Playing;
+        std::string replayAbortOption = replaying ? "Cancel playing ghost" : "~m~Cancel playing ghost";
+        std::vector<std::string> replayAbortDetail;
+        if (replaying) {
+            replayAbortDetail = { "Currently replaying a ghost car.",
+                "Want to re-do your lap, but not cross the finish line? Use this to stop and reset the ghost car." };
+        }
+        if (mbCtx.Option(replayAbortOption, replayAbortDetail)) {
+            if (replaying)
+                context.SetReplayState(EReplayState::Finished);
+        }
+
+        bool recording = context.GetRecordState() == ERecordState::Recording;
+        std::string recordAbortOption = recording ? "Cancel recording" : "~m~Cancel recording";
+        std::vector<std::string> recordAbortDetail;
+        if (recording) {
+            recordAbortDetail = { "Currently recording a ghost car.",
+                "Not racing anymore? Use this to stop and discard the recording." };
+        }
+        if (mbCtx.Option(recordAbortOption, recordAbortDetail)) {
+            if (recording)
+                context.SetRecordState(ERecordState::Finished);
+        }
+
         if (mbCtx.MenuOption("Track setup", "tracksetupmenu")) {
             context.SetScriptMode(EScriptMode::DefineTrack);
         }

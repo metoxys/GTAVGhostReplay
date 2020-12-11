@@ -67,6 +67,22 @@ public:
         mScriptMode = mode;
     }
 
+    EReplayState GetReplayState() {
+        return mReplayState;
+    }
+
+    void SetReplayState(EReplayState replayState) {
+        mReplayState = replayState;
+    }
+
+    ERecordState GetRecordState() {
+        return mRecordState;
+    }
+
+    void SetRecordState(ERecordState recordState) {
+        mRecordState = recordState;
+    }
+
     void SetTrack(const std::string& trackName);
     void SetReplay(const std::string& replayName, unsigned long long timestamp = 0);
     void ClearUnsavedRuns();

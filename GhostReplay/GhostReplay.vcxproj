@@ -115,6 +115,7 @@
     <ClCompile Include="TrackData.cpp" />
     <ClCompile Include="TrackDataARS.cpp" />
     <ClCompile Include="Util\FileVersion.cpp" />
+    <ClCompile Include="Util\Inputs.cpp" />
     <ClCompile Include="Util\Logger.cpp" />
     <ClCompile Include="Util\Paths.cpp" />
     <ClCompile Include="Util\String.cpp" />
@@ -150,6 +151,7 @@
     <ClInclude Include="TrackData.hpp" />
     <ClInclude Include="Util\FileVersion.hpp" />
     <ClInclude Include="Util\Game.hpp" />
+    <ClInclude Include="Util\Inputs.hpp" />
     <ClInclude Include="Util\Logger.hpp" />
     <ClInclude Include="Util\Math.hpp" />
     <ClInclude Include="Util\Paths.hpp" />

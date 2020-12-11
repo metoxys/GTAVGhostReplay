@@ -13,6 +13,7 @@
 #include "Util/UI.hpp"
 #include "Util/Logger.hpp"
 #include "Util/String.hpp"
+#include "Util/Inputs.hpp"
 
 #include <inc/enums.h>
 #include <inc/natives.h>
@@ -210,12 +211,13 @@ CReplayData CReplayScript::GetFastestReplay(const std::string& trackName, Hash v
 }
 
 bool CReplayScript::StartLineDef(SLineDef& lineDef, const std::string& lineName) {
-    const std::string escapeKey = "BACKSPACE";
-
     int progress = 0;
 
+    const eControl cancelControl = eControl::ControlFrontendCancel;
+    const eControl registerControl = eControl::ControlContext;
+
     while(true) {
-        if (PAD::IS_CONTROL_JUST_RELEASED(0, eControl::ControlFrontendCancel)) {
+        if (PAD::IS_CONTROL_JUST_RELEASED(0, cancelControl)) {
             return false;
         }
 
@@ -228,7 +230,7 @@ bool CReplayScript::StartLineDef(SLineDef& lineDef, const std::string& lineName)
             UI::DrawLine(lineDef.A, coords, 255, 255, 255, 255);
         }
 
-        if (PAD::IS_CONTROL_JUST_RELEASED(0, eControl::ControlVehicleHorn)) {
+        if (PAD::IS_CONTROL_JUST_RELEASED(0, registerControl)) {
             switch (progress) {
                 case 0: {
                     lineDef.A = coords;
@@ -248,9 +250,10 @@ bool CReplayScript::StartLineDef(SLineDef& lineDef, const std::string& lineName)
         std::string currentStepName = fmt::format("{} {} point", progress == 0 ? "left" : "right", lineName);
 
         UI::ShowHelpText(fmt::format(
-            "Press [Horn] to register {} at your current location. "
-            "Press [{}] to cancel and exit.", 
-            currentStepName, escapeKey));
+            "Press {} to register {} at your current location. "
+            "Press {} to cancel and exit.", 
+            Inputs::GetControlString(registerControl), currentStepName,
+            Inputs::GetControlString(cancelControl)));
         WAIT(0);
     }
 }

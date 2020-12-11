@@ -125,8 +125,9 @@ void CReplayScript::SetTrack(const std::string& trackName) {
         createPtfx(*foundTrack);
 
         if (mSettings.Replay.AutoLoadGhost) {
-            auto fastestReplay = GetFastestReplay(trackName, mCurrentRun.VehicleModel);
-            if (!fastestReplay.Name.empty()) {
+            Vehicle vehicle = PED::GET_VEHICLE_PED_IS_IN(PLAYER::PLAYER_PED_ID(), false);
+            auto fastestReplay = GetFastestReplay(trackName, ENTITY::GET_ENTITY_MODEL(vehicle));
+            if (!fastestReplay.Name.empty() && ENTITY::DOES_ENTITY_EXIST(vehicle)) {
                 SetReplay(fastestReplay.Name, fastestReplay.Timestamp);
             }
         }

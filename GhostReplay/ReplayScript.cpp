@@ -225,14 +225,18 @@ bool CReplayScript::StartLineDef(SLineDef& lineDef, const std::string& lineName)
     const eControl cancelControl = eControl::ControlFrontendCancel;
     const eControl registerControl = eControl::ControlContext;
 
+    createPtfx(*mActiveTrack);
+
+    bool result;
     while(true) {
         if (PAD::IS_CONTROL_JUST_RELEASED(0, cancelControl)) {
-            return false;
+            result = false;
+            goto exit;
         }
 
         auto coords = ENTITY::GET_ENTITY_COORDS(PLAYER::PLAYER_PED_ID(), true);
 
-        UI::DrawSphere(coords, 0.25f, 255, 255, 255, 255);
+        UI::DrawSphere(coords, 0.20f, 255, 255, 255, 255);
 
         if (progress == 1) {
             UI::DrawSphere(lineDef.A, 0.25f, 255, 255, 255, 255);
@@ -248,10 +252,12 @@ bool CReplayScript::StartLineDef(SLineDef& lineDef, const std::string& lineName)
                 }
                 case 1: {
                     lineDef.B = coords;
-                    return true;
+                    result = true;
+                    goto exit;
                 }
                 default: {
-                    return false;
+                    result = false;
+                    goto exit;
                 }
             }
         }
@@ -265,6 +271,10 @@ bool CReplayScript::StartLineDef(SLineDef& lineDef, const std::string& lineName)
             Inputs::GetControlString(cancelControl)));
         WAIT(0);
     }
+
+exit:
+    clearPtfx();
+    return result;
 }
 
 void CReplayScript::DeleteTrack(const CTrackData& track) {

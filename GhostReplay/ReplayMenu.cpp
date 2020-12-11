@@ -570,20 +570,26 @@ std::vector<std::string> GhostReplay::FormatTrackData(NativeMenu::Menu& mbCtx, C
 
     std::vector<std::string> extras{
         imgStr,
-        fmt::format("Replays for this track: {}", compatibleReplays.size()),
-        fmt::format("Lap record: {}", lapRecordString),
         fmt::format("Description: {}", track.Description),
+        fmt::format("Total ghosts: {}", compatibleReplays.size()),
+        fmt::format("Lap record: {}", lapRecordString),
+        "Fastest ghost of each model:",
     };
 
+    // compatibleReplays is ordered quickest to slowest.
     std::sort(compatibleReplays.begin(), compatibleReplays.end(),
         [](const CReplayData& a, const CReplayData& b) {
             return a.Nodes.back().Timestamp < b.Nodes.back().Timestamp;
         });
 
+    std::vector<Hash> fastestModels;
     for (const auto& replay : compatibleReplays) {
+        if (std::find(fastestModels.begin(), fastestModels.end(), replay.VehicleModel) != fastestModels.end())
+            continue;
         extras.push_back(fmt::format("{} ({})",
             Util::FormatMillisTime(replay.Nodes.back().Timestamp),
             Util::GetVehicleName(replay.VehicleModel)));
+        fastestModels.push_back(replay.VehicleModel);
     }
     return extras;
 }

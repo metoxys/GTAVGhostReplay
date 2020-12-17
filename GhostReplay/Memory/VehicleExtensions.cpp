@@ -774,6 +774,16 @@ std::vector<float> VehicleExtensions::GetWheelCompressions(Vehicle handle) {
     return compressions;
 }
 
+void VehicleExtensions::SetWheelCompression(Vehicle handle, uint8_t index, float value) {
+    if (index > GetNumWheels(handle)) return;
+    if (wheelSuspensionCompressionOffset == 0) return;
+
+    auto wheelPtr = GetWheelsPtr(handle);
+
+    auto wheelAddr = *reinterpret_cast<uint64_t*>(wheelPtr + 0x008 * index);
+    *reinterpret_cast<float*>(wheelAddr + wheelSuspensionCompressionOffset + 4) = value;
+}
+
 std::vector<float> VehicleExtensions::GetWheelSteeringAngles(Vehicle handle) {
     auto wheelPtr = GetWheelsPtr(handle);
     auto numWheels = GetNumWheels(handle);

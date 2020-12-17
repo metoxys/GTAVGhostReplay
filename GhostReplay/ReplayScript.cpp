@@ -447,6 +447,13 @@ void CReplayScript::updatePlayback(unsigned long long gameTime, bool startPassed
                 VExt::SetCurrentRPM(mReplayVehicle, nodeCurr->RPM);
             }
 
+            if (VExt::GetNumWheels(mReplayVehicle) == nodeCurr->SuspensionCompressions.size()) {
+                for (uint8_t idx = 0; idx < VExt::GetNumWheels(mReplayVehicle); ++idx) {
+                    float susp = lerp(nodeCurr->SuspensionCompressions[idx], nodeNext->SuspensionCompressions[idx], progress);
+                    VExt::SetWheelCompression(mReplayVehicle, idx, susp);
+                }
+            }
+
             VEHICLE::SET_VEHICLE_BRAKE_LIGHTS(mReplayVehicle, nodeCurr->Brake > 0.1f);
 
             VEHICLE::SET_VEHICLE_LIGHTS(mReplayVehicle, nodeCurr->LowBeams ? 3 : 4);
@@ -510,6 +517,7 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
             node.Pos = nowPos;
             node.Rot = nowRot;
             node.WheelRotations = VExt::GetWheelRotations(vehicle);
+            node.SuspensionCompressions = VExt::GetWheelCompressions(vehicle);
 
             node.SteeringAngle = VExt::GetSteeringAngle(vehicle);
             node.Throttle = VExt::GetThrottleP(vehicle);

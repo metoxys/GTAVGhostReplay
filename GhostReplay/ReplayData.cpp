@@ -60,6 +60,7 @@ CReplayData CReplayData::Read(const std::string& replayFile) {
                 node.Rot.z = jsonNode["RZ"];
             }
             node.WheelRotations = jsonNode.value("WheelRotations", std::vector<float>());
+            node.SuspensionCompressions = jsonNode.value("SuspensionCompressions", std::vector<float>());
             node.SteeringAngle = jsonNode.value("Steering", 0.0f);
             node.Throttle = jsonNode.value("Throttle", 0.0f);
             node.Brake = jsonNode.value("Brake", 0.0f);
@@ -100,6 +101,7 @@ void CReplayData::Write() {
             { "Pos", Node.Pos },
             { "Rot", Node.Rot },
             { "WheelRotations", Node.WheelRotations },
+            { "SuspensionCompressions", Node.SuspensionCompressions },
             { "Steering", Node.SteeringAngle },
             { "Throttle", Node.Throttle },
             { "Brake", Node.Brake },

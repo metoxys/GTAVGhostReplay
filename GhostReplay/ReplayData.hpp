@@ -10,6 +10,7 @@ struct SReplayNode {
     Vector3 Pos;
     Vector3 Rot;
     std::vector<float> WheelRotations;
+    std::vector<float> SuspensionCompressions;
 
     float SteeringAngle;
     float Throttle;

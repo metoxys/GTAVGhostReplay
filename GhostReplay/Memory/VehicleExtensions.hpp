@@ -153,6 +153,7 @@ public:
     static std::vector<Vector3> GetWheelOffsets(Vehicle handle);
     static std::vector<Vector3> GetWheelLastContactCoords(Vehicle handle);
     static std::vector<float> GetWheelCompressions(Vehicle handle);
+    static void SetWheelCompression(Vehicle handle, uint8_t index, float value);
     static std::vector<float> GetWheelSteeringAngles(Vehicle handle);
     static std::vector<bool> GetWheelsOnGround(Vehicle handle);
 

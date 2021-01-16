@@ -483,6 +483,10 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             { "Draws green flares for the track start, red flares for the track finish.",
               "Setting applies next time a track is selected." });
 
+        mbCtx.BoolOption("Extensive replay telemetry", GetSettings().Main.ExtensiveReplayTelemetry,
+            { "Adds additional telemetry data to replay files.",
+              "May impact performance." });
+
         mbCtx.MenuOption("Recording options", "recordoptionsmenu");
         mbCtx.MenuOption("Replay/ghost options", "replayoptionsmenu");
     });

@@ -17,4 +17,4 @@ can race against yourself.
 
 ## Downloads
 
-N/A
+[GTA5-Mods.com](https://www.gta5-mods.com/scripts/ghost-car)

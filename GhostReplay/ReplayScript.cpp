@@ -535,10 +535,12 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
             if (mSettings.Main.ExtensiveReplayTelemetry) {
                 node.VehicleSpeed = ENTITY::GET_ENTITY_SPEED(vehicle);
                 node.EngineTemperature = VExt::GetEngineTemp(vehicle);
+                node.Turbo = VExt::GetTurbo(vehicle);
             }
             else {
                 node.VehicleSpeed = 0.0f;
                 node.EngineTemperature = 0.0f;
+                node.Turbo = 0.0f;
             }
 
             bool saved = false;

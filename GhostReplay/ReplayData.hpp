@@ -24,6 +24,7 @@ struct SReplayNode {
 
     float VehicleSpeed; // meters/second
     float EngineTemperature; // degrees Celsius
+    float Turbo; // 0-1, percentage
 
     bool operator<(const SReplayNode& other) const {
         return Timestamp < other.Timestamp;

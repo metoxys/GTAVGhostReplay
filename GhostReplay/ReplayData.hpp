@@ -23,6 +23,7 @@ struct SReplayNode {
     bool HighBeams;
 
     float VehicleSpeed; // meters/second
+    float EngineTemperature; // degrees Celsius
 
     bool operator<(const SReplayNode& other) const {
         return Timestamp < other.Timestamp;

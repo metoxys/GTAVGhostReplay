@@ -30,7 +30,12 @@ void CScriptSettings::Load() {
 
     LOAD_VAL("Main", "NotifyLaps", Main.NotifyLaps);
     LOAD_VAL("Main", "DrawStartFinish", Main.DrawStartFinish);
-    LOAD_VAL("Main", "ExtensiveReplayTelemetry", Main.ExtensiveReplayTelemetry);
+    try {
+        LOAD_VAL("Main", "ExtensiveReplayTelemetry", Main.ExtensiveReplayTelemetry);
+    }
+    catch (std::exception) {
+        Main.ExtensiveReplayTelemetry = false;
+    }
 
     LOAD_VAL("Record", "AutoGhost", Record.AutoGhost);
     LOAD_VAL("Record", "DeltaMillis", Record.DeltaMillis);

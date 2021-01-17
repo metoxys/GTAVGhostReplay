@@ -459,7 +459,7 @@ void CReplayScript::updatePlayback(unsigned long long gameTime, bool startPassed
             VEHICLE::SET_VEHICLE_LIGHTS(mReplayVehicle, nodeCurr->LowBeams ? 3 : 4);
             VEHICLE::SET_VEHICLE_FULLBEAM(mReplayVehicle, nodeCurr->HighBeams);
 
-            if (finishPassedThisTick) {
+            if (replayTime >= 5000 && finishPassedThisTick) {
                 mReplayState = EReplayState::Finished;
                 //UI::Notify("Player finished", false);
             }
@@ -549,7 +549,7 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
                 saved = true;
             }
 
-            if (finishPassedThisTick) {
+            if (node.Timestamp >= 5000 && finishPassedThisTick) {
                 mRecordState = ERecordState::Finished;
                 if (!saved) {
                     mCurrentRun.Nodes.push_back(node);

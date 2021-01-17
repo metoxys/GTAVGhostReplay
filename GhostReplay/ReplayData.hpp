@@ -25,6 +25,7 @@ struct SReplayNode {
     float VehicleSpeed; // meters/second
     float EngineTemperature; // degrees Celsius
     float Turbo; // 0-1, percentage
+    float SteeringInputAngle; // -1-1, percentage, negative is to the right
 
     bool operator<(const SReplayNode& other) const {
         return Timestamp < other.Timestamp;

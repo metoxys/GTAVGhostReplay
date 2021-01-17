@@ -536,11 +536,13 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
                 node.VehicleSpeed = ENTITY::GET_ENTITY_SPEED(vehicle);
                 node.EngineTemperature = VExt::GetEngineTemp(vehicle);
                 node.Turbo = VExt::GetTurbo(vehicle);
+                node.SteeringInputAngle = VExt::GetSteeringInputAngle(vehicle);
             }
             else {
                 node.VehicleSpeed = 0.0f;
                 node.EngineTemperature = 0.0f;
                 node.Turbo = 0.0f;
+                node.SteeringInputAngle = 0.0f;
             }
 
             bool saved = false;

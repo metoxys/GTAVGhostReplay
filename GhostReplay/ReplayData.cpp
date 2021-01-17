@@ -112,6 +112,7 @@ void CReplayData::Write() {
             { "VehicleSpeed", Node.VehicleSpeed },
             { "EngineTemperature", Node.EngineTemperature },
             { "Turbo", Node.Turbo },
+            { "SteeringInputAngle", Node.SteeringInputAngle },
         });
     }
 

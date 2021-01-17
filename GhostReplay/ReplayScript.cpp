@@ -531,6 +531,14 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
             node.LowBeams = areLowBeamsOn;
             node.HighBeams = areHighBeamsOn;
 
+            // Only make use of all that stuff if ExtensiveReplayTelemetry is used
+            if (mSettings.Main.ExtensiveReplayTelemetry) {
+                node.VehicleSpeed = ENTITY::GET_ENTITY_SPEED(vehicle);
+            }
+            else {
+                node.VehicleSpeed = 0.0f;
+            }
+
             bool saved = false;
             unsigned long long lastNodeTime = 0;
             if (!mCurrentRun.Nodes.empty()) {

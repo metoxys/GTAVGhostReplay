@@ -6,21 +6,23 @@
 #include <vector>
 
 struct SReplayNode {
-    unsigned long long Timestamp;
+    unsigned long long Timestamp; // milliseconds
     Vector3 Pos;
-    Vector3 Rot;
-    std::vector<float> WheelRotations;
+    Vector3 Rot; // roll/pitch/yaw, degrees
+    std::vector<float> WheelRotations; // radians
     std::vector<float> SuspensionCompressions;
 
-    float SteeringAngle;
-    float Throttle;
-    float Brake;
+    float SteeringAngle; // steering input angle dependent on steering lock, radians
+    float Throttle; // 0-1, percentage
+    float Brake; // 0-1, percentage
 
     int Gear;
-    float RPM;
+    float RPM; // 0-1, percentage
 
     bool LowBeams;
     bool HighBeams;
+
+    float VehicleSpeed; // meters/second
 
     bool operator<(const SReplayNode& other) const {
         return Timestamp < other.Timestamp;

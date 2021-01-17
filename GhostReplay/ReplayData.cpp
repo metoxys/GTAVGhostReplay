@@ -109,6 +109,7 @@ void CReplayData::Write() {
             { "RPM", Node.RPM },
             { "LowBeams", Node.LowBeams },
             { "HighBeams", Node.HighBeams },
+            { "VehicleSpeed", Node.VehicleSpeed },
         });
     }
 

@@ -26,7 +26,7 @@ struct SReplayNode {
     float EngineTemperature; // degrees Celsius
     float Turbo; // -1-1, percentage, -0.9 is idle while stationary, -1.0 is idle while moving
     float SteeringInputAngle; // -1-1, percentage, positive is to the left
-    // float VisualHeight; // suspension upgrade impact, meters, positive is lowered car
+    float VisualHeight; // suspension upgrade impact, meters, positive is lowered car
     std::vector<float> WheelSpeeds; // meters/second
     std::vector<float> WheelPowers; // g
     std::vector<float> WheelBrakes; // g

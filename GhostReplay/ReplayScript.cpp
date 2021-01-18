@@ -459,8 +459,19 @@ void CReplayScript::updatePlayback(unsigned long long gameTime, bool startPassed
             VEHICLE::SET_VEHICLE_LIGHTS(mReplayVehicle, nodeCurr->LowBeams ? 3 : 4);
             VEHICLE::SET_VEHICLE_FULLBEAM(mReplayVehicle, nodeCurr->HighBeams);
 
-            if (finishPassedThisTick) {
-                mReplayState = EReplayState::Finished;
+            if (replayTime >= 5000 && finishPassedThisTick) {
+                if (startPassedThisTick) {
+                    mReplayState = EReplayState::Playing;
+                    replayStart = gameTime;
+                    ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, true, true);
+                    ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, map(mSettings.Replay.VehicleAlpha, 0, 100, 0, 255), false);
+                    ENTITY::SET_ENTITY_COMPLETELY_DISABLE_COLLISION(mReplayVehicle, false, false);
+                    VEHICLE::SET_VEHICLE_ENGINE_ON(mReplayVehicle, true, true, false);
+                    mLastNode = mActiveReplay->Nodes.begin();
+                }
+                else {
+                    mReplayState = EReplayState::Finished;
+                }
                 //UI::Notify("Player finished", false);
             }
             break;
@@ -610,7 +621,7 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
                 saved = true;
             }
 
-            if (finishPassedThisTick) {
+            if (node.Timestamp >= 5000 && finishPassedThisTick) {
                 mRecordState = ERecordState::Finished;
                 if (!saved) {
                     mCurrentRun.Nodes.push_back(node);
@@ -653,6 +664,21 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
 
                 if (mSettings.Main.NotifyLaps) {
                     UI::Notify(lapInfo, false);
+                }
+
+                if (startPassedThisTick) {
+                    mCurrentRun = CReplayData("");
+                    mRecordState = ERecordState::Recording;
+                    recordStart = gameTime;
+                    mCurrentRun.Timestamp = std::chrono::duration_cast<std::chrono::milliseconds>
+                        (std::chrono::system_clock::now().time_since_epoch()).count();
+                    mCurrentRun.Track = mActiveTrack->Name;
+                    mCurrentRun.Nodes.clear();
+                    mCurrentRun.VehicleModel = ENTITY::GET_ENTITY_MODEL(vehicle);
+
+                    VehicleModData modData = VehicleModData::LoadFrom(vehicle);
+                    mCurrentRun.VehicleMods = modData;
+                    //UI::Notify("Record started", false);
                 }
             }
             break;

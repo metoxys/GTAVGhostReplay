@@ -476,6 +476,30 @@ void CReplayScript::updatePlayback(unsigned long long gameTime, bool startPassed
     }
 }
 
+namespace GForce {
+    Vector3 PrevWorldVel;
+}
+
+Vector3 GetAccelVector() {
+    Vehicle vehicle = PED::GET_VEHICLE_PED_IS_IN(PLAYER::PLAYER_PED_ID(), false);
+    Vector3 worldVel = ENTITY::GET_ENTITY_VELOCITY(vehicle);
+    Vector3 worldVelDelta = (worldVel - GForce::PrevWorldVel);
+
+    Vector3 fwdVec = ENTITY::GET_ENTITY_FORWARD_VECTOR(vehicle);
+    Vector3 upVec = ENTITY::GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(vehicle, 0.0f, 0.0f, 1.0f) - ENTITY::GET_ENTITY_COORDS(vehicle, true);
+    Vector3 rightVec = Cross(fwdVec, upVec);
+
+    Vector3 relVelDelta{
+        -Dot(worldVelDelta, rightVec), 0,
+        Dot(worldVelDelta, fwdVec), 0,
+        Dot(worldVelDelta, upVec), 0,
+    };
+
+    GForce::PrevWorldVel = worldVel;
+
+    return relVelDelta * (1.0f / MISC::GET_FRAME_TIME());
+}
+
 void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedThisTick, bool finishPassedThisTick) {
     Vehicle vehicle = PED::GET_VEHICLE_PED_IS_IN(PLAYER::PLAYER_PED_ID(), false);
     if (!ENTITY::DOES_ENTITY_EXIST(vehicle) || !mActiveTrack) {
@@ -537,12 +561,43 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
                 node.EngineTemperature = VExt::GetEngineTemp(vehicle);
                 node.Turbo = VExt::GetTurbo(vehicle);
                 node.SteeringInputAngle = VExt::GetSteeringInputAngle(vehicle);
+                node.VisualHeight = VExt::GetVisualHeight(vehicle);
+                node.WheelSpeeds = VExt::GetTyreSpeeds(vehicle);
+                node.WheelPowers = VExt::GetWheelPower(vehicle);
+                node.WheelBrakes = VExt::GetWheelBrakePressure(vehicle);
+                node.WheelDownforces = VExt::GetWheelDownforces(vehicle);
+                node.WheelTractions = VExt::GetWheelTractionVectorLength(vehicle);
+                node.WheelRotationSpeeds = VExt::GetWheelRotationSpeeds(vehicle);
+                node.WheelSteeringAngles = VExt::GetWheelSteeringAngles(vehicle);
+                node.VehicleSpeedVector = ENTITY::GET_ENTITY_SPEED_VECTOR(vehicle, true);
+                node.VehicleVelocity = ENTITY::GET_ENTITY_VELOCITY(vehicle);
+                node.Clutch = VExt::GetClutch(vehicle);
+                Vector3 accel = GetAccelVector();
+                node.GForceLat = accel.x / 9.8f;
+                node.GForceLon = accel.y / 9.8f;
+                node.GForceVert = accel.z / 9.8f;
+                node.WheelsOnGround = VExt::GetWheelsOnGround(vehicle);
             }
             else {
                 node.VehicleSpeed = 0.0f;
                 node.EngineTemperature = 0.0f;
                 node.Turbo = 0.0f;
                 node.SteeringInputAngle = 0.0f;
+                node.VisualHeight = 0.0f;
+                node.WheelSpeeds = { 0.0f };
+                node.WheelPowers = { 0.0f };
+                node.WheelBrakes = { 0.0f };
+                node.WheelDownforces = { 0.0f };
+                node.WheelTractions = { 0.0f };
+                node.WheelRotationSpeeds = { 0.0f };
+                node.WheelSteeringAngles = { 0.0f };
+                node.VehicleSpeedVector = { 0.0f };
+                node.VehicleVelocity = { 0.0f };
+                node.Clutch = 0.0f;
+                node.GForceLat = 0.0f;
+                node.GForceLon = 0.0f;
+                node.GForceVert = 0.0f;
+                node.WheelsOnGround = { true };
             }
 
             bool saved = false;

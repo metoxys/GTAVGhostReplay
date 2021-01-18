@@ -113,6 +113,21 @@ void CReplayData::Write() {
             { "EngineTemperature", Node.EngineTemperature },
             { "Turbo", Node.Turbo },
             { "SteeringInputAngle", Node.SteeringInputAngle },
+            { "VisualHeight", Node.VisualHeight },
+            { "WheelSpeeds", Node.WheelSpeeds },
+            { "WheelPowers", Node.WheelPowers },
+            { "WheelBrakes", Node.WheelBrakes },
+            { "WheelDownforces", Node.WheelDownforces },
+            { "WheelTractions", Node.WheelTractions },
+            { "WheelRotationSpeeds", Node.WheelRotationSpeeds },
+            { "WheelSteeringAngles", Node.WheelSteeringAngles },
+            { "VehicleSpeedVector", Node.VehicleSpeedVector },
+            { "VehicleVelocity", Node.VehicleVelocity },
+            { "Clutch", Node.Clutch },
+            { "GForceLat", Node.GForceLat },
+            { "GForceLon", Node.GForceLon },
+            { "GForceVert", Node.GForceVert },
+            { "WheelsOnGround", Node.WheelsOnGround },
         });
     }
 

@@ -20,3 +20,7 @@ namespace GhostReplay {
 
     void AddReplay(CReplayData replay);
 }
+
+namespace Dll {
+    bool Unloading();
+}

@@ -483,6 +483,10 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             { "Draws green flares for the track start, red flares for the track finish.",
               "Setting applies next time a track is selected." });
 
+        mbCtx.BoolOption("Ghost blips", GetSettings().Main.GhostBlips,
+            { "Draws blips for the ghost vehicle.",
+              "Setting applies next time a ghost is started." });
+
         mbCtx.MenuOption("Recording options", "recordoptionsmenu");
         mbCtx.MenuOption("Replay/ghost options", "replayoptionsmenu");
     });

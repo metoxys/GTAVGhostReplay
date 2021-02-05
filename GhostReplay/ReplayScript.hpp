@@ -3,6 +3,7 @@
 #include "ReplayData.hpp"
 #include "TrackData.hpp"
 #include "Image.hpp"
+#include "Blip.hpp"
 
 #include <vector>
 #include <string>
@@ -133,7 +134,9 @@ protected:
     Vector3 mLastPos;
     std::vector<SReplayNode>::iterator mLastNode;
 
+    // TODO: Refactor replay vehicle logic to... somewhere else.
     Vehicle mReplayVehicle;
+    std::unique_ptr<CWrappedBlip> mReplayVehicleBlip;
 
     std::vector<CReplayData> mUnsavedRuns;
     CReplayData mCurrentRun;

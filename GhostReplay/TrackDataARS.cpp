@@ -2,8 +2,8 @@
 #include "Util/Logger.hpp"
 #include "Util/Math.hpp"
 #include <pugixml/src/pugixml.hpp>
+#include <fmt/format.h>
 #include <fstream>
-
 
 #define VERIFY_NODE(parent, node, name) \
     parent.child((name)); \
@@ -50,7 +50,7 @@ CTrackData CTrackData::ReadARS(const std::string& trackFile) {
             goto errorHandling;
         }
 
-        trackData.Name = nameNode.text().as_string();
+        trackData.Name = fmt::format("[ARS] {}", nameNode.text().as_string());
 
         bool circuit = Distance(trackCoords.front().v, trackCoords.back().v) < 5.0f;
 

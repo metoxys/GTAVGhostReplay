@@ -83,7 +83,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 context.SetReplayState(EReplayState::Finished);
         }
 
-        bool recording = context.GetRecordState() == ERecordState::Recording;
+        bool recording = context.IsRecording();
         std::string recordAbortOption = recording ? "Cancel recording" : "~m~Cancel recording";
         std::vector<std::string> recordAbortDetail;
         if (recording) {
@@ -92,7 +92,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         }
         if (mbCtx.Option(recordAbortOption, recordAbortDetail)) {
             if (recording)
-                context.SetRecordState(ERecordState::Finished);
+                context.StopRecording();
         }
 
         if (mbCtx.MenuOption("Track setup", "tracksetupmenu")) {

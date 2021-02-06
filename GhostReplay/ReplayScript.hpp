@@ -17,7 +17,6 @@ enum class EScriptMode {
 enum class ERecordState {
     Idle,
     Recording,
-    Finished,
 };
 
 class CReplayScript {
@@ -74,12 +73,13 @@ public:
             mReplayVehicle->SetReplayState(replayState);
     }
 
-    ERecordState GetRecordState() {
-        return mRecordState;
+    bool IsRecording() {
+        return mRecordState == ERecordState::Recording;
     }
 
-    void SetRecordState(ERecordState recordState) {
-        mRecordState = recordState;
+    void StopRecording() {
+        mRecordState = ERecordState::Idle;
+        mCurrentRun = CReplayData("");
     }
 
     Vehicle GetReplayVehicle() {
@@ -110,6 +110,9 @@ protected:
     void updateRecord(unsigned long long gameTime, bool startPassedThisTick, bool finishPassedThisTick);
     void updateTrackDefine();
     bool passedLineThisTick(SLineDef line, Vector3 oldPos, Vector3 newPos);
+    void startRecord(unsigned long long gameTime, Vehicle vehicle);
+    bool saveNode(unsigned long long gameTime, SReplayNode& node, Vehicle vehicle, bool firstNode);
+    void finishRecord(bool saved, const SReplayNode& node);
     void clearPtfx();
     void createPtfx(const CTrackData& trackData);
 

@@ -387,113 +387,33 @@ void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedTh
         return;
     }
 
-    Vector3 nowPos = ENTITY::GET_ENTITY_COORDS(vehicle, true);
-    Vector3 nowRot = ENTITY::GET_ENTITY_ROTATION(vehicle, 0);
-
     switch (mRecordState) {
         case ERecordState::Idle: {
             if (startPassedThisTick) {
                 mRecordState = ERecordState::Recording;
-                recordStart = gameTime;
-                mCurrentRun.Timestamp = std::chrono::duration_cast<std::chrono::milliseconds>
-                    (std::chrono::system_clock::now().time_since_epoch()).count();
-                mCurrentRun.Track = mActiveTrack->Name;
-                mCurrentRun.Nodes.clear();
-                mCurrentRun.VehicleModel = ENTITY::GET_ENTITY_MODEL(vehicle);
-
-                VehicleModData modData = VehicleModData::LoadFrom(vehicle);
-                mCurrentRun.VehicleMods = modData;
-                //UI::Notify("Record started", false);
-            }
-            else {
-                break;
-            }
-            [[fallthrough]];
-        }
-        case ERecordState::Recording: {
-            if (ENTITY::GET_ENTITY_MODEL(vehicle) != mCurrentRun.VehicleModel) {
-                mRecordState = ERecordState::Finished;
-                break;
-            }
-            SReplayNode node{};
-            node.Timestamp = gameTime - recordStart;
-            node.Pos = nowPos;
-            node.Rot = nowRot;
-            node.WheelRotations = VExt::GetWheelRotations(vehicle);
-            node.SuspensionCompressions = VExt::GetWheelCompressions(vehicle);
-
-            node.SteeringAngle = VExt::GetSteeringAngle(vehicle);
-            node.Throttle = VExt::GetThrottleP(vehicle);
-            node.Brake = VExt::GetBrakeP(vehicle);
-
-            node.Gear = VExt::GetGearCurr(vehicle);
-            node.RPM = VExt::GetCurrentRPM(vehicle);
-
-            BOOL areLowBeamsOn, areHighBeamsOn;
-            VEHICLE::GET_VEHICLE_LIGHTS_STATE(vehicle, &areLowBeamsOn, &areHighBeamsOn);
-            node.LowBeams = areLowBeamsOn;
-            node.HighBeams = areHighBeamsOn;
-
-            bool saved = false;
-            unsigned long long lastNodeTime = 0;
-            if (!mCurrentRun.Nodes.empty()) {
-                lastNodeTime = mCurrentRun.Nodes.back().Timestamp;
-            }
-            if (node.Timestamp >= lastNodeTime + mSettings.Record.DeltaMillis) {
-                mCurrentRun.Nodes.push_back(node);
-                saved = true;
-            }
-
-            if (finishPassedThisTick) {
-                mRecordState = ERecordState::Finished;
-                if (!saved) {
-                    mCurrentRun.Nodes.push_back(node);
-                }
-
-                bool fastestLap = false;
-                bool fasterLap = false;
-
-                if (mActiveReplay) {
-                    fasterLap = node.Timestamp < mActiveReplay->Nodes.back().Timestamp;
-                }
-                else {
-                    fasterLap = true;
-                }
-                if (fasterLap) {
-                    fastestLap = IsFastestLap(mCurrentRun.Track, 0, node.Timestamp);
-                }
-
-                std::string lapInfo;
-
-                if (mSettings.Record.AutoGhost && (!mActiveReplay || fasterLap)) {
-                    mCurrentRun.Name = Util::FormatReplayName(
-                        node.Timestamp,
-                        mCurrentRun.Track,
-                        Util::GetVehicleName(mCurrentRun.VehicleModel));
-                    CReplayData::WriteAsync(mCurrentRun);
-                    GhostReplay::AddReplay(mCurrentRun);
-                    mCompatibleReplays.push_back(mCurrentRun);
-                    SetReplay(mCurrentRun.Name, mCurrentRun.Timestamp);
-                }
-                else {
-                    mUnsavedRuns.push_back(mCurrentRun);
-                }
-
-                lapInfo = fmt::format("Lap time: {}{}",
-                    fastestLap ? "~p~" : fasterLap ? "~g~" : "~y~",
-                    Util::FormatMillisTime(node.Timestamp));
-
-                // TODO: Movable UI element with current time & laptime & delta?
-
-                if (mSettings.Main.NotifyLaps) {
-                    UI::Notify(lapInfo, false);
-                }
+                startRecord(gameTime, vehicle);
+                SReplayNode node{};
+                saveNode(gameTime, node, vehicle, true);
             }
             break;
         }
-        case ERecordState::Finished: {
-            mRecordState = ERecordState::Idle;
-            mCurrentRun = CReplayData("");
+        case ERecordState::Recording: {
+            if (ENTITY::GET_ENTITY_MODEL(vehicle) != mCurrentRun.VehicleModel) {
+                mRecordState = ERecordState::Idle;
+                mCurrentRun = CReplayData("");
+                break;
+            }
+            SReplayNode node{};
+            bool saved = saveNode(gameTime, node, vehicle, false);
+
+            if (finishPassedThisTick) {
+                mRecordState = ERecordState::Idle;
+                finishRecord(saved, node);
+                if (startPassedThisTick) {
+                    mRecordState = ERecordState::Recording;
+                    startRecord(gameTime, vehicle);
+                }
+            }
             break;
         }
     }
@@ -510,6 +430,96 @@ bool CReplayScript::passedLineThisTick(SLineDef line, Vector3 oldPos, Vector3 ne
     float oldSgn = sgn(GetAngleABC(line.A, line.B, oldPos));
     float newSgn = sgn(GetAngleABC(line.A, line.B, newPos));
     return oldSgn != newSgn && oldSgn > 0.0f;
+}
+
+void CReplayScript::startRecord(unsigned long long gameTime, Vehicle vehicle) {
+    recordStart = gameTime;
+    mCurrentRun.Timestamp = std::chrono::duration_cast<std::chrono::milliseconds>
+        (std::chrono::system_clock::now().time_since_epoch()).count();
+    mCurrentRun.Track = mActiveTrack->Name;
+    mCurrentRun.Nodes.clear();
+    mCurrentRun.VehicleModel = ENTITY::GET_ENTITY_MODEL(vehicle);
+
+    VehicleModData modData = VehicleModData::LoadFrom(vehicle);
+    mCurrentRun.VehicleMods = modData;
+    //UI::Notify("Record started", false);
+}
+
+bool CReplayScript::saveNode(unsigned long long gameTime, SReplayNode& node, Vehicle vehicle, bool firstNode) {
+    Vector3 nowPos = ENTITY::GET_ENTITY_COORDS(vehicle, true);
+    Vector3 nowRot = ENTITY::GET_ENTITY_ROTATION(vehicle, 0);
+
+    node.Timestamp = gameTime - recordStart;
+    node.Pos = nowPos;
+    node.Rot = nowRot;
+    node.WheelRotations = VExt::GetWheelRotations(vehicle);
+    node.SuspensionCompressions = VExt::GetWheelCompressions(vehicle);
+
+    node.SteeringAngle = VExt::GetSteeringAngle(vehicle);
+    node.Throttle = VExt::GetThrottleP(vehicle);
+    node.Brake = VExt::GetBrakeP(vehicle);
+
+    node.Gear = VExt::GetGearCurr(vehicle);
+    node.RPM = VExt::GetCurrentRPM(vehicle);
+
+    BOOL areLowBeamsOn, areHighBeamsOn;
+    VEHICLE::GET_VEHICLE_LIGHTS_STATE(vehicle, &areLowBeamsOn, &areHighBeamsOn);
+    node.LowBeams = areLowBeamsOn;
+    node.HighBeams = areHighBeamsOn;
+
+    bool saved = false;
+    unsigned long long lastNodeTime = 0;
+    if (!mCurrentRun.Nodes.empty()) {
+        lastNodeTime = mCurrentRun.Nodes.back().Timestamp;
+    }
+    if (node.Timestamp >= lastNodeTime + mSettings.Record.DeltaMillis || firstNode) {
+        mCurrentRun.Nodes.push_back(node);
+        saved = true;
+    }
+    return saved;
+}
+
+void CReplayScript::finishRecord(bool saved, const SReplayNode& node) {
+    if (!saved) {
+        mCurrentRun.Nodes.push_back(node);
+    }
+
+    bool fastestLap = false;
+    bool fasterLap = false;
+
+    if (mActiveReplay) {
+        fasterLap = node.Timestamp < mActiveReplay->Nodes.back().Timestamp;
+    }
+    else {
+        fasterLap = true;
+    }
+    if (fasterLap) {
+        fastestLap = IsFastestLap(mCurrentRun.Track, 0, node.Timestamp);
+    }
+
+    if (mSettings.Record.AutoGhost && (!mActiveReplay || fasterLap)) {
+        mCurrentRun.Name = Util::FormatReplayName(
+            node.Timestamp,
+            mCurrentRun.Track,
+            Util::GetVehicleName(mCurrentRun.VehicleModel));
+        CReplayData::WriteAsync(mCurrentRun);
+        GhostReplay::AddReplay(mCurrentRun);
+        mCompatibleReplays.push_back(mCurrentRun);
+        SetReplay(mCurrentRun.Name, mCurrentRun.Timestamp);
+    }
+    else {
+        mUnsavedRuns.push_back(mCurrentRun);
+    }
+
+    std::string lapInfo = fmt::format("Lap time: {}{}",
+                                      fastestLap ? "~p~" : fasterLap ? "~g~" : "~y~",
+                                      Util::FormatMillisTime(node.Timestamp));
+
+    // TODO: Movable UI element with current time & laptime & delta?
+
+    if (mSettings.Main.NotifyLaps) {
+        UI::Notify(lapInfo, false);
+    }
 }
 
 void CReplayScript::clearPtfx() {

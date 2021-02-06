@@ -68,9 +68,9 @@ public:
         return EReplayState::Idle;
     }
 
-    void SetReplayState(EReplayState replayState) {
+    void StopReplay() {
         if (mReplayVehicle)
-            mReplayVehicle->SetReplayState(replayState);
+            mReplayVehicle->StopReplay();
     }
 
     bool IsRecording() {

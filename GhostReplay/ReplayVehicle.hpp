@@ -7,7 +7,6 @@
 enum class EReplayState {
     Idle,
     Playing,
-    Finished,
 };
 
 class CReplayVehicle {
@@ -19,7 +18,7 @@ public:
     CReplayVehicle(CReplayVehicle&&) = delete;
     CReplayVehicle& operator=(CReplayVehicle&&) = delete;
 
-    ~CReplayVehicle() = default;
+    ~CReplayVehicle();
 
     Vehicle GetVehicle() { return mReplayVehicle; }
 
@@ -29,8 +28,9 @@ public:
         return mReplayState;
     }
 
-    void SetReplayState(EReplayState replayState) {
-        mReplayState = replayState;
+    void StopReplay() {
+        mReplayState = EReplayState::Idle;
+        resetReplay();
     }
 
 private:
@@ -43,6 +43,10 @@ private:
     EReplayState mReplayState;
     unsigned long long replayStart = 0;
     std::vector<SReplayNode>::iterator mLastNode;
+
+    void startReplay(unsigned long long gameTime);
+    void showNode(unsigned long long replayTime, bool, const std::vector<SReplayNode>::iterator& nodeCurr);
+    void resetReplay();
 
     void createReplayVehicle(Hash model, CReplayData* activeReplay, Vector3 pos);
     void createBlip();

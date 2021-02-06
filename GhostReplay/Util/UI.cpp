@@ -34,7 +34,7 @@ void showNotification(const std::string& message, int* prevNotification) {
 }
 
 void UI::Notify(const std::string& message) {
-    Notify(message, true);
+    Notify(message, false);
 }
 
 void UI::Notify(const std::string& message, bool removePrevious) {

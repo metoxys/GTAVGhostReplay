@@ -1,4 +1,5 @@
 #include "ReplayVehicle.hpp"
+#include "Script.hpp"
 #include "Util/UI.hpp"
 #include "Util/Logger.hpp"
 #include "Util/Math.hpp"
@@ -17,9 +18,15 @@ CReplayVehicle::CReplayVehicle(const CScriptSettings& settings, CReplayData* act
     createReplayVehicle(activeReplay->VehicleModel, activeReplay, activeReplay->Nodes[0].Pos);
 }
 
+CReplayVehicle::~CReplayVehicle() {
+    if (!Dll::Unloading())
+        resetReplay();
+}
+
 void CReplayVehicle::UpdatePlayback(unsigned long long gameTime, bool startPassedThisTick, bool finishPassedThisTick) {
     if (!mActiveReplay) {
         mReplayState = EReplayState::Idle;
+        resetReplay();
         return;
     }
 
@@ -27,20 +34,9 @@ void CReplayVehicle::UpdatePlayback(unsigned long long gameTime, bool startPasse
         case EReplayState::Idle: {
             if (startPassedThisTick) {
                 mReplayState = EReplayState::Playing;
-                replayStart = gameTime;
-                ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, true, true);
-                ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, map(mSettings.Replay.VehicleAlpha, 0, 100, 0, 255), false);
-                ENTITY::SET_ENTITY_COMPLETELY_DISABLE_COLLISION(mReplayVehicle, false, false);
-                VEHICLE::SET_VEHICLE_ENGINE_ON(mReplayVehicle, true, true, false);
-                mLastNode = mActiveReplay->Nodes.begin();
-
-                if (mSettings.Main.GhostBlips)
-                    createBlip();
+                startReplay(gameTime);
             }
-            else {
-                break;
-            }
-            [[fallthrough]];
+            break;
         }
         case EReplayState::Playing: {
             auto replayTime = gameTime - replayStart;
@@ -52,70 +48,91 @@ void CReplayVehicle::UpdatePlayback(unsigned long long gameTime, bool startPasse
 
             bool lastNode = nodeCurr == std::prev(mActiveReplay->Nodes.end());
             if (nodeCurr == mActiveReplay->Nodes.end() || lastNode) {
-                mReplayState = EReplayState::Finished;
+                mReplayState = EReplayState::Idle;
+                resetReplay();
                 //UI::Notify("Replay finished", false);
                 break;
             }
+            showNode(replayTime, lastNode, nodeCurr);
 
-            auto nodeNext = lastNode ? nodeCurr : std::next(nodeCurr);
-
-            float progress = ((float)replayTime - (float)nodeCurr->Timestamp) /
-                ((float)nodeNext->Timestamp - (float)nodeCurr->Timestamp);
-
-            Vector3 pos = lerp(nodeCurr->Pos, nodeNext->Pos, progress);
-            Vector3 rot = lerp(nodeCurr->Rot, nodeNext->Rot, progress, -180.0f, 180.0f);
-            ENTITY::SET_ENTITY_COORDS_NO_OFFSET(mReplayVehicle, pos.x, pos.y, pos.z, false, false, false);
-            ENTITY::SET_ENTITY_ROTATION(mReplayVehicle, rot.x, rot.y, rot.z, 0, false);
-
-            if (VExt::GetNumWheels(mReplayVehicle) == nodeCurr->WheelRotations.size()) {
-                for (uint8_t idx = 0; idx < VExt::GetNumWheels(mReplayVehicle); ++idx) {
-                    float wheelRot = lerp(nodeCurr->WheelRotations[idx], nodeNext->WheelRotations[idx], progress,
-                        -static_cast<float>(M_PI), static_cast<float>(M_PI));
-                    VExt::SetWheelRotation(mReplayVehicle, idx, wheelRot);
-                }
-            }
-
-            VExt::SetSteeringAngle(mReplayVehicle, nodeCurr->SteeringAngle);
-            VExt::SetThrottle(mReplayVehicle, nodeCurr->Throttle);
-            VExt::SetThrottleP(mReplayVehicle, nodeCurr->Throttle);
-            VExt::SetBrakeP(mReplayVehicle, nodeCurr->Brake);
-
-            if (nodeCurr->Gear >= 0 && nodeCurr->RPM > 0.0f) {
-                VExt::SetGearCurr(mReplayVehicle, static_cast<uint16_t>(nodeCurr->Gear));
-                VExt::SetGearNext(mReplayVehicle, static_cast<uint16_t>(nodeCurr->Gear));
-                VExt::SetCurrentRPM(mReplayVehicle, nodeCurr->RPM);
-            }
-
-            if (VExt::GetNumWheels(mReplayVehicle) == nodeCurr->SuspensionCompressions.size()) {
-                for (uint8_t idx = 0; idx < VExt::GetNumWheels(mReplayVehicle); ++idx) {
-                    float susp = lerp(nodeCurr->SuspensionCompressions[idx], nodeNext->SuspensionCompressions[idx], progress);
-                    VExt::SetWheelCompression(mReplayVehicle, idx, susp);
-                }
-            }
-
-            VEHICLE::SET_VEHICLE_BRAKE_LIGHTS(mReplayVehicle, nodeCurr->Brake > 0.1f);
-
-            VEHICLE::SET_VEHICLE_LIGHTS(mReplayVehicle, nodeCurr->LowBeams ? 3 : 4);
-            VEHICLE::SET_VEHICLE_FULLBEAM(mReplayVehicle, nodeCurr->HighBeams);
-
+            // On a faster player lap, the current replay is nuked and this doesn't run, but better to
+            // not rely on that behavior and have this here anyway, in case that part changes.
             if (finishPassedThisTick) {
-                mReplayState = EReplayState::Finished;
-                //UI::Notify("Player finished", false);
+                mReplayState = EReplayState::Idle;
+                resetReplay();
+                if (startPassedThisTick) {
+                    mReplayState = EReplayState::Playing;
+                    startReplay(gameTime);
+                }
             }
-            break;
-        }
-        case EReplayState::Finished: {
-            mReplayState = EReplayState::Idle;
-            ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, false, false);
-            ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, 0, false);
-            ENTITY::SET_ENTITY_COLLISION(mReplayVehicle, false, false);
-            VExt::SetCurrentRPM(mReplayVehicle, 0.0f);
-            mLastNode = mActiveReplay->Nodes.begin();
-
-            deleteBlip();
             break;
         }
     }
+}
+
+void CReplayVehicle::startReplay(unsigned long long gameTime) {
+    replayStart = gameTime;
+    ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, true, true);
+    ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, map(mSettings.Replay.VehicleAlpha, 0, 100, 0, 255), false);
+    ENTITY::SET_ENTITY_COMPLETELY_DISABLE_COLLISION(mReplayVehicle, false, false);
+    VEHICLE::SET_VEHICLE_ENGINE_ON(mReplayVehicle, true, true, false);
+    mLastNode = mActiveReplay->Nodes.begin();
+
+    if (mSettings.Main.GhostBlips)
+        createBlip();
+}
+
+void CReplayVehicle::showNode(unsigned long long replayTime, bool lastNode, const std::vector<SReplayNode>::iterator& nodeCurr) {
+    auto nodeNext = lastNode ? nodeCurr : std::next(nodeCurr);
+
+    float progress = ((float)replayTime - (float)nodeCurr->Timestamp) /
+        ((float)nodeNext->Timestamp - (float)nodeCurr->Timestamp);
+
+    Vector3 pos = lerp(nodeCurr->Pos, nodeNext->Pos, progress);
+    Vector3 rot = lerp(nodeCurr->Rot, nodeNext->Rot, progress, -180.0f, 180.0f);
+    ENTITY::SET_ENTITY_COORDS_NO_OFFSET(mReplayVehicle, pos.x, pos.y, pos.z, false, false, false);
+    ENTITY::SET_ENTITY_ROTATION(mReplayVehicle, rot.x, rot.y, rot.z, 0, false);
+
+    if (VExt::GetNumWheels(mReplayVehicle) == nodeCurr->WheelRotations.size()) {
+        for (uint8_t idx = 0; idx < VExt::GetNumWheels(mReplayVehicle); ++idx) {
+            float wheelRot = lerp(nodeCurr->WheelRotations[idx], nodeNext->WheelRotations[idx], progress,
+                -static_cast<float>(M_PI), static_cast<float>(M_PI));
+            VExt::SetWheelRotation(mReplayVehicle, idx, wheelRot);
+        }
+    }
+
+    VExt::SetSteeringAngle(mReplayVehicle, nodeCurr->SteeringAngle);
+    VExt::SetThrottle(mReplayVehicle, nodeCurr->Throttle);
+    VExt::SetThrottleP(mReplayVehicle, nodeCurr->Throttle);
+    VExt::SetBrakeP(mReplayVehicle, nodeCurr->Brake);
+
+    if (nodeCurr->Gear >= 0 && nodeCurr->RPM > 0.0f) {
+        VExt::SetGearCurr(mReplayVehicle, static_cast<uint16_t>(nodeCurr->Gear));
+        VExt::SetGearNext(mReplayVehicle, static_cast<uint16_t>(nodeCurr->Gear));
+        VExt::SetCurrentRPM(mReplayVehicle, nodeCurr->RPM);
+    }
+
+    if (VExt::GetNumWheels(mReplayVehicle) == nodeCurr->SuspensionCompressions.size()) {
+        for (uint8_t idx = 0; idx < VExt::GetNumWheels(mReplayVehicle); ++idx) {
+            float susp = lerp(nodeCurr->SuspensionCompressions[idx], nodeNext->SuspensionCompressions[idx], progress);
+            VExt::SetWheelCompression(mReplayVehicle, idx, susp);
+        }
+    }
+
+    VEHICLE::SET_VEHICLE_BRAKE_LIGHTS(mReplayVehicle, nodeCurr->Brake > 0.1f);
+
+    VEHICLE::SET_VEHICLE_LIGHTS(mReplayVehicle, nodeCurr->LowBeams ? 3 : 4);
+    VEHICLE::SET_VEHICLE_FULLBEAM(mReplayVehicle, nodeCurr->HighBeams);
+}
+
+void CReplayVehicle::resetReplay() {
+    ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, false, false);
+    ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, 0, false);
+    ENTITY::SET_ENTITY_COLLISION(mReplayVehicle, false, false);
+    VExt::SetCurrentRPM(mReplayVehicle, 0.0f);
+    mLastNode = mActiveReplay->Nodes.begin();
+
+    deleteBlip();
 }
 
 void CReplayVehicle::createReplayVehicle(Hash model, CReplayData* activeReplay, Vector3 pos) {

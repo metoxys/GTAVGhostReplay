@@ -80,7 +80,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         }
         if (mbCtx.Option(replayAbortOption, replayAbortDetail)) {
             if (replaying)
-                context.SetReplayState(EReplayState::Finished);
+                context.StopReplay();
         }
 
         bool recording = context.IsRecording();

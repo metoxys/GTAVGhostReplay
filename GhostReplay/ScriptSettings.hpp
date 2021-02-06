@@ -12,6 +12,7 @@ public:
         bool NotifyLaps = true;
         bool DrawStartFinish = true;
         bool GhostBlips = true;
+        bool StartStopBlips = true;
     } Main;
 
     struct {

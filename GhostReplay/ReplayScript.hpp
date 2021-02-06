@@ -115,6 +115,8 @@ protected:
     void finishRecord(bool saved, const SReplayNode& node);
     void clearPtfx();
     void createPtfx(const CTrackData& trackData);
+    void clearTrackBlips();
+    void createTrackBlips(const CTrackData& trackData);
 
     const CScriptSettings& mSettings;
     std::vector<CReplayData>& mReplays;
@@ -126,15 +128,14 @@ protected:
     CReplayData* mActiveReplay;
     CTrackData* mActiveTrack;
 
+    std::unique_ptr<CWrappedBlip> mStartBlip;
+    std::unique_ptr<CWrappedBlip> mFinishBlip;
+
     EScriptMode mScriptMode;
     ERecordState mRecordState;
     unsigned long long recordStart = 0;
 
     Vector3 mLastPos;
-
-    // TODO: Refactor replay vehicle logic to... somewhere else.
-    //Vehicle mReplayVehicle;
-    //std::unique_ptr<CWrappedBlip> mReplayVehicleBlip;
 
     std::unique_ptr<CReplayVehicle> mReplayVehicle;
 

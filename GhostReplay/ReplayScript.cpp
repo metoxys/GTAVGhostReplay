@@ -93,6 +93,7 @@ void CReplayScript::SetTrack(const std::string& trackName) {
     SetReplay("");
     mCompatibleReplays.clear();
     clearPtfx();
+    clearTrackBlips();
 
     if (trackName.empty()) {
         mActiveTrack = nullptr;
@@ -124,7 +125,11 @@ void CReplayScript::SetTrack(const std::string& trackName) {
         mReplayVehicle.reset();
         mRecordState = ERecordState::Idle;
         mCompatibleReplays = GetCompatibleReplays(trackName);
-        createPtfx(*foundTrack);
+        if (mSettings.Main.DrawStartFinish)
+            createPtfx(*foundTrack);
+
+        if (mSettings.Main.StartStopBlips)
+            createTrackBlips(*foundTrack);
 
         if (mSettings.Replay.AutoLoadGhost) {
             Vehicle vehicle = PED::GET_VEHICLE_PED_IS_IN(PLAYER::PLAYER_PED_ID(), false);
@@ -562,5 +567,36 @@ void CReplayScript::createPtfx(const CTrackData& trackData) {
 
         mPtfxHandles.push_back(Util::CreateParticleFxAtCoord(assetName, effectName, A, 1.0f, 0.0f, 0.0f, 1.0f));
         mPtfxHandles.push_back(Util::CreateParticleFxAtCoord(assetName, effectName, B, 1.0f, 0.0f, 0.0f, 1.0f));
+    }
+}
+
+void CReplayScript::clearTrackBlips() {
+    mStartBlip.reset();
+    mFinishBlip.reset();
+}
+
+void CReplayScript::createTrackBlips(const CTrackData& trackData) {
+    Vector3 startBlipCoord = (trackData.StartLine.A + trackData.StartLine.B) * 0.5f;
+    Vector3 finishBlipCoord = (trackData.FinishLine.A + trackData.FinishLine.B) * 0.5f;
+
+    // Skip finish blip if it's within 5 meters of the start blip
+    float blipDist = Distance(startBlipCoord, finishBlipCoord);
+    bool showFinish = blipDist > 5.0f;
+
+    std::string startName = showFinish ? fmt::format("{} (Start)", trackData.Name) : trackData.Name;
+    eBlipColor startColor = showFinish ? eBlipColor::BlipColorBlue : eBlipColor::BlipColorWhite;
+
+    mStartBlip = std::make_unique<CWrappedBlip>(
+        startBlipCoord,
+        eBlipSprite::BlipSpriteRaceFinish,
+        startName,
+        startColor);
+
+    if (showFinish) {
+        mFinishBlip = std::make_unique<CWrappedBlip>(
+            finishBlipCoord,
+            eBlipSprite::BlipSpriteRaceFinish,
+            fmt::format("{} (Finish)", trackData.Name),
+            eBlipColor::BlipColorWhite);
     }
 }

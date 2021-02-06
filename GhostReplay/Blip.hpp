@@ -5,6 +5,7 @@
 
 class CWrappedBlip {
 public:
+    CWrappedBlip(Vector3 pos, eBlipSprite blip, std::string name, eBlipColor color);
     CWrappedBlip(Entity entity, eBlipSprite blip, std::string name, eBlipColor color, bool showHeading);
     ~CWrappedBlip();
 

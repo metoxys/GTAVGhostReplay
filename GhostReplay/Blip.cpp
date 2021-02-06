@@ -2,6 +2,16 @@
 #include "Script.hpp"
 #include <inc/natives.h>
 
+CWrappedBlip::CWrappedBlip(Vector3 pos, eBlipSprite blip, std::string name, eBlipColor color)
+    : mHandle(HUD::ADD_BLIP_FOR_COORD(pos.x, pos.y, pos.z))
+    , mEntity(0)
+    , mName(std::move(name)) {
+    SetSprite(blip);
+    SetName(name);
+    SetColor(color);
+    ShowHeading(false);
+}
+
 CWrappedBlip::CWrappedBlip(Entity entity, eBlipSprite blip, std::string name, eBlipColor color, bool showHeading)
     : mHandle(HUD::ADD_BLIP_FOR_ENTITY(entity))
     , mEntity(entity)
@@ -68,6 +78,7 @@ std::string CWrappedBlip::GetName() {
 }
 
 void CWrappedBlip::SetName(const std::string& name) {
+    mName = name;
     HUD::BEGIN_TEXT_COMMAND_SET_BLIP_NAME("STRING");
     HUD::ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(name.c_str());
     HUD::END_TEXT_COMMAND_SET_BLIP_NAME(mHandle);

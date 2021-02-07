@@ -32,7 +32,7 @@ namespace GhostReplay {
     bool replaySearchSelected = false;
     std::string replaySelectSearch;
 
-    std::vector<CReplayData> filteredReplays;
+    std::vector<std::shared_ptr<CReplayData>> filteredReplays;
 }
 
 std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
@@ -346,17 +346,17 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             bool currentReplay = false;
             if (context.ActiveReplay()) {
                 currentReplay =
-                    context.ActiveReplay()->Name == replay.Name &&
-                    context.ActiveReplay()->Timestamp == replay.Timestamp;
+                    context.ActiveReplay()->Name == replay->Name &&
+                    context.ActiveReplay()->Timestamp == replay->Timestamp;
             }
             std::string selector = currentReplay ? "-> " : "";
-            std::string deleteCol = replay.MarkedForDeletion ? "~r~" : "";
+            std::string deleteCol = replay->MarkedForDeletion ? "~r~" : "";
 
             std::vector<std::string> description{
                 "Press select to toggle replay selection.",
             };
 
-            if (!replay.MarkedForDeletion) {
+            if (!replay->MarkedForDeletion) {
                 description.emplace_back("Press Left to delete.");
             }
             else {
@@ -366,45 +366,45 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             }
 
             auto clearDeleteFlag = [&]() {
-                replay.MarkedForDeletion = false;
+                replay->MarkedForDeletion = false;
             };
 
             bool triggerBreak = false;
             auto deleteFlag = [&]() {
-                if (replay.MarkedForDeletion) {
-                    context.DeleteReplay(replay);
+                if (replay->MarkedForDeletion) {
+                    context.DeleteReplay(*replay);
                     triggerBreak = true;
                     UpdateReplayFilter(context);
                 }
                 else {
-                    replay.MarkedForDeletion = true;
+                    replay->MarkedForDeletion = true;
                 }
             };
 
             std::string optionNameRaw = fmt::format("{} - {}",
-                Util::FormatMillisTime(replay.Nodes.back().Timestamp),
-                Util::GetVehicleName(replay.VehicleModel));
+                Util::FormatMillisTime(replay->Nodes.back().Timestamp),
+                Util::GetVehicleName(replay->VehicleModel));
             std::string optionName = fmt::format("{}{}{}", deleteCol, selector, optionNameRaw);
             std::string datetime;
-            if (replay.Timestamp == 0) {
+            if (replay->Timestamp == 0) {
                 datetime = "No date";
             }
             else {
-                datetime = Util::GetTimestampReadable(replay.Timestamp);
+                datetime = Util::GetTimestampReadable(replay->Timestamp);
             }
             std::vector<std::string> extras
             {
-                fmt::format("Track: {}", replay.Track),
+                fmt::format("Track: {}", replay->Track),
                 fmt::format("Car: {} {}",
-                    Util::GetVehicleMake(replay.VehicleModel),
-                    Util::GetVehicleName(replay.VehicleModel)),
-                fmt::format("Time: {}",  Util::FormatMillisTime(replay.Nodes.back().Timestamp)),
+                    Util::GetVehicleMake(replay->VehicleModel),
+                    Util::GetVehicleName(replay->VehicleModel)),
+                fmt::format("Time: {}",  Util::FormatMillisTime(replay->Nodes.back().Timestamp)),
                 fmt::format("Lap recorded: {}", datetime),
             };
 
             if (mbCtx.OptionPlus(optionName, extras, nullptr, clearDeleteFlag, deleteFlag, "Ghost", description)) {
                 if (!currentReplay)
-                    context.SetReplay(replay.Name, replay.Timestamp);
+                    context.SetReplay(replay->Name, replay->Timestamp);
                 else
                     context.SetReplay("");
             }
@@ -457,7 +457,6 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 context.AddCompatibleReplay(unsavedRun);
 
                 unsavedRunIt = context.EraseUnsavedRun(unsavedRunIt);
-                //GhostReplay::LoadReplays();
             }
             else {
                 ++unsavedRunIt;
@@ -588,18 +587,18 @@ std::vector<std::string> GhostReplay::FormatTrackData(NativeMenu::Menu& mbCtx, C
 
     // compatibleReplays is ordered quickest to slowest.
     std::sort(compatibleReplays.begin(), compatibleReplays.end(),
-        [](const CReplayData& a, const CReplayData& b) {
-            return a.Nodes.back().Timestamp < b.Nodes.back().Timestamp;
+        [](const auto& a, const auto& b) {
+            return a->Nodes.back().Timestamp < b->Nodes.back().Timestamp;
         });
 
     std::vector<Hash> fastestModels;
     for (const auto& replay : compatibleReplays) {
-        if (std::find(fastestModels.begin(), fastestModels.end(), replay.VehicleModel) != fastestModels.end())
+        if (std::find(fastestModels.begin(), fastestModels.end(), replay->VehicleModel) != fastestModels.end())
             continue;
         extras.push_back(fmt::format("{} ({})",
-            Util::FormatMillisTime(replay.Nodes.back().Timestamp),
-            Util::GetVehicleName(replay.VehicleModel)));
-        fastestModels.push_back(replay.VehicleModel);
+            Util::FormatMillisTime(replay->Nodes.back().Timestamp),
+            Util::GetVehicleName(replay->VehicleModel)));
+        fastestModels.push_back(replay->VehicleModel);
     }
     return extras;
 }
@@ -681,16 +680,16 @@ void GhostReplay::UpdateReplayFilter(CReplayScript& context) {
         return;
 
     for (const auto& replay : context.GetCompatibleReplays(context.ActiveTrack()->Name)) {
-        std::string vehicleName = Util::GetVehicleName(replay.VehicleModel);
-        std::string tracktime = Util::FormatMillisTime(replay.Nodes.back().Timestamp);
+        std::string vehicleName = Util::GetVehicleName(replay->VehicleModel);
+        std::string tracktime = Util::FormatMillisTime(replay->Nodes.back().Timestamp);
         std::string datetime;
-        if (replay.Timestamp == 0) {
+        if (replay->Timestamp == 0) {
             datetime = "No date";
         }
         else {
-            datetime = Util::GetTimestampReadable(replay.Timestamp);
+            datetime = Util::GetTimestampReadable(replay->Timestamp);
         }
-        if (Util::FindSubstring(replay.Name, replaySelectSearch) != -1 ||
+        if (Util::FindSubstring(replay->Name, replaySelectSearch) != -1 ||
             Util::FindSubstring(vehicleName, replaySelectSearch) != -1 ||
             Util::FindSubstring(tracktime, replaySelectSearch) != -1 ||
             Util::FindSubstring(datetime, replaySelectSearch) != -1) {

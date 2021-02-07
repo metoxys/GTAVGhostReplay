@@ -23,14 +23,14 @@ class CReplayScript {
 public:
     CReplayScript(
         CScriptSettings& settings,
-        std::vector<CReplayData>& replays,
+        std::vector<std::shared_ptr<CReplayData>>& replays,
         std::vector<CTrackData>& tracks,
         std::vector<CImage>& trackImages,
         std::vector<CTrackData>& arsTracks);
     virtual ~CReplayScript();
     virtual void Tick();
 
-    std::vector<CReplayData>& GetReplays() {
+    std::vector<std::shared_ptr<CReplayData>>& GetReplays() {
         return mCompatibleReplays;
     }
 
@@ -93,7 +93,7 @@ public:
     void ClearUnsavedRuns();
     std::vector<CReplayData>::const_iterator EraseUnsavedRun(std::vector<CReplayData>::const_iterator runIt);
 
-    std::vector<CReplayData> GetCompatibleReplays(const std::string& trackName);
+    std::vector<std::shared_ptr<CReplayData>> GetCompatibleReplays(const std::string& trackName);
     void AddCompatibleReplay(const CReplayData& value);
 
     bool IsFastestLap(const std::string& trackName, Hash vehicleModel, unsigned long long timestamp);
@@ -119,8 +119,8 @@ protected:
     void createTrackBlips(const CTrackData& trackData);
 
     const CScriptSettings& mSettings;
-    std::vector<CReplayData>& mReplays;
-    std::vector<CReplayData> mCompatibleReplays;
+    std::vector<std::shared_ptr<CReplayData>>& mReplays;
+    std::vector<std::shared_ptr<CReplayData>> mCompatibleReplays;
     std::vector<CTrackData>& mTracks;
     std::vector<CImage>& mTrackImages;
     std::vector<CTrackData>& mArsTracks;

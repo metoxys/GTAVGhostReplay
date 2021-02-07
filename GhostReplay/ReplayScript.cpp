@@ -25,7 +25,7 @@ using VExt = VehicleExtensions;
 
 CReplayScript::CReplayScript(
     CScriptSettings& settings,
-    std::vector<CReplayData>& replays,
+    std::vector<std::shared_ptr<CReplayData>>& replays,
     std::vector<CTrackData>& tracks,
     std::vector<CImage>& trackImages,
     std::vector<CTrackData>& arsTracks)
@@ -153,11 +153,11 @@ void CReplayScript::SetReplay(const std::string& replayName, unsigned long long 
     }
 
     for (auto& replay : mReplays) {
-        bool nameOK = replay.Name == replayName;
-        bool timeOK = timestamp == 0 ? true : replay.Timestamp == timestamp;
+        bool nameOK = replay->Name == replayName;
+        bool timeOK = timestamp == 0 ? true : replay->Timestamp == timestamp;
 
         if (nameOK && timeOK) {
-            mActiveReplay = &replay;
+            mActiveReplay = &*replay;
             mRecordState = ERecordState::Idle;
             mReplayVehicle = std::make_unique<CReplayVehicle>(mSettings, mActiveReplay);
             return;
@@ -182,17 +182,17 @@ std::vector<CReplayData>::const_iterator CReplayScript::EraseUnsavedRun(std::vec
     return mUnsavedRuns.erase(runIt);
 }
 
-std::vector<CReplayData> CReplayScript::GetCompatibleReplays(const std::string& trackName) {
-    std::vector<CReplayData> replays;
+std::vector<std::shared_ptr<CReplayData>> CReplayScript::GetCompatibleReplays(const std::string& trackName) {
+    std::vector<std::shared_ptr<CReplayData>> replays;
     for (auto& replay : mReplays) {
-        if (replay.Track == trackName)
+        if (replay->Track == trackName)
             replays.push_back(replay);
     }
     return replays;
 }
 
 void CReplayScript::AddCompatibleReplay(const CReplayData& value) {
-    mCompatibleReplays.push_back(value);
+    mCompatibleReplays.push_back(std::make_shared<CReplayData>(value));
 }
 
 bool CReplayScript::IsFastestLap(const std::string& trackName, Hash vehicleModel, unsigned long long timestamp) {
@@ -208,15 +208,15 @@ CReplayData CReplayScript::GetFastestReplay(const std::string& trackName, Hash v
     CReplayData fastestReplay("");
 
     for (auto& replay : mReplays) {
-        if (replay.Track != trackName)
+        if (replay->Track != trackName)
             continue;
 
-        if (vehicleModel != 0 && replay.VehicleModel != vehicleModel)
+        if (vehicleModel != 0 && replay->VehicleModel != vehicleModel)
             continue;
 
         if (fastestReplay.Nodes.empty() ||
-            replay.Nodes.back().Timestamp < fastestReplay.Nodes.back().Timestamp) {
-            fastestReplay = replay;
+            replay->Nodes.back().Timestamp < fastestReplay.Nodes.back().Timestamp) {
+            fastestReplay = *replay;
         }
     }
     return fastestReplay;
@@ -304,12 +304,12 @@ void CReplayScript::DeleteTrack(const CTrackData& track) {
 }
 
 void CReplayScript::DeleteReplay(const CReplayData& replay) {
-    auto replayIt = std::find_if(mReplays.begin(), mReplays.end(), [&](const CReplayData& x) {
-        return x.FileName() == replay.FileName();
+    auto replayIt = std::find_if(mReplays.begin(), mReplays.end(), [&](const auto& x) {
+        return x->FileName() == replay.FileName();
     });
     // Because it's a copy, let's just update this in parallel.
-    auto replayCompIt = std::find_if(mCompatibleReplays.begin(), mCompatibleReplays.end(), [&](const CReplayData& x) {
-        return x.FileName() == replay.FileName();
+    auto replayCompIt = std::find_if(mCompatibleReplays.begin(), mCompatibleReplays.end(), [&](const auto& x) {
+        return x->FileName() == replay.FileName();
     });
 
     if (replayIt == mReplays.end()) {
@@ -318,7 +318,7 @@ void CReplayScript::DeleteReplay(const CReplayData& replay) {
         UI::Notify(fmt::format("[Replay] Failed to delete {}", replay.Name));
         return;
     }
-
+    
     if (replayCompIt == mCompatibleReplays.end()) {
         logger.Write(ERROR, "[Replay] Attempted to delete replay [%s] but didn't find it in the compatible list? Filename: [%s]",
             replay.Name.c_str(), replay.FileName().c_str());
@@ -509,7 +509,7 @@ void CReplayScript::finishRecord(bool saved, const SReplayNode& node) {
             Util::GetVehicleName(mCurrentRun.VehicleModel));
         CReplayData::WriteAsync(mCurrentRun);
         GhostReplay::AddReplay(mCurrentRun);
-        mCompatibleReplays.push_back(mCurrentRun);
+        mCompatibleReplays.push_back(std::make_shared<CReplayData>(mCurrentRun));
         SetReplay(mCurrentRun.Name, mCurrentRun.Timestamp);
     }
     else {

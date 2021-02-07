@@ -23,7 +23,7 @@ namespace {
     std::shared_ptr<CScriptSettings> settings;
     std::shared_ptr<CReplayScript> scriptInst;
 
-    std::vector<CReplayData> replays;
+    std::vector<std::shared_ptr<CReplayData>> replays;
     std::vector<CTrackData> tracks;
     std::vector<CTrackData> arsTracks;
     std::vector<CImage> trackImages;
@@ -34,7 +34,7 @@ namespace {
         }
 
         for (auto& replay : replays) {
-            replay.MarkedForDeletion = false;
+            replay->MarkedForDeletion = false;
         }
     }
 }
@@ -117,7 +117,7 @@ uint32_t GhostReplay::LoadReplays() {
 
         CReplayData replay = CReplayData::Read(fs::path(file).string());
         if (!replay.Nodes.empty())
-            replays.push_back(replay);
+            replays.push_back(std::make_shared<CReplayData>(replay));
         else
             logger.Write(WARN, "[Replay] Skipping [%s] - not a valid file", fs::path(file).string().c_str());
 
@@ -239,5 +239,5 @@ uint32_t GhostReplay::LoadARSTracks() {
 }
 
 void GhostReplay::AddReplay(CReplayData replay) {
-    replays.push_back(replay);
+    replays.push_back(std::make_shared<CReplayData>(replay));
 }

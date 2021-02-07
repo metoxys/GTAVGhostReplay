@@ -30,10 +30,9 @@ struct SReplayNode {
 class CReplayData {
 public:
     static CReplayData Read(const std::string& replayFile);
-    static void WriteAsync(const CReplayData& replayData);
+    static void WriteAsync(CReplayData& replayData);
 
     CReplayData(std::string fileName);
-    void Write();
     std::string FileName() const { return mFileName; }
     void Delete() const;
 
@@ -51,5 +50,10 @@ public:
     // chosen from.
     std::vector<SReplayNode> Nodes;
 private:
+    // Make sure mFileName has been set before calling this.
+    void write();
+    // Only run this before asynchronously calling write().
+    void generateFileName();
+
     std::string mFileName;
 };

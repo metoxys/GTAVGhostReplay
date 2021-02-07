@@ -86,7 +86,7 @@ CReplayData::CReplayData(std::string fileName)
     , VehicleModel(0)
     , mFileName(std::move(fileName)) {}
 
-void CReplayData::Write() {
+void CReplayData::write() {
     nlohmann::json replayJson;
 
     replayJson["Timestamp"] = Timestamp;
@@ -112,6 +112,12 @@ void CReplayData::Write() {
         });
     }
 
+    std::ofstream replayFile(mFileName);
+    replayFile << std::setw(2) << replayJson << std::endl;
+    logger.Write(INFO, "[Replay] Written %s", mFileName.c_str());
+}
+
+void CReplayData::generateFileName() {
     const std::string replaysPath =
         Paths::GetModuleFolder(Paths::GetOurModuleHandle()) +
         Constants::ModDir +
@@ -130,19 +136,14 @@ void CReplayData::Write() {
         }
     }
 
-    const std::string replayFileName = fmt::format("{}\\{}{}.json", replaysPath, cleanName, suffix);
-
-    std::ofstream replayFile(replayFileName);
-    replayFile << std::setw(2) << replayJson << std::endl;
-
-    logger.Write(INFO, "[Replay] Written %s", replayFileName.c_str());
-    mFileName = replayFileName;
+    mFileName = fmt::format("{}\\{}{}.json", replaysPath, cleanName, suffix);
 }
 
-void CReplayData::WriteAsync(const CReplayData& replayData) {
+void CReplayData::WriteAsync(CReplayData& replayData) {
+    replayData.generateFileName();
     std::thread([replayData]() {
         CReplayData myCopy = replayData;
-        myCopy.Write();
+        myCopy.write();
     }).detach();
 }
 

@@ -238,6 +238,6 @@ uint32_t GhostReplay::LoadARSTracks() {
     return static_cast<unsigned>(arsTracks.size());
 }
 
-void GhostReplay::AddReplay(CReplayData replay) {
+void GhostReplay::AddReplay(const CReplayData& replay) {
     replays.push_back(std::make_shared<CReplayData>(replay));
 }

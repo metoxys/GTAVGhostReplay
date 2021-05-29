@@ -523,6 +523,9 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         mbCtx.BoolOption("Auto-load quickest ghost", GetSettings().Replay.AutoLoadGhost, 
             { "Automatically loads the quickest ghost lap when a track is selected, for that specific car model." });
 
+        mbCtx.FloatOptionCb("Offset seconds", GetSettings().Replay.OffsetSeconds, -60.0f, 60.0f, 0.05f,
+            MenuUtils::GetKbFloat, { "Ghost offset. Positive is in front, negative is behind." });
+
         std::vector<std::string> replayAlphaDescr{
             "The transparency of the ghost vehicle. Applied on ghost lap start.",
             "0: completely invisible.",

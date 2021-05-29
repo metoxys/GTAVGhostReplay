@@ -25,6 +25,7 @@ public:
         std::string FallbackModel = "sultan";
         bool ForceFallbackModel = false;
         bool AutoLoadGhost = true;
+        float OffsetSeconds = 0.0f;
     } Replay;
 
 private:

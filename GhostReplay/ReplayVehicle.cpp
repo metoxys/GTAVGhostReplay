@@ -40,6 +40,7 @@ void CReplayVehicle::UpdatePlayback(unsigned long long gameTime, bool startPasse
         }
         case EReplayState::Playing: {
             auto replayTime = gameTime - replayStart;
+            replayTime += (unsigned long long)(mSettings.Replay.OffsetSeconds * 1000.0f);
             auto nodeCurr = std::upper_bound(mLastNode, mActiveReplay->Nodes.end(), SReplayNode{ replayTime });
             if (nodeCurr != mActiveReplay->Nodes.begin())
                 nodeCurr = std::prev(nodeCurr);
@@ -84,7 +85,6 @@ void CReplayVehicle::startReplay(unsigned long long gameTime) {
 
 void CReplayVehicle::showNode(unsigned long long replayTime, bool lastNode, const std::vector<SReplayNode>::iterator& nodeCurr) {
     auto nodeNext = lastNode ? nodeCurr : std::next(nodeCurr);
-
     float progress = ((float)replayTime - (float)nodeCurr->Timestamp) /
         ((float)nodeNext->Timestamp - (float)nodeCurr->Timestamp);
 

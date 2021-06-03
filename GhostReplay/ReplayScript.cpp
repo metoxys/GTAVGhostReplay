@@ -99,6 +99,10 @@ void CReplayScript::SetTrack(const std::string& trackName) {
         mActiveTrack = nullptr;
         mReplayVehicle.reset();
         mRecordState = ERecordState::Idle;
+        if (RagePresence::AreCustomDetailsSet())
+            RagePresence::ClearCustomDetails();
+        if (RagePresence::IsCustomStateSet())
+            RagePresence::ClearCustomState();
         return;
     }
 
@@ -121,6 +125,8 @@ void CReplayScript::SetTrack(const std::string& trackName) {
     }
 
     if (foundTrack != nullptr) {
+        bool alone = true;
+
         mActiveTrack = foundTrack;
         mReplayVehicle.reset();
         mRecordState = ERecordState::Idle;
@@ -136,8 +142,14 @@ void CReplayScript::SetTrack(const std::string& trackName) {
             auto fastestReplay = GetFastestReplay(trackName, ENTITY::GET_ENTITY_MODEL(vehicle));
             if (!fastestReplay.Name.empty() && ENTITY::DOES_ENTITY_EXIST(vehicle)) {
                 SetReplay(fastestReplay.Name, fastestReplay.Timestamp);
+                alone = false;
             }
         }
+
+        if (alone)
+            RagePresence::SetCustomDetails("Setting a new laptime");
+        RagePresence::SetCustomState(fmt::format("GhostReplay Track: {}", foundTrack->Name).c_str());
+
         return;
     }
 
@@ -160,6 +172,10 @@ void CReplayScript::SetReplay(const std::string& replayName, unsigned long long 
             mActiveReplay = &*replay;
             mRecordState = ERecordState::Idle;
             mReplayVehicle = std::make_unique<CReplayVehicle>(mSettings, mActiveReplay);
+
+            std::string opponent = Util::GetVehicleName(replay->VehicleModel);
+            std::string timestamp = Util::FormatMillisTime(replay->Nodes.back().Timestamp);
+            RagePresence::SetCustomDetails(fmt::format("Racing ghost {} | {}", opponent, timestamp).c_str());
             return;
         }
     }

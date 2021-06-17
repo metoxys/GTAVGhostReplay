@@ -35,11 +35,13 @@ void CScriptSettings::Load() {
     LOAD_VAL("Record", "AutoGhost", Record.AutoGhost);
     LOAD_VAL("Record", "DeltaMillis", Record.DeltaMillis);
 
+    LOAD_VAL("Replay", "OffsetSeconds", Replay.OffsetSeconds);
     LOAD_VAL("Replay", "VehicleAlpha", Replay.VehicleAlpha);
+    LOAD_VAL("Replay", "ForceLights", Replay.ForceLights);
+
     LOAD_VAL("Replay", "FallbackModel", Replay.FallbackModel);
     LOAD_VAL("Replay", "ForceFallbackModel", Replay.ForceFallbackModel);
     LOAD_VAL("Replay", "AutoLoadGhost", Replay.AutoLoadGhost);
-    LOAD_VAL("Replay", "OffsetSeconds", Replay.OffsetSeconds);
 }
 
 void CScriptSettings::Save() {
@@ -55,11 +57,13 @@ void CScriptSettings::Save() {
     SAVE_VAL("Record", "AutoGhost", Record.AutoGhost);
     SAVE_VAL("Record", "DeltaMillis", Record.DeltaMillis);
 
+    SAVE_VAL("Replay", "OffsetSeconds", Replay.OffsetSeconds);
     SAVE_VAL("Replay", "VehicleAlpha", Replay.VehicleAlpha);
+    SAVE_VAL("Replay", "ForceLights", Replay.ForceLights);
+
     SAVE_VAL("Replay", "FallbackModel", Replay.FallbackModel);
     SAVE_VAL("Replay", "ForceFallbackModel", Replay.ForceFallbackModel);
     SAVE_VAL("Replay", "AutoLoadGhost", Replay.AutoLoadGhost);
-    SAVE_VAL("Replay", "OffsetSeconds", Replay.OffsetSeconds);
 
     result = ini.SaveFile(mSettingsFile.c_str());
     CHECK_LOG_SI_ERROR(result, "save");

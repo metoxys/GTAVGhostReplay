@@ -21,11 +21,15 @@ public:
     } Record;
 
     struct {
+        // Normal
+        float OffsetSeconds = 0.0f;
         int VehicleAlpha = 40;
+        int ForceLights = 0;
+
+        // Advanced
         std::string FallbackModel = "sultan";
         bool ForceFallbackModel = false;
         bool AutoLoadGhost = true;
-        float OffsetSeconds = 0.0f;
     } Replay;
 
 private:

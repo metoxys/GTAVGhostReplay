@@ -33,6 +33,8 @@ namespace GhostReplay {
     std::string replaySelectSearch;
 
     std::vector<std::shared_ptr<CReplayData>> filteredReplays;
+
+    const std::vector<std::string> lightsOptions = { "Default", "Force Off", "Force On" };
 }
 
 std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
@@ -114,6 +116,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             UI::Notify("Tracks and replays refreshed", false);
         }
 
+        mbCtx.MenuOption("Ghost options", "ghostoptionsmenu");
         mbCtx.MenuOption("Settings", "settingsmenu");
     });
 
@@ -468,6 +471,37 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         }
     });
 
+    /* mainmenu -> ghostoptionsmenu */
+    submenus.emplace_back("ghostoptionsmenu", [](NativeMenu::Menu& mbCtx, CReplayScript& context) {
+        mbCtx.Title("Ghost options");
+        mbCtx.Subtitle("");
+
+        mbCtx.FloatOptionCb("Offset (seconds)", GetSettings().Replay.OffsetSeconds, -60.0f, 60.0f, 0.05f,
+            MenuUtils::GetKbFloat, { "Ghost offset. Positive is in front, negative is behind." });
+
+        std::vector<std::string> replayAlphaDescr{
+            "The transparency of the ghost vehicle.",
+            "0: completely invisible.",
+            "100: completely visible.",
+        };
+        int replayAlpha = GetSettings().Replay.VehicleAlpha;
+        if (mbCtx.IntOptionCb("Ghost opacity %", replayAlpha, 0, 100, 20, MenuUtils::GetKbInt, replayAlphaDescr)) {
+            if (replayAlpha < 0)
+                replayAlpha = 0;
+            if (replayAlpha > 100)
+                replayAlpha = 100;
+            GetSettings().Replay.VehicleAlpha = replayAlpha;
+            ENTITY::SET_ENTITY_ALPHA(
+                context.GetReplayVehicle(),
+                map(GetSettings().Replay.VehicleAlpha, 0, 100, 0, 255), false);
+        }
+
+        mbCtx.StringArray("Lights", lightsOptions, GetSettings().Replay.ForceLights,
+            { "Default: Replay lights as recorded.",
+              "Forced Off: Always lights off.",
+              "Forced On: Always use low beam.", });
+    });
+
     /* mainmenu -> settingsmenu */
     submenus.emplace_back("settingsmenu", [](NativeMenu::Menu& mbCtx, CReplayScript& context) {
         mbCtx.Title("Settings");
@@ -492,13 +526,13 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
               "Setting applies next time a track is selected.",
               "Draws separate start (blue) and finish (white) blips when they're further apart than 5 meters."});
 
-        mbCtx.MenuOption("Recording options", "recordoptionsmenu");
-        mbCtx.MenuOption("Replay/ghost options", "replayoptionsmenu");
+        mbCtx.MenuOption("Recording settings", "recordsettingsmenu");
+        mbCtx.MenuOption("Advanced ghost settings", "advghostsettingsmenu");
     });
 
-    /* mainmenu -> settingsmenu -> recordoptionsmenu */
-    submenus.emplace_back("recordoptionsmenu", [](NativeMenu::Menu& mbCtx, CReplayScript& context) {
-        mbCtx.Title("Recording options");
+    /* mainmenu -> settingsmenu -> recordsettingsmenu */
+    submenus.emplace_back("recordsettingsmenu", [](NativeMenu::Menu& mbCtx, CReplayScript& context) {
+        mbCtx.Title("Recording settings");
         mbCtx.Subtitle("");
 
         mbCtx.BoolOption("Automatically save faster laps", GetSettings().Record.AutoGhost,
@@ -515,33 +549,13 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         }
     });
 
-    /* mainmenu -> settingsmenu -> replayoptionsmenu */
-    submenus.emplace_back("replayoptionsmenu", [](NativeMenu::Menu& mbCtx, CReplayScript& context) {
-        mbCtx.Title("Replay options");
-        mbCtx.Subtitle("");
+    /* mainmenu -> settingsmenu -> advghostsettingsmenu */
+    submenus.emplace_back("advghostsettingsmenu", [](NativeMenu::Menu& mbCtx, CReplayScript& context) {
+        mbCtx.Title("Ghost settings");
+        mbCtx.Subtitle("Advanced");
 
         mbCtx.BoolOption("Auto-load quickest ghost", GetSettings().Replay.AutoLoadGhost, 
             { "Automatically loads the quickest ghost lap when a track is selected, for that specific car model." });
-
-        mbCtx.FloatOptionCb("Offset seconds", GetSettings().Replay.OffsetSeconds, -60.0f, 60.0f, 0.05f,
-            MenuUtils::GetKbFloat, { "Ghost offset. Positive is in front, negative is behind." });
-
-        std::vector<std::string> replayAlphaDescr{
-            "The transparency of the ghost vehicle. Applied on ghost lap start.",
-            "0: completely invisible.",
-            "100: completely visible.",
-        };
-        int replayAlpha = GetSettings().Replay.VehicleAlpha;
-        if (mbCtx.IntOptionCb("Ghost opacity %", replayAlpha, 0, 100, 20, MenuUtils::GetKbInt, replayAlphaDescr)) {
-            if (replayAlpha < 0)
-                replayAlpha = 0;
-            if (replayAlpha > 100)
-                replayAlpha = 100;
-            GetSettings().Replay.VehicleAlpha = replayAlpha;
-            ENTITY::SET_ENTITY_ALPHA(
-                context.GetReplayVehicle(),
-                map(GetSettings().Replay.VehicleAlpha, 0, 100, 0, 255), false);
-        }
 
         std::string fallbackOpt =
             fmt::format("Fallback vehicle model: {}", GetSettings().Replay.FallbackModel);

@@ -121,8 +121,20 @@ void CReplayVehicle::showNode(unsigned long long replayTime, bool lastNode, cons
 
     VEHICLE::SET_VEHICLE_BRAKE_LIGHTS(mReplayVehicle, nodeCurr->Brake > 0.1f);
 
-    VEHICLE::SET_VEHICLE_LIGHTS(mReplayVehicle, nodeCurr->LowBeams ? 3 : 4);
-    VEHICLE::SET_VEHICLE_FULLBEAM(mReplayVehicle, nodeCurr->HighBeams);
+    switch (mSettings.Replay.ForceLights) {
+        case 2: // Force On
+            VEHICLE::SET_VEHICLE_LIGHTS(mReplayVehicle, 3);
+            VEHICLE::SET_VEHICLE_FULLBEAM(mReplayVehicle, false);
+            break;
+        case 1: // Force Off
+            VEHICLE::SET_VEHICLE_LIGHTS(mReplayVehicle, 4);
+            VEHICLE::SET_VEHICLE_FULLBEAM(mReplayVehicle, false);
+            break;
+        case 0: // Default
+        default:
+            VEHICLE::SET_VEHICLE_LIGHTS(mReplayVehicle, nodeCurr->LowBeams ? 3 : 4);
+            VEHICLE::SET_VEHICLE_FULLBEAM(mReplayVehicle, nodeCurr->HighBeams);
+    }
 }
 
 void CReplayVehicle::resetReplay() {

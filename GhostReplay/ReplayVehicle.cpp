@@ -9,11 +9,13 @@
 
 using VExt = VehicleExtensions;
 
-CReplayVehicle::CReplayVehicle(const CScriptSettings& settings, CReplayData* activeReplay)
+CReplayVehicle::CReplayVehicle(const CScriptSettings& settings, CReplayData* activeReplay,
+    const std::function<void()>& onCleanup)
     : mSettings(settings)
     , mActiveReplay(activeReplay)
     , mReplayVehicle(0)
-    , mReplayState(EReplayState::Idle) {
+    , mReplayState(EReplayState::Idle)
+    , mOnCleanup(onCleanup) {
     mLastNode = activeReplay->Nodes.begin();
     createReplayVehicle(activeReplay->VehicleModel, activeReplay, activeReplay->Nodes[0].Pos);
 }
@@ -87,17 +89,23 @@ void CReplayVehicle::showNode(unsigned long long replayTime, bool lastNode, cons
     auto nodeNext = lastNode ? nodeCurr : std::next(nodeCurr);
     float progress = ((float)replayTime - (float)nodeCurr->Timestamp) /
         ((float)nodeNext->Timestamp - (float)nodeCurr->Timestamp);
-
+    float deltaT = ((nodeNext->Timestamp - nodeCurr->Timestamp) * 0.001f); // Seconds
     Vector3 pos = lerp(nodeCurr->Pos, nodeNext->Pos, progress);
     Vector3 rot = lerp(nodeCurr->Rot, nodeNext->Rot, progress, -180.0f, 180.0f);
     ENTITY::SET_ENTITY_COORDS_NO_OFFSET(mReplayVehicle, pos.x, pos.y, pos.z, false, false, false);
     ENTITY::SET_ENTITY_ROTATION(mReplayVehicle, rot.x, rot.y, rot.z, 0, false);
+
+    Vector3 vel = (nodeNext->Pos - nodeCurr->Pos) * (1.0f / deltaT);
+    ENTITY::SET_ENTITY_VELOCITY(mReplayVehicle, vel.x, vel.y, vel.z);
 
     if (VExt::GetNumWheels(mReplayVehicle) == nodeCurr->WheelRotations.size()) {
         for (uint8_t idx = 0; idx < VExt::GetNumWheels(mReplayVehicle); ++idx) {
             float wheelRot = lerp(nodeCurr->WheelRotations[idx], nodeNext->WheelRotations[idx], progress,
                 -static_cast<float>(M_PI), static_cast<float>(M_PI));
             VExt::SetWheelRotation(mReplayVehicle, idx, wheelRot);
+
+            float wheelRotVel = (nodeNext->WheelRotations[idx] - nodeCurr->WheelRotations[idx]) / deltaT;
+            VExt::SetWheelRotationSpeed(mReplayVehicle, idx, wheelRotVel);
         }
     }
 
@@ -143,8 +151,10 @@ void CReplayVehicle::resetReplay() {
     ENTITY::SET_ENTITY_COLLISION(mReplayVehicle, false, false);
     VExt::SetCurrentRPM(mReplayVehicle, 0.0f);
     mLastNode = mActiveReplay->Nodes.begin();
-
     deleteBlip();
+    
+    if (mOnCleanup)
+        mOnCleanup();
 }
 
 void CReplayVehicle::createReplayVehicle(Hash model, CReplayData* activeReplay, Vector3 pos) {

@@ -171,7 +171,8 @@ void CReplayScript::SetReplay(const std::string& replayName, unsigned long long 
         if (nameOK && timeOK) {
             mActiveReplay = &*replay;
             mRecordState = ERecordState::Idle;
-            mReplayVehicle = std::make_unique<CReplayVehicle>(mSettings, mActiveReplay);
+            mReplayVehicle = std::make_unique<CReplayVehicle>(mSettings, mActiveReplay,
+                std::bind(&CReplayScript::DeactivatePassengerMode, this));
 
             std::string opponent = Util::GetVehicleName(replay->VehicleModel);
             std::string timestamp = Util::FormatMillisTime(replay->Nodes.back().Timestamp);
@@ -368,6 +369,86 @@ std::string CReplayScript::GetTrackImageMenuString(const std::string& trackName)
             imgIt->ResY);
     }
     return extra;
+}
+
+void CReplayScript::ActivatePassengerMode()
+{
+    if (!mActiveTrack || !mActiveReplay) {
+        mPassengerModeActive = false;
+        mPassengerModePlayerVehicle = 0;
+        return;
+    }
+
+    StopReplay();
+    StopRecording();
+
+    Ped playerPed = PLAYER::PLAYER_PED_ID();
+    Vehicle playerVehicle = PED::GET_VEHICLE_PED_IS_IN(playerPed, false);
+    if (ENTITY::DOES_ENTITY_EXIST(playerVehicle)) {
+        mPassengerModePlayerVehicle = playerVehicle;
+        if (ENTITY::IS_ENTITY_A_MISSION_ENTITY(playerVehicle)) {
+            mPassengerModPlayerVehicleManagedByThisScript = false;
+        }
+        else {
+            ENTITY::SET_ENTITY_AS_MISSION_ENTITY(playerVehicle, true, true);
+            mPassengerModPlayerVehicleManagedByThisScript = true;
+        }
+    }
+
+    mReplayVehicle->UpdatePlayback(MISC::GET_GAME_TIMER(), true, false);
+
+    Vehicle replayVehicle = mReplayVehicle->GetVehicle();
+    int numReplayVehicleSeats = VEHICLE::GET_VEHICLE_MODEL_NUMBER_OF_SEATS(ENTITY::GET_ENTITY_MODEL(replayVehicle));
+    
+    if (VEHICLE::ARE_ANY_VEHICLE_SEATS_FREE(replayVehicle)) {
+        PED::SET_PED_INTO_VEHICLE(playerPed, replayVehicle, -2);
+    }
+    else {
+        PED::SET_PED_INTO_VEHICLE(playerPed, replayVehicle, -1);
+    }
+    mPassengerModeActive = true;
+}
+
+void CReplayScript::DeactivatePassengerMode() {
+    Ped playerPed = PLAYER::PLAYER_PED_ID();
+    Vehicle playerVehicle = PED::GET_VEHICLE_PED_IS_IN(playerPed, false);
+    if (!mReplayVehicle || playerVehicle != mReplayVehicle->GetVehicle()) {
+        return;
+    }
+    Vehicle replayVehicle = mReplayVehicle->GetVehicle();
+
+    Vector3 currVel = ENTITY::GET_ENTITY_VELOCITY(replayVehicle);
+    Vector3 currRot = ENTITY::GET_ENTITY_ROTATION(replayVehicle, 0);
+    Vector3 currCoords = ENTITY::GET_ENTITY_COORDS(replayVehicle, !ENTITY::IS_ENTITY_DEAD(replayVehicle, false));
+    Vector3 offset = Normalize(currVel);
+    currCoords.x -= offset.x * 10.0f;
+    currCoords.y -= offset.y * 10.0f;
+
+    if (mPassengerModePlayerVehicle) {
+        PED::SET_PED_INTO_VEHICLE(playerPed, mPassengerModePlayerVehicle, -1);
+
+        ENTITY::SET_ENTITY_COORDS(mPassengerModePlayerVehicle, currCoords.x, currCoords.y, currCoords.z,
+            false, false, false, false);
+        ENTITY::SET_ENTITY_ROTATION(mPassengerModePlayerVehicle, currRot.x, currRot.y, currRot.z, 0, false);
+
+        if (mPassengerModPlayerVehicleManagedByThisScript) {
+            ENTITY::SET_ENTITY_AS_MISSION_ENTITY(mPassengerModePlayerVehicle, false, true);
+            ENTITY::SET_ENTITY_AS_NO_LONGER_NEEDED(&mPassengerModePlayerVehicle);
+
+            VEHICLE::SET_VEHICLE_FIXED(mPassengerModePlayerVehicle);
+            VEHICLE::SET_VEHICLE_DEFORMATION_FIXED(mPassengerModePlayerVehicle);
+
+            mPassengerModPlayerVehicleManagedByThisScript = false;
+        }
+
+        mPassengerModePlayerVehicle = 0;
+    }
+    else {
+        ENTITY::SET_ENTITY_COORDS(playerPed, currCoords.x, currCoords.y, currCoords.z,
+            false, false, false, false);
+    }
+
+    mPassengerModeActive = false;
 }
 
 void CReplayScript::updateReplay() {

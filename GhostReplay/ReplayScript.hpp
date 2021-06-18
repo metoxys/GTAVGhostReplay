@@ -105,6 +105,10 @@ public:
 
     std::string GetTrackImageMenuString(const std::string& trackName);
 
+    void ActivatePassengerMode();
+    void DeactivatePassengerMode();
+    bool IsPassengerModeActive() { return mPassengerModeActive; }
+
 protected:
     void updateReplay();
     void updateRecord(unsigned long long gameTime, bool startPassedThisTick, bool finishPassedThisTick);
@@ -143,4 +147,8 @@ protected:
     CReplayData mCurrentRun;
 
     std::vector<int> mPtfxHandles;
+
+    bool mPassengerModeActive = false;
+    Vehicle mPassengerModePlayerVehicle;
+    bool mPassengerModPlayerVehicleManagedByThisScript = false;
 };

@@ -500,6 +500,33 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             { "Default: Replay lights as recorded.",
               "Forced Off: Always lights off.",
               "Forced On: Always use low beam.", });
+
+        if (!context.IsPassengerModeActive()) {
+            std::string optionName = "Replay as passenger";
+            std::vector<std::string> passengerDescr{ "Start the selected ghost lap while being a passenger.",
+                "Aborts your current lap, if any is in progress." };
+
+            bool available;
+            if (context.ActiveTrack() && context.ActiveReplay()) {
+                available = true;
+            }
+            else {
+                available = false;
+                passengerDescr.push_back("Currently unavailable, select a track and a replay.");
+                optionName += " (Unavailable)";
+            }
+
+            if (mbCtx.Option(optionName, passengerDescr) && available) {
+                context.ActivatePassengerMode();
+            }
+        }
+        else {
+            const std::vector<std::string> passengerDescr{ "Stops replay and puts you back in control of your car, "
+                "if you had one." };
+            if (mbCtx.Option("Stop passenger mode", passengerDescr)) {
+                context.DeactivatePassengerMode();
+            }
+        }
     });
 
     /* mainmenu -> settingsmenu */

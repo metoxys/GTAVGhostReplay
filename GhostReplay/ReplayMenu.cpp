@@ -44,6 +44,16 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         mbCtx.Title("Ghost Car");
         mbCtx.Subtitle(fmt::format("~b~{}{}", Constants::DisplayVersion, GIT_DIFF));
 
+        if (GhostReplay::ReplaysLocked()) {
+            mbCtx.Option(fmt::format("Loading replays ({}/{})",
+                GhostReplay::ReplaysLoaded(), GhostReplay::ReplaysTotal()), {
+                    "Stand by, the script is currently loading all replays.",
+                    "Currently processing:",
+                    GhostReplay::CurrentLoadingReplay()
+                });
+            return;
+        }
+
         CReplayData* activeReplay = context.ActiveReplay();
         CTrackData* activeTrack = context.ActiveTrack();
         auto scriptMode = context.ScriptMode();
@@ -108,6 +118,9 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
         if (mbCtx.Option("Refresh tracks and ghosts", 
             { "Refresh tracks and ghosts if they are changed outside the script." } )) {
+            context.StopRecording();
+            context.StopReplay();
+
             GhostReplay::LoadTracks();
             GhostReplay::LoadARSTracks();
             GhostReplay::LoadReplays();

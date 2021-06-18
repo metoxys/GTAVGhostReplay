@@ -15,6 +15,8 @@
 #include <fmt/format.h>
 #include <memory>
 #include <filesystem>
+#include <thread>
+#include <mutex>
 
 using namespace GhostReplay;
 namespace fs = std::filesystem;
@@ -23,6 +25,14 @@ namespace {
     std::shared_ptr<CScriptSettings> settings;
     std::shared_ptr<CReplayScript> scriptInst;
 
+    std::atomic<uint32_t> totalReplays = 0;
+    std::atomic<uint32_t> loadedReplays = 0;
+    std::vector<std::string> pendingReplays;
+
+    std::mutex currentLoadingReplayMutex;
+    std::string currentLoadingReplay;
+
+    std::mutex replaysMutex;
     std::vector<std::shared_ptr<CReplayData>> replays;
     std::vector<CTrackData> tracks;
     std::vector<CTrackData> arsTracks;
@@ -33,6 +43,7 @@ namespace {
             track.MarkedForDeletion = false;
         }
 
+        std::lock_guard replaysLock(replaysMutex);
         for (auto& replay : replays) {
             replay->MarkedForDeletion = false;
         }
@@ -94,38 +105,81 @@ CReplayScript* GhostReplay::GetScript() {
     return scriptInst.get();
 }
 
-uint32_t GhostReplay::LoadReplays() {
+bool GhostReplay::ReplaysLocked() {
+    return totalReplays != loadedReplays;
+}
+
+uint32_t GhostReplay::ReplaysLoaded() {
+    return loadedReplays;
+}
+
+uint32_t GhostReplay::ReplaysTotal() {
+    return totalReplays;
+}
+
+std::string GhostReplay::CurrentLoadingReplay() {
+    std::lock_guard nameMutex(currentLoadingReplayMutex);
+    return currentLoadingReplay;
+}
+
+// TODO: Do this in background somehow
+void GhostReplay::LoadReplays() {
     const std::string replaysPath =
         Paths::GetModuleFolder(Paths::GetOurModuleHandle()) +
         Constants::ModDir +
         "\\Replays";
 
     logger.Write(DEBUG, "[Replay] Clearing and reloading replays");
-
-    replays.clear();
-
+    
     if (!(fs::exists(fs::path(replaysPath)) && fs::is_directory(fs::path(replaysPath)))) {
         logger.Write(ERROR, "[Replay] Directory [%s] not found!", replaysPath.c_str());
-        return 0;
+        return;
     }
+    
+    {
+        std::lock_guard replaysLock(replaysMutex);
+        replays.clear();
+    }
+
+    pendingReplays.clear();
+    totalReplays = 0;
+    loadedReplays = 0;
 
     for (const auto& file : fs::directory_iterator(replaysPath)) {
         if (Util::to_lower(fs::path(file).extension().string()) != ".json") {
             logger.Write(DEBUG, "[Replay] Skipping [%s] - not .json", fs::path(file).string().c_str());
             continue;
         }
-
-        CReplayData replay = CReplayData::Read(fs::path(file).string());
-        if (!replay.Nodes.empty())
-            replays.push_back(std::make_shared<CReplayData>(replay));
-        else
-            logger.Write(WARN, "[Replay] Skipping [%s] - not a valid file", fs::path(file).string().c_str());
-
-        logger.Write(DEBUG, "[Replay] Loaded replay [%s]", replay.Name.c_str());
+        pendingReplays.push_back(fs::path(file).string());
+        ++totalReplays;
     }
-    logger.Write(INFO, "[Replay] Replays loaded: %d", replays.size());
 
-    return static_cast<unsigned>(replays.size());
+    std::thread([replaysPath]() {
+        for (const auto& file : pendingReplays) {
+            {
+                std::lock_guard nameMutex(currentLoadingReplayMutex);
+                currentLoadingReplay = std::filesystem::path(file).stem().string();
+            }
+
+            CReplayData replay = CReplayData::Read(file);
+            if (!replay.Nodes.empty()) {
+                std::lock_guard replaysLock(replaysMutex);
+                replays.push_back(std::make_shared<CReplayData>(replay));
+            }
+            else {
+                logger.Write(WARN, "[Replay] Skipping [%s] - not a valid file", file.c_str());
+            }
+
+            logger.Write(DEBUG, "[Replay] Loaded replay [%s]", replay.Name.c_str());
+            ++loadedReplays;
+        }
+
+        logger.Write(INFO, "[Replay] Replays loaded: %d", replays.size());
+        pendingReplays.clear();
+
+        std::lock_guard nameMutex(currentLoadingReplayMutex);
+        currentLoadingReplay = std::string();
+    }).detach();
 }
 
 uint32_t GhostReplay::LoadTracks() {
@@ -239,5 +293,6 @@ uint32_t GhostReplay::LoadARSTracks() {
 }
 
 void GhostReplay::AddReplay(const CReplayData& replay) {
+    std::lock_guard replaysLock(replaysMutex);
     replays.push_back(std::make_shared<CReplayData>(replay));
 }

@@ -13,10 +13,16 @@ namespace GhostReplay {
 
     CReplayScript* GetScript();
 
-    uint32_t LoadReplays();
+    bool ReplaysLocked();
+    uint32_t ReplaysLoaded();
+    uint32_t ReplaysTotal();
+    std::string CurrentLoadingReplay();
+
+    void LoadReplays();
     uint32_t LoadTracks();
     uint32_t LoadTrackImages();
     uint32_t LoadARSTracks();
+
 
     void AddReplay(const CReplayData& replay);
 }

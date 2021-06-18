@@ -479,7 +479,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         mbCtx.FloatOptionCb("Offset (seconds)", GetSettings().Replay.OffsetSeconds, -60.0f, 60.0f, 0.05f,
             MenuUtils::GetKbFloat, { "Ghost offset. Positive is in front, negative is behind." });
 
-        std::vector<std::string> replayAlphaDescr{
+        const std::vector<std::string> replayAlphaDescr{
             "The transparency of the ghost vehicle.",
             "0: completely invisible.",
             "100: completely visible.",

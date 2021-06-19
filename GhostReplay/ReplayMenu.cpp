@@ -85,7 +85,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
         mbCtx.MenuOption("Ghost controls", "ghostoptionsmenu");
 
-        bool replaying = context.GetReplayState() == EReplayState::Playing;
+        bool replaying = context.GetReplayState() != EReplayState::Idle;
         std::string replayAbortOption = replaying ? "Cancel playing ghost" : "~m~Cancel playing ghost";
         std::vector<std::string> replayAbortDetail;
         if (replaying) {

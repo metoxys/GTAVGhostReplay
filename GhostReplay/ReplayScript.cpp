@@ -527,6 +527,11 @@ void CReplayScript::updateReplay() {
 
     Vehicle vehicle = PED::GET_VEHICLE_PED_IS_IN(PLAYER::PLAYER_PED_ID(), false);
     Vector3 nowPos;
+
+    bool inGhostVehicle = false;
+    if (mReplayVehicle)
+        inGhostVehicle = vehicle == mReplayVehicle->GetVehicle();
+
     if (ENTITY::DOES_ENTITY_EXIST(vehicle)) {
         nowPos = ENTITY::GET_ENTITY_COORDS(vehicle, true);
     }
@@ -546,7 +551,7 @@ void CReplayScript::updateReplay() {
 
     mLastPos = nowPos;
 
-    updateRecord(gameTime, startPassedThisTick, finishPassedThisTick);
+    updateRecord(gameTime, !inGhostVehicle && startPassedThisTick, !inGhostVehicle && finishPassedThisTick);
     if (mReplayVehicle)
         mReplayVehicle->UpdatePlayback(gameTime, startPassedThisTick, finishPassedThisTick);
 }

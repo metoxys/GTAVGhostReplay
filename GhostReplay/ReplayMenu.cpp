@@ -47,7 +47,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         if (GhostReplay::ReplaysLocked()) {
             mbCtx.Option(fmt::format("Loading replays ({}/{})",
                 GhostReplay::ReplaysLoaded(), GhostReplay::ReplaysTotal()), {
-                    "Stand by, the script is currently loading all replays.",
+                    "Please wait, replays are currently loading.",
                     "Currently processing:",
                     GhostReplay::CurrentLoadingReplay()
                 });

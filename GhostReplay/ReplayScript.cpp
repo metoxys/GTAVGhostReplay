@@ -372,8 +372,7 @@ std::string CReplayScript::GetTrackImageMenuString(const std::string& trackName)
     return extra;
 }
 
-void CReplayScript::ActivatePassengerMode()
-{
+void CReplayScript::ActivatePassengerMode() {
     if (!mActiveTrack || !mActiveReplay) {
         mPassengerModeActive = false;
         mPassengerModePlayerVehicle = 0;
@@ -400,7 +399,7 @@ void CReplayScript::ActivatePassengerMode()
 
     Vehicle replayVehicle = mReplayVehicle->GetVehicle();
     int numReplayVehicleSeats = VEHICLE::GET_VEHICLE_MODEL_NUMBER_OF_SEATS(ENTITY::GET_ENTITY_MODEL(replayVehicle));
-    
+
     if (VEHICLE::ARE_ANY_VEHICLE_SEATS_FREE(replayVehicle)) {
         PED::SET_PED_INTO_VEHICLE(playerPed, replayVehicle, -2);
     }

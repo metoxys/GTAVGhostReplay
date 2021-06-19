@@ -41,7 +41,7 @@ void CReplayVehicle::UpdatePlayback(unsigned long long gameTime, bool startPasse
             break;
         }
         case EReplayState::Playing: {
-            auto replayTime = gameTime - replayStart;
+            auto replayTime = gameTime - mReplayStart;
             replayTime += (unsigned long long)(mSettings.Replay.OffsetSeconds * 1000.0f);
             auto nodeCurr = std::upper_bound(mLastNode, mActiveReplay->Nodes.end(), SReplayNode{ replayTime });
             if (nodeCurr != mActiveReplay->Nodes.begin())
@@ -74,7 +74,7 @@ void CReplayVehicle::UpdatePlayback(unsigned long long gameTime, bool startPasse
 }
 
 void CReplayVehicle::startReplay(unsigned long long gameTime) {
-    replayStart = gameTime;
+    mReplayStart = gameTime;
     ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, true, true);
     ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, map(mSettings.Replay.VehicleAlpha, 0, 100, 0, 255), false);
     ENTITY::SET_ENTITY_COMPLETELY_DISABLE_COLLISION(mReplayVehicle, false, false);

@@ -41,7 +41,7 @@ private:
     std::unique_ptr<CWrappedBlip> mReplayVehicleBlip;
 
     EReplayState mReplayState;
-    unsigned long long replayStart = 0;
+    unsigned long long mReplayStart = 0;
     std::vector<SReplayNode>::iterator mLastNode;
 
     std::function<void(Vehicle)> mOnCleanup;

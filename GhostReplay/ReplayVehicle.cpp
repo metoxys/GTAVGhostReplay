@@ -234,7 +234,7 @@ void CReplayVehicle::resetReplay() {
 
     // Freeze invisible vehicle in air, so it won't get damaged (falling in water, etc).
     ENTITY::FREEZE_ENTITY_POSITION(mReplayVehicle, true);
-    ENTITY::SET_ENTITY_COORDS(mReplayVehicle, pos.x, pos.y, pos.z + 100.0f, false, false, false, false);
+    ENTITY::SET_ENTITY_COORDS_NO_OFFSET(mReplayVehicle, pos.x, pos.y, pos.z + 100.0f, false, false, false);
 
     VExt::SetCurrentRPM(mReplayVehicle, 0.0f);
     mLastNode = mActiveReplay->Nodes.begin();

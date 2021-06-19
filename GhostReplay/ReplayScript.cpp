@@ -392,6 +392,11 @@ void CReplayScript::ActivatePassengerMode() {
             ENTITY::SET_ENTITY_AS_MISSION_ENTITY(playerVehicle, true, true);
             mPassengerModPlayerVehicleManagedByThisScript = true;
         }
+
+        auto pos = ENTITY::GET_ENTITY_COORDS(playerVehicle, !ENTITY::IS_ENTITY_DEAD(playerVehicle, false));
+        ENTITY::FREEZE_ENTITY_POSITION(playerVehicle, true);
+        ENTITY::SET_ENTITY_COORDS_NO_OFFSET(playerVehicle, pos.x, pos.y, pos.z + 100.0f, 0, 0, 0);
+        ENTITY::SET_ENTITY_VISIBLE(playerVehicle, false, false);
     }
 
     mReplayVehicle->UpdatePlayback(MISC::GET_GAME_TIMER(), true, false);
@@ -441,6 +446,9 @@ void CReplayScript::DeactivatePassengerMode(Vehicle vehicle) {
         ENTITY::SET_ENTITY_COORDS(mPassengerModePlayerVehicle, currCoords.x, currCoords.y, groundZ,
             false, false, false, false);
         ENTITY::SET_ENTITY_ROTATION(mPassengerModePlayerVehicle, currRot.x, currRot.y, currRot.z, 0, false);
+
+        ENTITY::FREEZE_ENTITY_POSITION(mPassengerModePlayerVehicle, false);
+        ENTITY::SET_ENTITY_VISIBLE(mPassengerModePlayerVehicle, true, false);
 
         if (mPassengerModPlayerVehicleManagedByThisScript) {
             ENTITY::SET_ENTITY_AS_MISSION_ENTITY(mPassengerModePlayerVehicle, false, true);

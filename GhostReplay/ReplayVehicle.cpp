@@ -44,6 +44,7 @@ void CReplayVehicle::UpdatePlayback(unsigned long long gameTime, bool startPasse
             if (mActiveReplay && mLastNode == mActiveReplay->Nodes.end()) {
                 logger.Write(DEBUG, "Updating currentNode to activeReplay begin");
                 mLastNode = mActiveReplay->Nodes.begin();
+                startReplay(gameTime);
             }
             showNode(mLastNode->Timestamp, false, mLastNode, true);
             break;

@@ -162,10 +162,10 @@ Vector3T Normalize(Vector3T vec) {
 
 template <typename Vector3T>
 Vector3T GetOffsetInWorldCoords(Vector3T position, Vector3T rotation, Vector3T forward, Vector3T offset) {
-    float num1 = cosf(rotation.y);
-    float x = num1 * cosf(-rotation.z);
-    float y = num1 * sinf(rotation.z);
-    float z = sinf(-rotation.y);
+    auto num1 = cos(rotation.y);
+    auto x = num1 * cos(-rotation.z);
+    auto y = num1 * sin(rotation.z);
+    auto z = sin(-rotation.y);
     Vector3 right = { x, 0, y, 0, z, 0 };
     Vector3 up = Cross(right, forward);
     return position + (right * offset.x) + (forward * offset.y) + (up * offset.z);
@@ -194,9 +194,9 @@ auto GetAngleBetween(Vector3T a, Vector3T b) {
 
 template <typename Vector3T>
 Vector3T RotationToDirection(Vector3T rot) {
-    float rotZ = (rot.z);
-    float rotX = (rot.x);
-    float multXY = abs(cos(rotX));
+    auto rotZ = (rot.z);
+    auto rotX = (rot.x);
+    auto multXY = abs(cos(rotX));
     Vector3T v{};
     v.x = -sin(rotZ) * multXY;
     v.y = cos(rotZ) * multXY;
@@ -206,11 +206,11 @@ Vector3T RotationToDirection(Vector3T rot) {
 
 template <typename Vector3T>
 Vector3T RelativeRightVector(Vector3T rot) {
-    double num = cosf(rot.y);
+    auto num = cos(rot.y);
     Vector3T v{};
-    v.x = cosf(-rot.z) * num;
-    v.y = sinf(rot.z) * num;
-    v.z = sinf(-rot.y);
+    v.x = cos(-rot.z) * num;
+    v.y = sin(rot.z) * num;
+    v.z = sin(-rot.y);
     return v;
 }
 

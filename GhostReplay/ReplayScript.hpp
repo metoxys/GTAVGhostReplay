@@ -107,6 +107,7 @@ public:
 
     void ActivatePassengerMode();
     void DeactivatePassengerMode();
+    void DeactivatePassengerMode(Vehicle vehicle);
     bool IsPassengerModeActive() { return mPassengerModeActive; }
 
 protected:

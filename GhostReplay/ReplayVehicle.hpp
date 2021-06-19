@@ -11,7 +11,7 @@ enum class EReplayState {
 
 class CReplayVehicle {
 public:
-    CReplayVehicle(const CScriptSettings& settings, CReplayData* activeReplay, const std::function<void()>& onCleanup);
+    CReplayVehicle(const CScriptSettings& settings, CReplayData* activeReplay, const std::function<void(Vehicle)>& onCleanup);
 
     CReplayVehicle(const CReplayVehicle&) = delete;
     CReplayVehicle& operator=(const CReplayVehicle&) = delete;
@@ -44,7 +44,7 @@ private:
     unsigned long long replayStart = 0;
     std::vector<SReplayNode>::iterator mLastNode;
 
-    std::function<void()> mOnCleanup;
+    std::function<void(Vehicle)> mOnCleanup;
 
     void startReplay(unsigned long long gameTime);
     void showNode(unsigned long long replayTime, bool, const std::vector<SReplayNode>::iterator& nodeCurr);

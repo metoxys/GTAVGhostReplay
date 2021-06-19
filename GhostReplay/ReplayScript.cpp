@@ -157,6 +157,7 @@ void CReplayScript::SetTrack(const std::string& trackName) {
 }
 
 void CReplayScript::SetReplay(const std::string& replayName, unsigned long long timestamp) {
+    DeactivatePassengerMode();
     if (replayName.empty()) {
         mActiveReplay = nullptr;
         mRecordState = ERecordState::Idle;
@@ -172,7 +173,7 @@ void CReplayScript::SetReplay(const std::string& replayName, unsigned long long 
             mActiveReplay = &*replay;
             mRecordState = ERecordState::Idle;
             mReplayVehicle = std::make_unique<CReplayVehicle>(mSettings, mActiveReplay,
-                std::bind(&CReplayScript::DeactivatePassengerMode, this));
+                std::bind(static_cast<void(CReplayScript::*)(int)>(&CReplayScript::DeactivatePassengerMode), this, std::placeholders::_1));
 
             std::string opponent = Util::GetVehicleName(replay->VehicleModel);
             std::string timestamp = Util::FormatMillisTime(replay->Nodes.back().Timestamp);
@@ -410,12 +411,23 @@ void CReplayScript::ActivatePassengerMode()
 }
 
 void CReplayScript::DeactivatePassengerMode() {
-    Ped playerPed = PLAYER::PLAYER_PED_ID();
-    Vehicle playerVehicle = PED::GET_VEHICLE_PED_IS_IN(playerPed, false);
-    if (!mReplayVehicle || playerVehicle != mReplayVehicle->GetVehicle()) {
+    if (mReplayVehicle) {
+        DeactivatePassengerMode(mReplayVehicle->GetVehicle());
+    }
+}
+
+void CReplayScript::DeactivatePassengerMode(Vehicle vehicle) {
+    if (!mPassengerModeActive) {
         return;
     }
-    Vehicle replayVehicle = mReplayVehicle->GetVehicle();
+
+    Ped playerPed = PLAYER::PLAYER_PED_ID();
+    Vehicle playerVehicle = PED::GET_VEHICLE_PED_IS_IN(playerPed, false);
+    if (playerVehicle != vehicle) {
+        mPassengerModeActive = false;
+        return;
+    }
+    Vehicle replayVehicle = vehicle;
 
     Vector3 currVel = ENTITY::GET_ENTITY_VELOCITY(replayVehicle);
     Vector3 currRot = ENTITY::GET_ENTITY_ROTATION(replayVehicle, 0);

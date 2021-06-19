@@ -519,7 +519,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             mbCtx.Option("~m~Replay controls unavailable", { "Select a track and a replay." });
         }
         else {
-            const uint32_t scrubDist = 5000;
+            const uint32_t scrubDist = 1000;
             auto activeReplay = context.ActiveReplay();
             auto replayState = context.GetReplayState();
             std::string replayStateName;
@@ -552,7 +552,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 fnScrubForward,
                 fnScrubBackward,
                 "Playback controls",
-                { "Playback controls. Select to play or pause. Left or right to jump backward or forward 5 seconds." });
+                { "Playback controls. Select to play or pause. Left or right to jump backward or forward 1 second." });
             if (togglePause) {
                 context.TogglePause(replayState == EReplayState::Playing);
             }

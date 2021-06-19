@@ -473,12 +473,12 @@ void CReplayScript::TogglePause(bool pause) {
         mReplayVehicle->TogglePause(pause, MISC::GET_GAME_TIMER());
 }
 
-void CReplayScript::ScrubBackward(uint32_t millis) {
+void CReplayScript::ScrubBackward(uint64_t millis) {
     if (mReplayVehicle)
         mReplayVehicle->ScrubBackward(millis);
 }
 
-void CReplayScript::ScrubForward(uint32_t millis) {
+void CReplayScript::ScrubForward(uint64_t millis) {
     if (mReplayVehicle)
         mReplayVehicle->ScrubForward(millis);
 }

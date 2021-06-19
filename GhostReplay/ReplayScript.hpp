@@ -113,8 +113,8 @@ public:
     // Playback control
     uint64_t GetReplayProgress();
     void TogglePause(bool pause);
-    void ScrubBackward(uint32_t millis);
-    void ScrubForward(uint32_t millis);
+    void ScrubBackward(uint64_t millis);
+    void ScrubForward(uint64_t millis);
 
 protected:
     void updateReplay();

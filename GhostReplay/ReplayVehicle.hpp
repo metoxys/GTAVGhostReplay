@@ -7,6 +7,7 @@
 enum class EReplayState {
     Idle,
     Playing,
+    Paused,
 };
 
 class CReplayVehicle {
@@ -32,6 +33,12 @@ public:
         mReplayState = EReplayState::Idle;
         resetReplay();
     }
+
+    // Playback control
+    uint64_t GetReplayProgress();
+    void TogglePause(bool pause, uint64_t gameTime);
+    void ScrubBackward(uint32_t millis);
+    void ScrubForward(uint32_t millis);
 
 private:
     const CScriptSettings& mSettings;

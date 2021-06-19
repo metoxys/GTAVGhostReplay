@@ -40,6 +40,14 @@ void CReplayVehicle::UpdatePlayback(unsigned long long gameTime, bool startPasse
             }
             break;
         }
+        case EReplayState::Paused: {
+            if (mActiveReplay && mLastNode == mActiveReplay->Nodes.end()) {
+                logger.Write(DEBUG, "Updating currentNode to activeReplay begin");
+                mLastNode = mActiveReplay->Nodes.begin();
+            }
+            showNode(mLastNode->Timestamp, false, mLastNode);
+            break;
+        }
         case EReplayState::Playing: {
             auto replayTime = gameTime - mReplayStart;
             replayTime += (unsigned long long)(mSettings.Replay.OffsetSeconds * 1000.0f);
@@ -71,6 +79,38 @@ void CReplayVehicle::UpdatePlayback(unsigned long long gameTime, bool startPasse
             break;
         }
     }
+}
+
+uint64_t CReplayVehicle::GetReplayProgress() {
+    if (mActiveReplay && mLastNode != mActiveReplay->Nodes.end()) {
+        return mLastNode->Timestamp;
+    }
+    return 0;
+}
+
+void CReplayVehicle::TogglePause(bool pause, uint64_t gameTime) {
+    if (mReplayState == EReplayState::Idle) {
+        startReplay(gameTime);
+    }
+    if (pause) {
+        mReplayState = EReplayState::Paused;
+    }
+    else {
+        mReplayState = EReplayState::Playing;
+        uint64_t offset = 0;
+        if (mActiveReplay && mLastNode != mActiveReplay->Nodes.end()) {
+            offset = mLastNode->Timestamp;
+        }
+        mReplayStart = gameTime - offset;
+    }
+}
+
+void CReplayVehicle::ScrubBackward(uint32_t millis) {
+    // TODO
+}
+
+void CReplayVehicle::ScrubForward(uint32_t millis) {
+    // TODO
 }
 
 void CReplayVehicle::startReplay(unsigned long long gameTime) {

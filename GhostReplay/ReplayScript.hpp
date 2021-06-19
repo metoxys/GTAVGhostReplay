@@ -110,6 +110,12 @@ public:
     void DeactivatePassengerMode(Vehicle vehicle);
     bool IsPassengerModeActive() { return mPassengerModeActive; }
 
+    // Playback control
+    uint64_t GetReplayProgress();
+    void TogglePause(bool pause);
+    void ScrubBackward(uint32_t millis);
+    void ScrubForward(uint32_t millis);
+
 protected:
     void updateReplay();
     void updateRecord(unsigned long long gameTime, bool startPassedThisTick, bool finishPassedThisTick);

@@ -462,6 +462,27 @@ void CReplayScript::DeactivatePassengerMode(Vehicle vehicle) {
     mPassengerModeActive = false;
 }
 
+uint64_t CReplayScript::GetReplayProgress() {
+    if (mReplayVehicle)
+        return mReplayVehicle->GetReplayProgress();
+    return 0;
+}
+
+void CReplayScript::TogglePause(bool pause) {
+    if (mReplayVehicle)
+        mReplayVehicle->TogglePause(pause, MISC::GET_GAME_TIMER());
+}
+
+void CReplayScript::ScrubBackward(uint32_t millis) {
+    if (mReplayVehicle)
+        mReplayVehicle->ScrubBackward(millis);
+}
+
+void CReplayScript::ScrubForward(uint32_t millis) {
+    if (mReplayVehicle)
+        mReplayVehicle->ScrubForward(millis);
+}
+
 void CReplayScript::updateReplay() {
     if (!mActiveTrack)
         return;

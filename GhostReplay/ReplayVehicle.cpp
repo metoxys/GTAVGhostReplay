@@ -108,15 +108,15 @@ void CReplayVehicle::TogglePause(bool pause, uint64_t gameTime) {
 
 void CReplayVehicle::ScrubBackward(uint64_t millis) {
     if (mActiveReplay && mLastNode != mActiveReplay->Nodes.end()) {
-        auto replayTime = mLastNode->Timestamp - millis;
+        bool wouldSkipPastBegin = mLastNode->Timestamp < millis;
+        auto minMillis = wouldSkipPastBegin ? mLastNode->Timestamp : millis;
+
+        auto replayTime = mLastNode->Timestamp - minMillis;
         auto nodeCurr = std::lower_bound(mActiveReplay->Nodes.begin(), mLastNode, SReplayNode{ replayTime });
-        if (nodeCurr != mActiveReplay->Nodes.begin())
-            nodeCurr = std::prev(nodeCurr);
 
         mLastNode = nodeCurr;
-        mReplayStart += millis;
+        mReplayStart += minMillis;
     }
-    
 }
 
 void CReplayVehicle::ScrubForward(uint64_t millis) {

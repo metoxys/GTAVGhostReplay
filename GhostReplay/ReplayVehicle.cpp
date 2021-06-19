@@ -137,6 +137,7 @@ void CReplayVehicle::startReplay(unsigned long long gameTime) {
     ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, map(mSettings.Replay.VehicleAlpha, 0, 100, 0, 255), false);
     ENTITY::SET_ENTITY_COMPLETELY_DISABLE_COLLISION(mReplayVehicle, false, false);
     VEHICLE::SET_VEHICLE_ENGINE_ON(mReplayVehicle, true, true, false);
+    ENTITY::FREEZE_ENTITY_POSITION(mReplayVehicle, false);
     mLastNode = mActiveReplay->Nodes.begin();
 
     if (mSettings.Main.GhostBlips)
@@ -221,15 +222,23 @@ void CReplayVehicle::showNode(
 }
 
 void CReplayVehicle::resetReplay() {
+    if (mOnCleanup)
+        mOnCleanup(mReplayVehicle);
+
+    auto pos = ENTITY::GET_ENTITY_COORDS(mReplayVehicle, !ENTITY::IS_ENTITY_DEAD(mReplayVehicle, false));
+
     ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, false, false);
     ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, 0, false);
     ENTITY::SET_ENTITY_COLLISION(mReplayVehicle, false, false);
+    VEHICLE::SET_VEHICLE_ENGINE_ON(mReplayVehicle, false, true, true);
+
+    // Freeze invisible vehicle in air, so it won't get damaged (falling in water, etc).
+    ENTITY::FREEZE_ENTITY_POSITION(mReplayVehicle, true);
+    ENTITY::SET_ENTITY_COORDS(mReplayVehicle, pos.x, pos.y, pos.z + 100.0f, false, false, false, false);
+
     VExt::SetCurrentRPM(mReplayVehicle, 0.0f);
     mLastNode = mActiveReplay->Nodes.begin();
     deleteBlip();
-    
-    if (mOnCleanup)
-        mOnCleanup(mReplayVehicle);
 }
 
 void CReplayVehicle::createReplayVehicle(Hash model, CReplayData* activeReplay, Vector3 pos) {

@@ -162,13 +162,23 @@ void CReplayVehicle::showNode(
         ENTITY::SET_ENTITY_VELOCITY(mReplayVehicle, vel.x, vel.y, vel.z);
     }
 
+    // Base wheel rotation (for dashboard speed) on forward speed,
+    // as it's not possible to accurately deduce speed from wheel rotation alone.
+    Vector3 rotInRad = nodeCurr->Rot;
+    rotInRad.x = deg2rad(rotInRad.x);
+    rotInRad.y = deg2rad(rotInRad.y);
+    rotInRad.z = deg2rad(rotInRad.z);
+    Vector3 offNext = GetRelativeOffsetGivenWorldCoords(nodeCurr->Pos, nodeNext->Pos, rotInRad);
+    Vector3 relVel = offNext * (1.0f / deltaT);
+
+    auto wheelDims = VExt::GetWheelDimensions(mReplayVehicle);
     if (VExt::GetNumWheels(mReplayVehicle) == nodeCurr->WheelRotations.size()) {
         for (uint8_t idx = 0; idx < VExt::GetNumWheels(mReplayVehicle); ++idx) {
             float wheelRot = lerp(nodeCurr->WheelRotations[idx], nodeNext->WheelRotations[idx], progress,
                 -static_cast<float>(M_PI), static_cast<float>(M_PI));
             VExt::SetWheelRotation(mReplayVehicle, idx, wheelRot);
 
-            float wheelRotVel = (nodeNext->WheelRotations[idx] - nodeCurr->WheelRotations[idx]) / deltaT;
+            float wheelRotVel = -relVel.y / wheelDims[idx].TyreRadius;
             VExt::SetWheelRotationSpeed(mReplayVehicle, idx, wheelRotVel);
         }
     }

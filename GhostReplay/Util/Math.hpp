@@ -194,19 +194,36 @@ auto GetAngleBetween(Vector3T a, Vector3T b) {
 
 template <typename Vector3T>
 Vector3T RotationToDirection(Vector3T rot) {
-    float z = rot.z;
-    float num = z * 0.0174532924f;
+    float rotZ = (rot.z);
+    float rotX = (rot.x);
+    float multXY = abs(cos(rotX));
+    Vector3T v{};
+    v.x = -sin(rotZ) * multXY;
+    v.y = cos(rotZ) * multXY;
+    v.z = sin(rotX);
+    return v;
+}
 
-    float x = rot.x;
-    float num2 = x * 0.0174532924f;
+template <typename Vector3T>
+Vector3T RelativeRightVector(Vector3T rot) {
+    double num = cosf(rot.y);
+    Vector3T v{};
+    v.x = cosf(-rot.z) * num;
+    v.y = sinf(rot.z) * num;
+    v.z = sinf(-rot.y);
+    return v;
+}
 
-    float num3 = abs(cos(num2));
+template <typename Vector3T>
+inline Vector3T GetRelativeOffsetGivenWorldCoords(Vector3T position1, Vector3T position2, Vector3T rot) {
+    Vector3T right = RelativeRightVector(rot);
+    Vector3T forward = RotationToDirection(rot);
 
-    Vector3T dir{};
-    dir.x = -sin(num) * num3;
-    dir.y = cos(num) * num3;
-    dir.z = sin(num2);
-    return dir;
+    Vector3T v{};
+    v.x = -1 * Dot(right, (position1 - position2));
+    v.y = -1 * Dot(forward, (position1 - position2));
+    v.z = position2.z - position1.z;
+    return v;
 }
 
 inline bool operator==(const Vector3& lhs, const Vector3& rhs) {

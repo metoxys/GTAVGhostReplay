@@ -121,6 +121,13 @@ void CReplayVehicle::ScrubBackward(uint64_t millis) {
 
 void CReplayVehicle::ScrubForward(uint64_t millis) {
     if (mActiveReplay && mLastNode != mActiveReplay->Nodes.end()) {
+        bool wouldSkipPastEnd = mLastNode->Timestamp + millis > mActiveReplay->Nodes.back().Timestamp;
+        if (wouldSkipPastEnd) {
+            mReplayState = EReplayState::Idle;
+            resetReplay();
+            return;
+        }
+
         auto replayTime = mLastNode->Timestamp + millis;
         auto nodeCurr = std::upper_bound(mLastNode, mActiveReplay->Nodes.end(), SReplayNode{ replayTime });
         if (nodeCurr != mActiveReplay->Nodes.begin())

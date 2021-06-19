@@ -482,6 +482,36 @@ void CReplayScript::ScrubForward(uint64_t millis) {
         mReplayVehicle->ScrubForward(millis);
 }
 
+void CReplayScript::TeleportToTrack(const CTrackData& trackData) {
+    Ped playerPed = PLAYER::PLAYER_PED_ID();
+    Vehicle playerVehicle = PED::GET_VEHICLE_PED_IS_IN(playerPed, false);
+
+    if (mReplayVehicle && playerVehicle) {
+        if (mReplayVehicle->GetVehicle() == playerVehicle) {
+            UI::Notify("Can't teleport while riding ghost vehicle.");
+            return;
+        }
+    }
+
+    Vector3 startLineAB = (trackData.StartLine.A + trackData.StartLine.B) * 0.5f;
+    Vector3 startOffset = GetPerpendicular(startLineAB, trackData.StartLine.B, 15.0f, false);
+    float startHeading = MISC::GET_HEADING_FROM_VECTOR_2D(
+        trackData.StartLine.B.x - trackData.StartLine.A.x,
+        trackData.StartLine.B.y - trackData.StartLine.A.y
+    ) + 90.0f;
+
+    if (playerVehicle) {
+        ENTITY::SET_ENTITY_COORDS(playerVehicle, startOffset.x, startOffset.y, startOffset.z,
+            false, false, false, false);
+        ENTITY::SET_ENTITY_HEADING(playerVehicle, startHeading);
+    }
+    else {
+        ENTITY::SET_ENTITY_COORDS(playerPed, startOffset.x, startOffset.y, startOffset.z,
+            false, false, false, false);
+        ENTITY::SET_ENTITY_HEADING(playerPed, startHeading);
+    }
+}
+
 void CReplayScript::updateReplay() {
     if (!mActiveTrack)
         return;

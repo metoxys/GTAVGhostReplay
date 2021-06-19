@@ -116,6 +116,8 @@ public:
     void ScrubBackward(uint64_t millis);
     void ScrubForward(uint64_t millis);
 
+    void TeleportToTrack(const CTrackData& trackData);
+
 protected:
     void updateReplay();
     void updateRecord(unsigned long long gameTime, bool startPassedThisTick, bool finishPassedThisTick);

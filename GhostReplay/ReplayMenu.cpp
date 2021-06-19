@@ -263,6 +263,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             };
 
             if (!track.MarkedForDeletion) {
+                description.emplace_back("Press Right to teleport to starting point.");
                 description.emplace_back("Press Left to delete.");
             }
             else {
@@ -271,7 +272,11 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 description.emplace_back("~r~~h~THIS IS PERMANENT");
             }
 
-            auto clearDeleteFlag = [&]() {
+            auto onRight = [&]() {
+                if (!track.MarkedForDeletion) {
+                    context.TeleportToTrack(track);
+                }
+
                 track.MarkedForDeletion = false;
             };
             auto deleteFlag = [&]() {
@@ -286,7 +291,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
             std::string optionName = fmt::format("{}{}{}", deleteCol, selector, track.Name);
             bool highlighted;
-            if (mbCtx.OptionPlus(optionName, {}, &highlighted, clearDeleteFlag, deleteFlag, "", description)) {
+            if (mbCtx.OptionPlus(optionName, {}, &highlighted, onRight, deleteFlag, "", description)) {
                 if (!currentTrack)
                     context.SetTrack(track.Name);
                 else

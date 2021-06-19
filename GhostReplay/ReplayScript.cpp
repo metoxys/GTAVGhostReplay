@@ -428,12 +428,11 @@ void CReplayScript::DeactivatePassengerMode(Vehicle vehicle) {
     }
     Vehicle replayVehicle = vehicle;
 
-    Vector3 currVel = ENTITY::GET_ENTITY_VELOCITY(replayVehicle);
     Vector3 currRot = ENTITY::GET_ENTITY_ROTATION(replayVehicle, 0);
     Vector3 currCoords = ENTITY::GET_ENTITY_COORDS(replayVehicle, !ENTITY::IS_ENTITY_DEAD(replayVehicle, false));
-    Vector3 offset = Normalize(currVel);
-    currCoords.x -= offset.x * 10.0f;
-    currCoords.y -= offset.y * 10.0f;
+    Vector3 forward = ENTITY::GET_ENTITY_FORWARD_VECTOR(replayVehicle);
+    currCoords.x -= forward.x * 10.0f;
+    currCoords.y -= forward.y * 10.0f;
 
     if (mPassengerModePlayerVehicle) {
         PED::SET_PED_INTO_VEHICLE(playerPed, mPassengerModePlayerVehicle, -1);

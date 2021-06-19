@@ -45,7 +45,7 @@ void CReplayVehicle::UpdatePlayback(unsigned long long gameTime, bool startPasse
                 logger.Write(DEBUG, "Updating currentNode to activeReplay begin");
                 mLastNode = mActiveReplay->Nodes.begin();
             }
-            showNode(mLastNode->Timestamp, false, mLastNode);
+            showNode(mLastNode->Timestamp, false, mLastNode, true);
             break;
         }
         case EReplayState::Playing: {
@@ -64,7 +64,7 @@ void CReplayVehicle::UpdatePlayback(unsigned long long gameTime, bool startPasse
                 //UI::Notify("Replay finished", false);
                 break;
             }
-            showNode(replayTime, lastNode, nodeCurr);
+            showNode(replayTime, lastNode, nodeCurr, false);
 
             // On a faster player lap, the current replay is nuked and this doesn't run, but better to
             // not rely on that behavior and have this here anyway, in case that part changes.
@@ -142,7 +142,11 @@ void CReplayVehicle::startReplay(unsigned long long gameTime) {
         createBlip();
 }
 
-void CReplayVehicle::showNode(unsigned long long replayTime, bool lastNode, const std::vector<SReplayNode>::iterator& nodeCurr) {
+void CReplayVehicle::showNode(
+    unsigned long long replayTime,
+    bool lastNode,
+    const std::vector<SReplayNode>::iterator& nodeCurr,
+    bool zeroVelocity) {
     auto nodeNext = lastNode ? nodeCurr : std::next(nodeCurr);
     float progress = ((float)replayTime - (float)nodeCurr->Timestamp) /
         ((float)nodeNext->Timestamp - (float)nodeCurr->Timestamp);
@@ -152,8 +156,11 @@ void CReplayVehicle::showNode(unsigned long long replayTime, bool lastNode, cons
     ENTITY::SET_ENTITY_COORDS_NO_OFFSET(mReplayVehicle, pos.x, pos.y, pos.z, false, false, false);
     ENTITY::SET_ENTITY_ROTATION(mReplayVehicle, rot.x, rot.y, rot.z, 0, false);
 
-    Vector3 vel = (nodeNext->Pos - nodeCurr->Pos) * (1.0f / deltaT);
-    ENTITY::SET_ENTITY_VELOCITY(mReplayVehicle, vel.x, vel.y, vel.z);
+    // Prevent the third person camera from rotating backwards
+    if (!zeroVelocity) {
+        Vector3 vel = (nodeNext->Pos - nodeCurr->Pos) * (1.0f / deltaT);
+        ENTITY::SET_ENTITY_VELOCITY(mReplayVehicle, vel.x, vel.y, vel.z);
+    }
 
     if (VExt::GetNumWheels(mReplayVehicle) == nodeCurr->WheelRotations.size()) {
         for (uint8_t idx = 0; idx < VExt::GetNumWheels(mReplayVehicle); ++idx) {

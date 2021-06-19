@@ -54,7 +54,10 @@ private:
     std::function<void(Vehicle)> mOnCleanup;
 
     void startReplay(unsigned long long gameTime);
-    void showNode(unsigned long long replayTime, bool, const std::vector<SReplayNode>::iterator& nodeCurr);
+    void showNode(unsigned long long replayTime,
+        bool lastNode,
+        const std::vector<SReplayNode>::iterator& nodeCurr,
+        bool zeroVelocity);
     void resetReplay();
 
     void createReplayVehicle(Hash model, CReplayData* activeReplay, Vector3 pos);

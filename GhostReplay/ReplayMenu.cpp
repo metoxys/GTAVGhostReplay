@@ -312,11 +312,16 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
             std::vector<std::string> description{
                 "Press select to toggle track selection.",
+                "Press Right to teleport to starting point.",
+            };
+
+            auto onRight = [&]() {
+                context.TeleportToTrack(track);
             };
 
             std::string optionName = fmt::format("{}{}", selector, track.Name);
             bool highlighted;
-            if (mbCtx.OptionPlus(optionName, {}, &highlighted, nullptr, nullptr, "", description)) {
+            if (mbCtx.OptionPlus(optionName, {}, &highlighted, onRight, nullptr, "", description)) {
                 if (!currentTrack)
                     context.SetTrack(track.Name);
                 else

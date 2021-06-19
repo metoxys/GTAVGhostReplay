@@ -83,6 +83,8 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             UpdateReplayFilter(context);
         }
 
+        mbCtx.MenuOption("Ghost controls", "ghostoptionsmenu");
+
         bool replaying = context.GetReplayState() == EReplayState::Playing;
         std::string replayAbortOption = replaying ? "Cancel playing ghost" : "~m~Cancel playing ghost";
         std::vector<std::string> replayAbortDetail;
@@ -129,7 +131,6 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             UI::Notify("Tracks and replays refreshed", false);
         }
 
-        mbCtx.MenuOption("Ghost options", "ghostoptionsmenu");
         mbCtx.MenuOption("Settings", "settingsmenu");
     });
 
@@ -486,7 +487,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
     /* mainmenu -> ghostoptionsmenu */
     submenus.emplace_back("ghostoptionsmenu", [](NativeMenu::Menu& mbCtx, CReplayScript& context) {
-        mbCtx.Title("Ghost options");
+        mbCtx.Title("Ghost controls");
         mbCtx.Subtitle("");
 
         mbCtx.FloatOptionCb("Offset (seconds)", GetSettings().Replay.OffsetSeconds, -60.0f, 60.0f, 0.05f,

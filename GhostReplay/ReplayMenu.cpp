@@ -562,6 +562,13 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 context.TogglePause(replayState == EReplayState::Playing);
             }
 
+            bool replaying = context.GetReplayState() != EReplayState::Idle;
+            std::string replayAbortOption = replaying ? "Stop playback" : "~m~Stop playback";
+            if (mbCtx.Option(replayAbortOption)) {
+                if (replaying)
+                    context.StopReplay();
+            }
+
             if (!context.IsPassengerModeActive()) {
                 std::string optionName = "Replay as passenger";
                 std::vector<std::string> passengerDescr{ "Start the selected ghost lap while being a passenger.",

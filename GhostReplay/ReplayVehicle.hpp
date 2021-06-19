@@ -63,4 +63,7 @@ private:
     void createReplayVehicle(Hash model, CReplayData* activeReplay, Vector3 pos);
     void createBlip();
     void deleteBlip();
+
+    void hideVehicle();
+    void unhideVehicle();
 };

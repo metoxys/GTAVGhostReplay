@@ -379,7 +379,6 @@ void CReplayScript::ActivatePassengerMode() {
         return;
     }
 
-    StopReplay();
     StopRecording();
 
     Ped playerPed = PLAYER::PLAYER_PED_ID();

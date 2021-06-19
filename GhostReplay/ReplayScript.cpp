@@ -432,11 +432,13 @@ void CReplayScript::DeactivatePassengerMode(Vehicle vehicle) {
     Vector3 forward = ENTITY::GET_ENTITY_FORWARD_VECTOR(replayVehicle);
     currCoords.x -= forward.x * 10.0f;
     currCoords.y -= forward.y * 10.0f;
+    float groundZ = currCoords.z;
+    MISC::GET_GROUND_Z_FOR_3D_COORD(currCoords.x, currCoords.y, currCoords.z, &groundZ, 0, 0);
 
     if (mPassengerModePlayerVehicle) {
         PED::SET_PED_INTO_VEHICLE(playerPed, mPassengerModePlayerVehicle, -1);
 
-        ENTITY::SET_ENTITY_COORDS(mPassengerModePlayerVehicle, currCoords.x, currCoords.y, currCoords.z,
+        ENTITY::SET_ENTITY_COORDS(mPassengerModePlayerVehicle, currCoords.x, currCoords.y, groundZ,
             false, false, false, false);
         ENTITY::SET_ENTITY_ROTATION(mPassengerModePlayerVehicle, currRot.x, currRot.y, currRot.z, 0, false);
 
@@ -453,7 +455,7 @@ void CReplayScript::DeactivatePassengerMode(Vehicle vehicle) {
         mPassengerModePlayerVehicle = 0;
     }
     else {
-        ENTITY::SET_ENTITY_COORDS(playerPed, currCoords.x, currCoords.y, currCoords.z,
+        ENTITY::SET_ENTITY_COORDS(playerPed, currCoords.x, currCoords.y, groundZ,
             false, false, false, false);
     }
 

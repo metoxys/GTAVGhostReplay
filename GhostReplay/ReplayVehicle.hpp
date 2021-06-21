@@ -40,6 +40,12 @@ public:
     void ScrubBackward(uint64_t millis);
     void ScrubForward(uint64_t millis);
 
+    // Debugging playback
+    uint64_t GetNumFrames();
+    uint64_t GetFrameIndex();
+    void FramePrev();
+    void FrameNext();
+
 private:
     const CScriptSettings& mSettings;
     CReplayData* mActiveReplay;

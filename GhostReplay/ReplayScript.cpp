@@ -491,6 +491,28 @@ void CReplayScript::ScrubForward(uint64_t millis) {
         mReplayVehicle->ScrubForward(millis);
 }
 
+uint64_t CReplayScript::GetNumFrames() {
+    if (mReplayVehicle)
+        return mReplayVehicle->GetNumFrames();
+    return 0;
+}
+
+uint64_t CReplayScript::GetFrameIndex() {
+    if (mReplayVehicle)
+        return mReplayVehicle->GetFrameIndex();
+    return 0;
+}
+
+void CReplayScript::FramePrev() {
+    if (mReplayVehicle)
+        mReplayVehicle->FramePrev();
+}
+
+void CReplayScript::FrameNext() {
+    if (mReplayVehicle)
+        mReplayVehicle->FrameNext();
+}
+
 void CReplayScript::TeleportToTrack(const CTrackData& trackData) {
     Ped playerPed = PLAYER::PLAYER_PED_ID();
     Vehicle playerVehicle = PED::GET_VEHICLE_PED_IS_IN(playerPed, false);

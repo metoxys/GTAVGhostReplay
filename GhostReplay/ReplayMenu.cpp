@@ -547,20 +547,12 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                     Util::FormatMillisTime(activeReplay->Nodes.back().Timestamp)),
             };
 
-            auto fnScrubBackward = [&]() {
-                context.ScrubBackward(scrubDist);
-            };
-
-            auto fnScrubForward = [&]() {
-                context.ScrubForward(scrubDist);
-            };
-
             bool togglePause = mbCtx.OptionPlus(
                 fmt::format("<< {} >>", replayState != EReplayState::Playing ? "Play" : "Pause"),
                 playbackDetails,
                 nullptr,
-                fnScrubForward,
-                fnScrubBackward,
+                [&]() { context.ScrubForward(scrubDist); },
+                [&]() { context.ScrubBackward(scrubDist); },
                 "Playback controls",
                 { "Playback controls. Select to play or pause. Left or right to jump backward or forward 1 second." });
             if (togglePause) {

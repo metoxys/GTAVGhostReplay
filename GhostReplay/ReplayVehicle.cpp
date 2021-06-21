@@ -139,6 +139,59 @@ void CReplayVehicle::ScrubForward(uint64_t millis) {
     }
 }
 
+uint64_t CReplayVehicle::GetNumFrames() {
+    if (mActiveReplay)
+        return mActiveReplay->Nodes.size();
+    return 0;
+}
+
+struct SMyStruct {
+    float Value;
+
+    bool operator<(const SMyStruct& other) const {
+        return Value < other.Value;
+    }
+};
+
+uint64_t CReplayVehicle::GetFrameIndex() {
+    if (!mActiveReplay)
+        return 0;
+
+    //return static_cast<uint64_t>(std::distance(mActiveReplay->Nodes.begin(), mLastNode));
+
+    for (uint64_t i = 0; i < mActiveReplay->Nodes.size(); ++i) {
+        if (mLastNode->Timestamp == mActiveReplay->Nodes[i].Timestamp)
+            return i;
+    }
+    return 0;
+}
+
+void CReplayVehicle::FramePrev() {
+    if (!mActiveReplay)
+        return;
+
+    if (mLastNode == mActiveReplay->Nodes.begin())
+        return;
+
+    auto prevIt = std::prev(mLastNode);
+    auto delta = mLastNode->Timestamp - prevIt->Timestamp;
+    mLastNode = prevIt;
+    mReplayStart += delta;
+}
+
+void CReplayVehicle::FrameNext() {
+    if (!mActiveReplay)
+        return;
+
+    if (std::next(mLastNode) == mActiveReplay->Nodes.end())
+        return;
+
+    auto nextIt = std::next(mLastNode);
+    auto delta = nextIt->Timestamp - mLastNode->Timestamp;
+    mLastNode = nextIt;
+    mReplayStart -= delta;
+}
+
 void CReplayVehicle::startReplay(unsigned long long gameTime) {
     mReplayStart = gameTime;
     unhideVehicle();

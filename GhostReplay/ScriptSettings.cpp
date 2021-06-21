@@ -54,6 +54,7 @@ void CScriptSettings::Save() {
     SAVE_VAL("Main", "NotifyLaps", Main.NotifyLaps);
     SAVE_VAL("Main", "DrawStartFinish", Main.DrawStartFinish);
     SAVE_VAL("Main", "GhostBlips", Main.GhostBlips);
+    SAVE_VAL("Main", "StartStopBlips", Main.StartStopBlips);
 
     SAVE_VAL("Record", "AutoGhost", Record.AutoGhost);
     SAVE_VAL("Record", "DeltaMillis", Record.DeltaMillis);

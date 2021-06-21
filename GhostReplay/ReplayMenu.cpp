@@ -559,6 +559,17 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 context.TogglePause(replayState == EReplayState::Playing);
             }
 
+            if (GetSettings().Main.Debug) {
+                mbCtx.OptionPlus(
+                    fmt::format("<< [{}/{}] >>", context.GetFrameIndex(), context.GetNumFrames()),
+                    playbackDetails,
+                    nullptr,
+                    [&]() { context.FrameNext(); },
+                    [&]() { context.FramePrev(); },
+                    "Frame controls",
+                    { "Frame controls. Left = previous frame. Right = next frame." });
+            }
+
             bool replaying = context.GetReplayState() != EReplayState::Idle;
             std::string replayAbortOption = replaying ? "Stop playback" : "~m~Stop playback";
             if (mbCtx.Option(replayAbortOption)) {

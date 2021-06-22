@@ -154,7 +154,7 @@ struct SMyStruct {
 };
 
 uint64_t CReplayVehicle::GetFrameIndex() {
-    if (!mActiveReplay)
+    if (!mActiveReplay || mLastNode == mActiveReplay->Nodes.end())
         return 0;
 
     //return static_cast<uint64_t>(std::distance(mActiveReplay->Nodes.begin(), mLastNode));
@@ -180,10 +180,13 @@ void CReplayVehicle::FramePrev() {
 }
 
 void CReplayVehicle::FrameNext() {
-    if (!mActiveReplay)
+    if (!mActiveReplay || mLastNode == mActiveReplay->Nodes.end())
         return;
 
     if (std::next(mLastNode) == mActiveReplay->Nodes.end())
+        return;
+
+    if (std::next(std::next(mLastNode)) == mActiveReplay->Nodes.end())
         return;
 
     auto nextIt = std::next(mLastNode);

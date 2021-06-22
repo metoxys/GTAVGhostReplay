@@ -560,14 +560,17 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             }
 
             if (GetSettings().Main.Debug) {
-                mbCtx.OptionPlus(
+                bool pause = mbCtx.OptionPlus(
                     fmt::format("<< [{}/{}] >>", context.GetFrameIndex(), context.GetNumFrames()),
                     playbackDetails,
                     nullptr,
                     [&]() { context.FrameNext(); },
                     [&]() { context.FramePrev(); },
                     "Frame controls",
-                    { "Frame controls. Left = previous frame. Right = next frame." });
+                    { "Frame controls. Select to pause. Left = previous frame. Right = next frame." });
+                if (pause) {
+                    context.TogglePause(true);
+                }
             }
 
             bool replaying = context.GetReplayState() != EReplayState::Idle;

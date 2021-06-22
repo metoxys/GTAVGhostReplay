@@ -47,26 +47,30 @@ void CReplayVehicle::UpdatePlayback(unsigned long long gameTime, bool startPasse
                 mLastNode = mActiveReplay->Nodes.begin();
                 startReplay(gameTime);
             }
-            showNode(mLastNode->Timestamp, false, mLastNode, true);
+            showNode(mLastNode->Timestamp, mLastNode, mLastNode);
             break;
         }
         case EReplayState::Playing: {
+            // The time that has elapsed from the viewpoint of the replay.
             auto replayTime = gameTime - mReplayStart;
-            replayTime += (unsigned long long)(mSettings.Replay.OffsetSeconds * 1000.0f);
-            auto nodeCurr = std::upper_bound(mLastNode, mActiveReplay->Nodes.end(), SReplayNode{ replayTime });
-            if (nodeCurr != mActiveReplay->Nodes.begin())
-                nodeCurr = std::prev(nodeCurr);
+            replayTime += static_cast<int>(mSettings.Replay.OffsetSeconds * 1000.0f);
 
-            mLastNode = nodeCurr;
+            // Find the node where the timestamp is larger than the current virtual timestamp (replayTime).
+            auto nodeNext = std::upper_bound(mLastNode, mActiveReplay->Nodes.end(), SReplayNode{ replayTime });
 
-            bool lastNode = nodeCurr == std::prev(mActiveReplay->Nodes.end());
-            if (nodeCurr == mActiveReplay->Nodes.end() || lastNode) {
+            // The ghost has reached the end of the recording
+            if (nodeNext == mActiveReplay->Nodes.end()) {
                 mReplayState = EReplayState::Idle;
                 resetReplay();
-                //UI::Notify("Replay finished", false);
                 break;
             }
-            showNode(replayTime, lastNode, nodeCurr, false);
+
+            // Update the node passed, if progressed past it.
+            if (mLastNode != std::prev(nodeNext))
+                mLastNode = std::prev(nodeNext);
+
+            // Show the node, with <nodePrev> <now> <nodeNext>.
+            showNode(replayTime, mLastNode, nodeNext);
 
             // On a faster player lap, the current replay is nuked and this doesn't run, but better to
             // not rely on that behavior and have this here anyway, in case that part changes.
@@ -206,10 +210,14 @@ void CReplayVehicle::startReplay(unsigned long long gameTime) {
 
 void CReplayVehicle::showNode(
     unsigned long long replayTime,
-    bool lastNode,
-    const std::vector<SReplayNode>::iterator& nodeCurr,
-    bool zeroVelocity) {
-    auto nodeNext = lastNode ? nodeCurr : std::next(nodeCurr);
+    std::vector<SReplayNode>::iterator nodeCurr,
+    std::vector<SReplayNode>::iterator nodeNext) {
+    // In paused state, nodeCurr == nodeNext, so fake-progress nodeNext.
+    // Make sure the frame control doesn't go further than std::next(nodeCurr) == end();
+    bool paused = nodeCurr == nodeNext;
+    if (paused)
+        nodeNext = std::next(nodeNext);
+
     float progress = ((float)replayTime - (float)nodeCurr->Timestamp) /
         ((float)nodeNext->Timestamp - (float)nodeCurr->Timestamp);
     float deltaT = ((nodeNext->Timestamp - nodeCurr->Timestamp) * 0.001f); // Seconds
@@ -219,7 +227,7 @@ void CReplayVehicle::showNode(
     ENTITY::SET_ENTITY_ROTATION(mReplayVehicle, rot.x, rot.y, rot.z, 0, false);
 
     // Prevent the third person camera from rotating backwards
-    if (!zeroVelocity) {
+    if (!paused) {
         Vector3 vel = (nodeNext->Pos - nodeCurr->Pos) * (1.0f / deltaT);
         ENTITY::SET_ENTITY_VELOCITY(mReplayVehicle, vel.x, vel.y, vel.z);
     }

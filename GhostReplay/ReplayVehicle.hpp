@@ -61,9 +61,8 @@ private:
 
     void startReplay(unsigned long long gameTime);
     void showNode(unsigned long long replayTime,
-        bool lastNode,
-        const std::vector<SReplayNode>::iterator& nodeCurr,
-        bool zeroVelocity);
+        std::vector<SReplayNode>::iterator nodeCurr,
+        std::vector<SReplayNode>::iterator nodeNext);
     void resetReplay();
 
     void createReplayVehicle(Hash model, CReplayData* activeReplay, Vector3 pos);

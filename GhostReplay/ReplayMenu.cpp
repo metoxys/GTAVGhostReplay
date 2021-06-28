@@ -565,7 +565,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
             if (GetSettings().Main.Debug) {
                 bool pause = mbCtx.OptionPlus(
-                    fmt::format("<< [{}/{}] >>", context.GetFrameIndex(), context.GetNumFrames()),
+                    fmt::format("<< [{}/{}] >>", context.GetFrameIndex(), context.GetNumFrames() - 1),
                     playbackDetails,
                     nullptr,
                     [&]() { context.FrameNext(); },

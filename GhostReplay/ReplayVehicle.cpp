@@ -114,7 +114,9 @@ void CReplayVehicle::TogglePause(bool pause, double gameTime) {
 void CReplayVehicle::ScrubBackward(double step) {
     if (mActiveReplay && mLastNode != mActiveReplay->Nodes.end()) {
         bool wouldSkipPastBegin = mLastNode->Timestamp < step;
-        auto minMillis = wouldSkipPastBegin ? mLastNode->Timestamp : step;
+        auto minMillis = wouldSkipPastBegin ?
+            mLastNode->Timestamp :
+            step;
 
         auto replayTime = mLastNode->Timestamp - minMillis;
         auto nodeCurr = std::lower_bound(mActiveReplay->Nodes.begin(), mLastNode, SReplayNode{ replayTime });
@@ -133,16 +135,15 @@ void CReplayVehicle::ScrubBackward(double step) {
 void CReplayVehicle::ScrubForward(double step) {
     if (mActiveReplay && mLastNode != mActiveReplay->Nodes.end()) {
         bool wouldSkipPastEnd = mLastNode->Timestamp + step > mActiveReplay->Nodes.back().Timestamp;
-        if (wouldSkipPastEnd) {
-            mReplayState = EReplayState::Idle;
-            resetReplay();
-            return;
-        }
+        auto minMillis = wouldSkipPastEnd ?
+            mActiveReplay->Nodes.back().Timestamp - mLastNode->Timestamp :
+            step;
 
-        auto replayTime = mLastNode->Timestamp + step;
+        auto replayTime = mLastNode->Timestamp + minMillis;
         auto nodeCurr = std::upper_bound(mLastNode, mActiveReplay->Nodes.end(), SReplayNode{ replayTime });
-        if (nodeCurr != mActiveReplay->Nodes.begin())
+        if (nodeCurr != mActiveReplay->Nodes.begin()) {
             nodeCurr = std::prev(nodeCurr);
+        }
 
         // Step is smaller than delta-time, so just go to the next frame.
         if (std::next(nodeCurr) != mActiveReplay->Nodes.end() && nodeCurr == mLastNode) {
@@ -151,7 +152,7 @@ void CReplayVehicle::ScrubForward(double step) {
         }
 
         mLastNode = nodeCurr;
-        mReplayStart -= step;
+        mReplayStart -= minMillis;
     }
 }
 

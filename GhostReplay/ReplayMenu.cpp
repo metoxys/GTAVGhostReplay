@@ -500,8 +500,12 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         mbCtx.Title("Ghost controls");
         mbCtx.Subtitle("");
 
-        mbCtx.FloatOptionCb("Offset (seconds)", GetSettings().Replay.OffsetSeconds, -60.0f, 60.0f, 0.05f,
+        float offset = static_cast<float>(GetSettings().Replay.OffsetSeconds);
+        bool offsetChanged = mbCtx.FloatOptionCb("Offset (seconds)", offset, -60.0f, 60.0f, 0.05f,
             MenuUtils::GetKbFloat, { "Ghost offset. Positive is in front, negative is behind." });
+        if (offsetChanged) {
+            GetSettings().Replay.OffsetSeconds = static_cast<double>(offset);
+        }
 
         const std::vector<std::string> replayAlphaDescr{
             "The transparency of the ghost vehicle.",
@@ -529,7 +533,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             mbCtx.Option("~m~Replay controls unavailable", { "Select a track and a replay." });
         }
         else {
-            const uint32_t scrubDist = 1000;
+            const double scrubDist = 1000.0; // milliseconds
             auto activeReplay = context.ActiveReplay();
             auto replayState = context.GetReplayState();
             std::string replayStateName;

@@ -96,7 +96,7 @@ public:
     std::vector<std::shared_ptr<CReplayData>> GetCompatibleReplays(const std::string& trackName);
     void AddCompatibleReplay(const CReplayData& value);
 
-    bool IsFastestLap(const std::string& trackName, Hash vehicleModel, unsigned long long timestamp);
+    bool IsFastestLap(const std::string& trackName, Hash vehicleModel, double timestamp);
     CReplayData GetFastestReplay(const std::string& trackName, Hash vehicleModel);
 
     bool StartLineDef(SLineDef& lineDef, const std::string& lineName);
@@ -111,10 +111,10 @@ public:
     bool IsPassengerModeActive() { return mPassengerModeActive; }
 
     // Playback control
-    uint64_t GetReplayProgress();
+    double GetReplayProgress();
     void TogglePause(bool pause);
-    void ScrubBackward(uint64_t millis);
-    void ScrubForward(uint64_t millis);
+    void ScrubBackward(double step);
+    void ScrubForward(double step);
 
     // Debugging playback
     uint64_t GetNumFrames();
@@ -126,16 +126,21 @@ public:
 
 protected:
     void updateReplay();
-    void updateRecord(unsigned long long gameTime, bool startPassedThisTick, bool finishPassedThisTick);
+    void updateRecord(double gameTime, bool startPassedThisTick, bool finishPassedThisTick);
     void updateTrackDefine();
     bool passedLineThisTick(SLineDef line, Vector3 oldPos, Vector3 newPos);
-    void startRecord(unsigned long long gameTime, Vehicle vehicle);
-    bool saveNode(unsigned long long gameTime, SReplayNode& node, Vehicle vehicle, bool firstNode);
+    void startRecord(double gameTime, Vehicle vehicle);
+    bool saveNode(double gameTime, SReplayNode& node, Vehicle vehicle, bool firstNode);
     void finishRecord(bool saved, const SReplayNode& node);
     void clearPtfx();
     void createPtfx(const CTrackData& trackData);
     void clearTrackBlips();
     void createTrackBlips(const CTrackData& trackData);
+
+    void updateSteppedTime();
+    double getSteppedTime();
+
+    double mCurrentTime;
 
     const CScriptSettings& mSettings;
     std::vector<std::shared_ptr<CReplayData>>& mReplays;
@@ -152,7 +157,7 @@ protected:
 
     EScriptMode mScriptMode;
     ERecordState mRecordState;
-    unsigned long long recordStart = 0;
+    double mRecordStart = 0.0;
 
     Vector3 mLastPos;
 

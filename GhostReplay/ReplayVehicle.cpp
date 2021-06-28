@@ -26,7 +26,7 @@ CReplayVehicle::~CReplayVehicle() {
         resetReplay();
 }
 
-void CReplayVehicle::UpdatePlayback(unsigned long long gameTime, bool startPassedThisTick, bool finishPassedThisTick) {
+void CReplayVehicle::UpdatePlayback(double gameTime, bool startPassedThisTick, bool finishPassedThisTick) {
     if (!mActiveReplay) {
         mReplayState = EReplayState::Idle;
         resetReplay();
@@ -53,7 +53,7 @@ void CReplayVehicle::UpdatePlayback(unsigned long long gameTime, bool startPasse
         case EReplayState::Playing: {
             // The time that has elapsed from the viewpoint of the replay.
             auto replayTime = gameTime - mReplayStart;
-            replayTime += static_cast<int>(mSettings.Replay.OffsetSeconds * 1000.0f);
+            replayTime += mSettings.Replay.OffsetSeconds * 1000.0;
 
             // Find the node where the timestamp is larger than the current virtual timestamp (replayTime).
             auto nodeNext = std::upper_bound(mLastNode, mActiveReplay->Nodes.end(), SReplayNode{ replayTime });
@@ -87,14 +87,14 @@ void CReplayVehicle::UpdatePlayback(unsigned long long gameTime, bool startPasse
     }
 }
 
-uint64_t CReplayVehicle::GetReplayProgress() {
+double CReplayVehicle::GetReplayProgress() {
     if (mActiveReplay && mLastNode != mActiveReplay->Nodes.end()) {
         return mLastNode->Timestamp;
     }
     return 0;
 }
 
-void CReplayVehicle::TogglePause(bool pause, uint64_t gameTime) {
+void CReplayVehicle::TogglePause(bool pause, double gameTime) {
     if (mReplayState == EReplayState::Idle) {
         startReplay(gameTime);
     }
@@ -103,7 +103,7 @@ void CReplayVehicle::TogglePause(bool pause, uint64_t gameTime) {
     }
     else {
         mReplayState = EReplayState::Playing;
-        uint64_t offset = 0;
+        double offset = 0.0;
         if (mActiveReplay && mLastNode != mActiveReplay->Nodes.end()) {
             offset = mLastNode->Timestamp;
         }
@@ -111,10 +111,10 @@ void CReplayVehicle::TogglePause(bool pause, uint64_t gameTime) {
     }
 }
 
-void CReplayVehicle::ScrubBackward(uint64_t millis) {
+void CReplayVehicle::ScrubBackward(double step) {
     if (mActiveReplay && mLastNode != mActiveReplay->Nodes.end()) {
-        bool wouldSkipPastBegin = mLastNode->Timestamp < millis;
-        auto minMillis = wouldSkipPastBegin ? mLastNode->Timestamp : millis;
+        bool wouldSkipPastBegin = mLastNode->Timestamp < step;
+        auto minMillis = wouldSkipPastBegin ? mLastNode->Timestamp : step;
 
         auto replayTime = mLastNode->Timestamp - minMillis;
         auto nodeCurr = std::lower_bound(mActiveReplay->Nodes.begin(), mLastNode, SReplayNode{ replayTime });
@@ -124,22 +124,22 @@ void CReplayVehicle::ScrubBackward(uint64_t millis) {
     }
 }
 
-void CReplayVehicle::ScrubForward(uint64_t millis) {
+void CReplayVehicle::ScrubForward(double step) {
     if (mActiveReplay && mLastNode != mActiveReplay->Nodes.end()) {
-        bool wouldSkipPastEnd = mLastNode->Timestamp + millis > mActiveReplay->Nodes.back().Timestamp;
+        bool wouldSkipPastEnd = mLastNode->Timestamp + step > mActiveReplay->Nodes.back().Timestamp;
         if (wouldSkipPastEnd) {
             mReplayState = EReplayState::Idle;
             resetReplay();
             return;
         }
 
-        auto replayTime = mLastNode->Timestamp + millis;
+        auto replayTime = mLastNode->Timestamp + step;
         auto nodeCurr = std::upper_bound(mLastNode, mActiveReplay->Nodes.end(), SReplayNode{ replayTime });
         if (nodeCurr != mActiveReplay->Nodes.begin())
             nodeCurr = std::prev(nodeCurr);
 
         mLastNode = nodeCurr;
-        mReplayStart -= millis;
+        mReplayStart -= step;
     }
 }
 
@@ -148,14 +148,6 @@ uint64_t CReplayVehicle::GetNumFrames() {
         return mActiveReplay->Nodes.size();
     return 0;
 }
-
-struct SMyStruct {
-    float Value;
-
-    bool operator<(const SMyStruct& other) const {
-        return Value < other.Value;
-    }
-};
 
 uint64_t CReplayVehicle::GetFrameIndex() {
     if (!mActiveReplay || mLastNode == mActiveReplay->Nodes.end())
@@ -199,7 +191,7 @@ void CReplayVehicle::FrameNext() {
     mReplayStart -= delta;
 }
 
-void CReplayVehicle::startReplay(unsigned long long gameTime) {
+void CReplayVehicle::startReplay(double gameTime) {
     mReplayStart = gameTime;
     unhideVehicle();
     mLastNode = mActiveReplay->Nodes.begin();
@@ -209,7 +201,7 @@ void CReplayVehicle::startReplay(unsigned long long gameTime) {
 }
 
 void CReplayVehicle::showNode(
-    unsigned long long replayTime,
+    double replayTime,
     std::vector<SReplayNode>::iterator nodeCurr,
     std::vector<SReplayNode>::iterator nodeNext) {
     // In paused state, nodeCurr == nodeNext, so fake-progress nodeNext.
@@ -218,9 +210,9 @@ void CReplayVehicle::showNode(
     if (paused)
         nodeNext = std::next(nodeNext);
 
-    float progress = ((float)replayTime - (float)nodeCurr->Timestamp) /
-        ((float)nodeNext->Timestamp - (float)nodeCurr->Timestamp);
-    float deltaT = ((nodeNext->Timestamp - nodeCurr->Timestamp) * 0.001f); // Seconds
+    float progress = static_cast<float>((replayTime - nodeCurr->Timestamp) /
+        (nodeNext->Timestamp - nodeCurr->Timestamp));
+    double deltaT = ((nodeNext->Timestamp - nodeCurr->Timestamp) * 0.001); // Seconds
     Vector3 pos = lerp(nodeCurr->Pos, nodeNext->Pos, progress);
     Vector3 rot = lerp(nodeCurr->Rot, nodeNext->Rot, progress, -180.0f, 180.0f);
     ENTITY::SET_ENTITY_COORDS_NO_OFFSET(mReplayVehicle, pos.x, pos.y, pos.z, false, false, false);
@@ -228,7 +220,7 @@ void CReplayVehicle::showNode(
 
     // Prevent the third person camera from rotating backwards
     if (!paused) {
-        Vector3 vel = (nodeNext->Pos - nodeCurr->Pos) * (1.0f / deltaT);
+        Vector3 vel = (nodeNext->Pos - nodeCurr->Pos) * static_cast<float>(1.0 / deltaT);
         ENTITY::SET_ENTITY_VELOCITY(mReplayVehicle, vel.x, vel.y, vel.z);
     }
 
@@ -239,7 +231,7 @@ void CReplayVehicle::showNode(
     rotInRad.y = deg2rad(rotInRad.y);
     rotInRad.z = deg2rad(rotInRad.z);
     Vector3 offNext = GetRelativeOffsetGivenWorldCoords(nodeCurr->Pos, nodeNext->Pos, rotInRad);
-    Vector3 relVel = offNext * (1.0f / deltaT);
+    Vector3 relVel = offNext * static_cast<float>(1.0 / deltaT);
 
     auto wheelDims = VExt::GetWheelDimensions(mReplayVehicle);
     if (VExt::GetNumWheels(mReplayVehicle) == nodeCurr->WheelRotations.size()) {

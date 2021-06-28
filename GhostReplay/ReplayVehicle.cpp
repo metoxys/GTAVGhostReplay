@@ -168,7 +168,7 @@ uint64_t CReplayVehicle::GetFrameIndex() {
     //return static_cast<uint64_t>(std::distance(mActiveReplay->Nodes.begin(), mLastNode));
 
     for (uint64_t i = 0; i < mActiveReplay->Nodes.size(); ++i) {
-        if (mLastNode->Timestamp == mActiveReplay->Nodes[i].Timestamp)
+        if (mLastNode->Timestamp <= mActiveReplay->Nodes[i].Timestamp)
             return i;
     }
     return 0;
@@ -194,9 +194,6 @@ void CReplayVehicle::FrameNext() {
     if (std::next(mLastNode) == mActiveReplay->Nodes.end())
         return;
 
-    if (std::next(std::next(mLastNode)) == mActiveReplay->Nodes.end())
-        return;
-
     auto nextIt = std::next(mLastNode);
     auto delta = nextIt->Timestamp - mLastNode->Timestamp;
     mLastNode = nextIt;
@@ -219,8 +216,14 @@ void CReplayVehicle::showNode(
     // In paused state, nodeCurr == nodeNext, so fake-progress nodeNext.
     // Make sure the frame control doesn't go further than std::next(nodeCurr) == end();
     bool paused = nodeCurr == nodeNext;
-    if (paused)
-        nodeNext = std::next(nodeNext);
+    if (paused) {
+        if (std::next(nodeNext) != mActiveReplay->Nodes.end()) {
+            nodeNext = std::next(nodeNext);
+        }
+        else {
+            nodeCurr = std::prev(nodeCurr);
+        }
+    }
 
     float progress = static_cast<float>((replayTime - nodeCurr->Timestamp) /
         (nodeNext->Timestamp - nodeCurr->Timestamp));

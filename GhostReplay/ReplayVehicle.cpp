@@ -119,6 +119,12 @@ void CReplayVehicle::ScrubBackward(double step) {
         auto replayTime = mLastNode->Timestamp - minMillis;
         auto nodeCurr = std::lower_bound(mActiveReplay->Nodes.begin(), mLastNode, SReplayNode{ replayTime });
 
+        // Step is smaller than delta-time, so just go to the previous frame.
+        if (nodeCurr != mActiveReplay->Nodes.begin() && nodeCurr == mLastNode) {
+            FramePrev();
+            return;
+        }
+
         mLastNode = nodeCurr;
         mReplayStart += minMillis;
     }
@@ -137,6 +143,12 @@ void CReplayVehicle::ScrubForward(double step) {
         auto nodeCurr = std::upper_bound(mLastNode, mActiveReplay->Nodes.end(), SReplayNode{ replayTime });
         if (nodeCurr != mActiveReplay->Nodes.begin())
             nodeCurr = std::prev(nodeCurr);
+
+        // Step is smaller than delta-time, so just go to the next frame.
+        if (std::next(nodeCurr) != mActiveReplay->Nodes.end() && nodeCurr == mLastNode) {
+            FrameNext();
+            return;
+        }
 
         mLastNode = nodeCurr;
         mReplayStart -= step;

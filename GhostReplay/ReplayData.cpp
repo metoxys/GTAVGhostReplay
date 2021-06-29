@@ -11,15 +11,15 @@
 #include <thread>
 #include <utility>
 
-void to_json(nlohmann::json& j, const Vector3& vector3) {
-    j = nlohmann::json{
+void to_json(nlohmann::ordered_json& j, const Vector3& vector3) {
+    j = nlohmann::ordered_json{
         { "X", vector3.x },
         { "Y", vector3.y },
         { "Z", vector3.z },
     };
 }
 
-void from_json(const nlohmann::json& j, Vector3& vector3) {
+void from_json(const nlohmann::ordered_json& j, Vector3& vector3) {
     j.at("X").get_to(vector3.x);
     j.at("Y").get_to(vector3.y);
     j.at("Z").get_to(vector3.z);
@@ -28,7 +28,7 @@ void from_json(const nlohmann::json& j, Vector3& vector3) {
 CReplayData CReplayData::Read(const std::string& replayFile) {
     CReplayData replayData(replayFile);
 
-    nlohmann::json replayJson;
+    nlohmann::ordered_json replayJson;
     std::ifstream replayFileStream(replayFile.c_str());
     if (!replayFileStream.is_open()) {
         logger.Write(ERROR, "[Replay] Failed to open %s", replayFile.c_str());
@@ -87,7 +87,7 @@ CReplayData::CReplayData(std::string fileName)
     , mFileName(std::move(fileName)) {}
 
 void CReplayData::write() {
-    nlohmann::json replayJson;
+    nlohmann::ordered_json replayJson;
 
     replayJson["Timestamp"] = Timestamp;
     replayJson["Name"] = Name;

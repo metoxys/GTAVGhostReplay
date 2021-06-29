@@ -23,7 +23,7 @@ public:
 
     struct {
         // Normal
-        float OffsetSeconds = 0.0f;
+        double OffsetSeconds = 0.0;
         int VehicleAlpha = 40;
         int ForceLights = 0;
 
@@ -31,6 +31,7 @@ public:
         std::string FallbackModel = "sultan";
         bool ForceFallbackModel = false;
         bool AutoLoadGhost = true;
+        bool ZeroVelocityOnPause = true;
     } Replay;
 
 private:

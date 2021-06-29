@@ -6,7 +6,7 @@
 #include <vector>
 
 struct SReplayNode {
-    unsigned long long Timestamp;
+    double Timestamp;
     Vector3 Pos;
     Vector3 Rot;
     std::vector<float> WheelRotations;

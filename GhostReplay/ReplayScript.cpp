@@ -29,7 +29,8 @@ CReplayScript::CReplayScript(
     std::vector<CTrackData>& tracks,
     std::vector<CImage>& trackImages,
     std::vector<CTrackData>& arsTracks)
-    : mSettings(settings)
+    : mCurrentTime(static_cast<double>(MISC::GET_GAME_TIMER()))
+    , mSettings(settings)
     , mReplays(replays)
     , mCompatibleReplays()
     , mTracks(tracks)
@@ -41,7 +42,7 @@ CReplayScript::CReplayScript(
     , mRecordState(ERecordState::Idle)
     , mLastPos(Vector3{})
     , mReplayVehicle(nullptr)
-    , mCurrentRun(""){
+    , mCurrentRun("") {
 }
 
 CReplayScript::~CReplayScript() = default;
@@ -79,6 +80,12 @@ CReplayScript::~CReplayScript() = default;
 //          aa. Save new ghost | Discard
 
 void CReplayScript::Tick() {
+    updateSteppedTime();
+
+    // UI::ShowText(0.65f, 0.30f, 0.5f, fmt::format("{:.9f}", MISC::GET_FRAME_TIME()));
+    // UI::ShowText(0.65f, 0.35f, 0.5f, fmt::format("{:.9f}", mCurrentTime));
+    // UI::ShowText(0.65f, 0.40f, 0.5f, fmt::format("{:.9f}", getSteppedTime()));
+
     switch(mScriptMode) {
         case EScriptMode::DefineTrack:
             updateTrackDefine();
@@ -213,7 +220,7 @@ void CReplayScript::AddCompatibleReplay(const CReplayData& value) {
     mCompatibleReplays.push_back(std::make_shared<CReplayData>(value));
 }
 
-bool CReplayScript::IsFastestLap(const std::string& trackName, Hash vehicleModel, unsigned long long timestamp) {
+bool CReplayScript::IsFastestLap(const std::string& trackName, Hash vehicleModel, double timestamp) {
     CReplayData fastestReplay = GetFastestReplay(trackName, vehicleModel);
 
     if (!fastestReplay.Name.empty())
@@ -399,7 +406,7 @@ void CReplayScript::ActivatePassengerMode() {
         ENTITY::SET_ENTITY_VISIBLE(playerVehicle, false, false);
     }
 
-    mReplayVehicle->UpdatePlayback(MISC::GET_GAME_TIMER(), true, false);
+    mReplayVehicle->UpdatePlayback(getSteppedTime(), true, false);
 
     Vehicle replayVehicle = mReplayVehicle->GetVehicle();
     int numReplayVehicleSeats = VEHICLE::GET_VEHICLE_MODEL_NUMBER_OF_SEATS(ENTITY::GET_ENTITY_MODEL(replayVehicle));
@@ -470,7 +477,7 @@ void CReplayScript::DeactivatePassengerMode(Vehicle vehicle) {
     mPassengerModeActive = false;
 }
 
-uint64_t CReplayScript::GetReplayProgress() {
+double CReplayScript::GetReplayProgress() {
     if (mReplayVehicle)
         return mReplayVehicle->GetReplayProgress();
     return 0;
@@ -478,17 +485,17 @@ uint64_t CReplayScript::GetReplayProgress() {
 
 void CReplayScript::TogglePause(bool pause) {
     if (mReplayVehicle)
-        mReplayVehicle->TogglePause(pause, MISC::GET_GAME_TIMER());
+        mReplayVehicle->TogglePause(pause, getSteppedTime());
 }
 
-void CReplayScript::ScrubBackward(uint64_t millis) {
+void CReplayScript::ScrubBackward(double step) {
     if (mReplayVehicle)
-        mReplayVehicle->ScrubBackward(millis);
+        mReplayVehicle->ScrubBackward(step);
 }
 
-void CReplayScript::ScrubForward(uint64_t millis) {
+void CReplayScript::ScrubForward(double step) {
     if (mReplayVehicle)
-        mReplayVehicle->ScrubForward(millis);
+        mReplayVehicle->ScrubForward(step);
 }
 
 uint64_t CReplayScript::GetNumFrames() {
@@ -561,7 +568,7 @@ void CReplayScript::updateReplay() {
         nowPos = mLastPos;
     }
 
-    unsigned long long gameTime = MISC::GET_GAME_TIMER();
+    auto gameTime = getSteppedTime();
     bool startPassedThisTick = passedLineThisTick(mActiveTrack->StartLine, mLastPos, nowPos);
     bool finishPassedThisTick = passedLineThisTick(mActiveTrack->FinishLine, mLastPos, nowPos);
 
@@ -578,7 +585,7 @@ void CReplayScript::updateReplay() {
         mReplayVehicle->UpdatePlayback(gameTime, startPassedThisTick, finishPassedThisTick);
 }
 
-void CReplayScript::updateRecord(unsigned long long gameTime, bool startPassedThisTick, bool finishPassedThisTick) {
+void CReplayScript::updateRecord(double gameTime, bool startPassedThisTick, bool finishPassedThisTick) {
     Vehicle vehicle = PED::GET_VEHICLE_PED_IS_IN(PLAYER::PLAYER_PED_ID(), false);
     if (!ENTITY::DOES_ENTITY_EXIST(vehicle) || !mActiveTrack) {
         mRecordState = ERecordState::Idle;
@@ -631,8 +638,8 @@ bool CReplayScript::passedLineThisTick(SLineDef line, Vector3 oldPos, Vector3 ne
     return oldSgn != newSgn && oldSgn > 0.0f;
 }
 
-void CReplayScript::startRecord(unsigned long long gameTime, Vehicle vehicle) {
-    recordStart = gameTime;
+void CReplayScript::startRecord(double gameTime, Vehicle vehicle) {
+    mRecordStart = gameTime;
     mCurrentRun.Timestamp = std::chrono::duration_cast<std::chrono::milliseconds>
         (std::chrono::system_clock::now().time_since_epoch()).count();
     mCurrentRun.Track = mActiveTrack->Name;
@@ -644,11 +651,11 @@ void CReplayScript::startRecord(unsigned long long gameTime, Vehicle vehicle) {
     //UI::Notify("Record started", false);
 }
 
-bool CReplayScript::saveNode(unsigned long long gameTime, SReplayNode& node, Vehicle vehicle, bool firstNode) {
+bool CReplayScript::saveNode(double gameTime, SReplayNode& node, Vehicle vehicle, bool firstNode) {
     Vector3 nowPos = ENTITY::GET_ENTITY_COORDS(vehicle, true);
     Vector3 nowRot = ENTITY::GET_ENTITY_ROTATION(vehicle, 0);
 
-    node.Timestamp = gameTime - recordStart;
+    node.Timestamp = gameTime - mRecordStart;
     node.Pos = nowPos;
     node.Rot = nowRot;
     node.WheelRotations = VExt::GetWheelRotations(vehicle);
@@ -667,7 +674,7 @@ bool CReplayScript::saveNode(unsigned long long gameTime, SReplayNode& node, Veh
     node.HighBeams = areHighBeamsOn;
 
     bool saved = false;
-    unsigned long long lastNodeTime = 0;
+    double lastNodeTime = 0.0;
     if (!mCurrentRun.Nodes.empty()) {
         lastNodeTime = mCurrentRun.Nodes.back().Timestamp;
     }
@@ -793,4 +800,12 @@ void CReplayScript::createTrackBlips(const CTrackData& trackData) {
             fmt::format("{} (Finish)", trackData.Name),
             eBlipColor::BlipColorWhite);
     }
+}
+
+void CReplayScript::updateSteppedTime() {
+    mCurrentTime = mCurrentTime + static_cast<double>(MISC::GET_FRAME_TIME());
+}
+
+double CReplayScript::getSteppedTime() {
+    return mCurrentTime * 1000.0;
 }

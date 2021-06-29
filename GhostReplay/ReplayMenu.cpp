@@ -18,7 +18,12 @@
 #include <fmt/format.h>
 
 namespace GhostReplay {
-    std::vector<std::string> FormatTrackData(NativeMenu::Menu& mbCtx, CReplayScript& context, const CTrackData& track);
+    struct SFormattedTrackData {
+        size_t NumCompatibleReplays;
+        std::vector<std::string> Content;
+    };
+
+    const std::vector<std::string>& FormatTrackData(NativeMenu::Menu& mbCtx, CReplayScript& context, const CTrackData& track);
     bool EvaluateInput(std::string& searchFor);
     void UpdateTrackFilter(CReplayScript& context);
     void UpdateReplayFilter(CReplayScript& context);
@@ -33,6 +38,7 @@ namespace GhostReplay {
     std::string replaySelectSearch;
 
     std::vector<std::shared_ptr<CReplayData>> filteredReplays;
+    std::unordered_map<std::string, SFormattedTrackData> formattedTrackData;
 
     const std::vector<std::string> lightsOptions = { "Default", "Force Off", "Force On" };
 }
@@ -299,7 +305,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             }
 
             if (highlighted) {
-                auto extras = FormatTrackData(mbCtx, context, track);
+                auto& extras = FormatTrackData(mbCtx, context, track);
                 mbCtx.OptionPlusPlus(extras, track.Name);
             }
         }
@@ -329,7 +335,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             }
 
             if (highlighted) {
-                auto extras = FormatTrackData(mbCtx, context, track);
+                auto& extras = FormatTrackData(mbCtx, context, track);
                 mbCtx.OptionPlusPlus(extras, track.Name);
             }
         }
@@ -500,8 +506,12 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         mbCtx.Title("Ghost controls");
         mbCtx.Subtitle("");
 
-        mbCtx.FloatOptionCb("Offset (seconds)", GetSettings().Replay.OffsetSeconds, -60.0f, 60.0f, 0.05f,
+        float offset = static_cast<float>(GetSettings().Replay.OffsetSeconds);
+        bool offsetChanged = mbCtx.FloatOptionCb("Offset (seconds)", offset, -60.0f, 60.0f, 0.05f,
             MenuUtils::GetKbFloat, { "Ghost offset. Positive is in front, negative is behind." });
+        if (offsetChanged) {
+            GetSettings().Replay.OffsetSeconds = static_cast<double>(offset);
+        }
 
         const std::vector<std::string> replayAlphaDescr{
             "The transparency of the ghost vehicle.",
@@ -529,7 +539,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             mbCtx.Option("~m~Replay controls unavailable", { "Select a track and a replay." });
         }
         else {
-            const uint32_t scrubDist = 1000;
+            const double scrubDist = 1000.0; // milliseconds
             auto activeReplay = context.ActiveReplay();
             auto replayState = context.GetReplayState();
             std::string replayStateName;
@@ -561,7 +571,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
             if (GetSettings().Main.Debug) {
                 bool pause = mbCtx.OptionPlus(
-                    fmt::format("<< [{}/{}] >>", context.GetFrameIndex(), context.GetNumFrames()),
+                    fmt::format("<< [{}/{}] >>", context.GetFrameIndex(), context.GetNumFrames() - 1),
                     playbackDetails,
                     nullptr,
                     [&]() { context.FrameNext(); },
@@ -679,13 +689,28 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
         mbCtx.BoolOption("Force fallback model", GetSettings().Replay.ForceFallbackModel, 
             { "Always use the fallback model." });
+
+        mbCtx.BoolOption("Zero velocity on pause", GetSettings().Replay.ZeroVelocityOnPause,
+            { "When paused, no velocity is set. This stops the third person gameplay camera from moving, "
+              "but will cause glitched suspension for vehicles with advanced handling flag 0x0800000." });
     });
 
     return submenus;
 }
 
-std::vector<std::string> GhostReplay::FormatTrackData(NativeMenu::Menu& mbCtx, CReplayScript& context, const CTrackData& track) {
+const std::vector<std::string>& GhostReplay::FormatTrackData(NativeMenu::Menu& mbCtx, CReplayScript& context, const CTrackData& track) {
     auto compatibleReplays = context.GetCompatibleReplays(track.Name);
+
+    auto formattedTrackDataIt = formattedTrackData.find(track.Name);
+    if (formattedTrackDataIt != formattedTrackData.end()) {
+        if (formattedTrackDataIt->second.NumCompatibleReplays == compatibleReplays.size()) {
+            return formattedTrackDataIt->second.Content;
+        }
+        else {
+            formattedTrackData.erase(formattedTrackDataIt);
+        }
+    }
+
     CReplayData fastestReplayInfo = context.GetFastestReplay(track.Name, 0);
     std::string lapRecordString = "No times set";
     if (!fastestReplayInfo.Name.empty()) {
@@ -725,7 +750,9 @@ std::vector<std::string> GhostReplay::FormatTrackData(NativeMenu::Menu& mbCtx, C
             Util::GetVehicleName(replay->VehicleModel)));
         fastestModels.push_back(replay->VehicleModel);
     }
-    return extras;
+
+    auto inserted = formattedTrackData.insert({ track.Name, { compatibleReplays.size(), extras } });
+    return inserted.first->second.Content;
 }
 
 bool GhostReplay::EvaluateInput(std::string& searchFor) {

@@ -31,7 +31,7 @@ public:
         std::string FallbackModel = "sultan";
         bool ForceFallbackModel = false;
         bool AutoLoadGhost = true;
-        bool ZeroVelocityOnPause = false;
+        bool ZeroVelocityOnPause = true;
     } Replay;
 
 private:

@@ -18,7 +18,12 @@
 #include <fmt/format.h>
 
 namespace GhostReplay {
-    std::vector<std::string> FormatTrackData(NativeMenu::Menu& mbCtx, CReplayScript& context, const CTrackData& track);
+    struct SFormattedTrackData {
+        size_t NumCompatibleReplays;
+        std::vector<std::string> Content;
+    };
+
+    const std::vector<std::string>& FormatTrackData(NativeMenu::Menu& mbCtx, CReplayScript& context, const CTrackData& track);
     bool EvaluateInput(std::string& searchFor);
     void UpdateTrackFilter(CReplayScript& context);
     void UpdateReplayFilter(CReplayScript& context);
@@ -33,6 +38,7 @@ namespace GhostReplay {
     std::string replaySelectSearch;
 
     std::vector<std::shared_ptr<CReplayData>> filteredReplays;
+    std::unordered_map<std::string, SFormattedTrackData> formattedTrackData;
 
     const std::vector<std::string> lightsOptions = { "Default", "Force Off", "Force On" };
 }
@@ -299,7 +305,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             }
 
             if (highlighted) {
-                auto extras = FormatTrackData(mbCtx, context, track);
+                auto& extras = FormatTrackData(mbCtx, context, track);
                 mbCtx.OptionPlusPlus(extras, track.Name);
             }
         }
@@ -329,7 +335,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             }
 
             if (highlighted) {
-                auto extras = FormatTrackData(mbCtx, context, track);
+                auto& extras = FormatTrackData(mbCtx, context, track);
                 mbCtx.OptionPlusPlus(extras, track.Name);
             }
         }
@@ -692,8 +698,19 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
     return submenus;
 }
 
-std::vector<std::string> GhostReplay::FormatTrackData(NativeMenu::Menu& mbCtx, CReplayScript& context, const CTrackData& track) {
+const std::vector<std::string>& GhostReplay::FormatTrackData(NativeMenu::Menu& mbCtx, CReplayScript& context, const CTrackData& track) {
     auto compatibleReplays = context.GetCompatibleReplays(track.Name);
+
+    auto formattedTrackDataIt = formattedTrackData.find(track.Name);
+    if (formattedTrackDataIt != formattedTrackData.end()) {
+        if (formattedTrackDataIt->second.NumCompatibleReplays == compatibleReplays.size()) {
+            return formattedTrackDataIt->second.Content;
+        }
+        else {
+            formattedTrackData.erase(formattedTrackDataIt);
+        }
+    }
+
     CReplayData fastestReplayInfo = context.GetFastestReplay(track.Name, 0);
     std::string lapRecordString = "No times set";
     if (!fastestReplayInfo.Name.empty()) {
@@ -733,7 +750,9 @@ std::vector<std::string> GhostReplay::FormatTrackData(NativeMenu::Menu& mbCtx, C
             Util::GetVehicleName(replay->VehicleModel)));
         fastestModels.push_back(replay->VehicleModel);
     }
-    return extras;
+
+    auto inserted = formattedTrackData.insert({ track.Name, { compatibleReplays.size(), extras } });
+    return inserted.first->second.Content;
 }
 
 bool GhostReplay::EvaluateInput(std::string& searchFor) {

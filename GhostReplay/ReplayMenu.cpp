@@ -683,6 +683,10 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
         mbCtx.BoolOption("Force fallback model", GetSettings().Replay.ForceFallbackModel, 
             { "Always use the fallback model." });
+
+        mbCtx.BoolOption("Zero velocity on pause", GetSettings().Replay.ZeroVelocityOnPause,
+            { "When paused, no velocity is set. This stops the third person gameplay camera from moving, "
+              "but will cause glitches for vehicles with advanced handling flag 0x0800000." });
     });
 
     return submenus;

@@ -235,7 +235,7 @@ void CReplayVehicle::showNode(
     ENTITY::SET_ENTITY_ROTATION(mReplayVehicle, rot.x, rot.y, rot.z, 0, false);
 
     // Prevent the third person camera from rotating backwards
-    if (!paused) {
+    if (!(paused && mSettings.Replay.ZeroVelocityOnPause)) {
         Vector3 vel = (nodeNext->Pos - nodeCurr->Pos) * static_cast<float>(1.0 / deltaT);
         ENTITY::SET_ENTITY_VELOCITY(mReplayVehicle, vel.x, vel.y, vel.z);
     }

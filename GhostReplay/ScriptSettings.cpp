@@ -32,6 +32,7 @@ void CScriptSettings::Load() {
     LOAD_VAL("Main", "DrawStartFinish", Main.DrawStartFinish);
     LOAD_VAL("Main", "GhostBlips", Main.GhostBlips);
     LOAD_VAL("Main", "StartStopBlips", Main.StartStopBlips);
+    LOAD_VAL("Main", "ShowRecordTime", Main.ShowRecordTime);
     LOAD_VAL("Main", "Debug", Main.Debug);
 
     LOAD_VAL("Record", "AutoGhost", Record.AutoGhost);
@@ -57,6 +58,7 @@ void CScriptSettings::Save() {
     SAVE_VAL("Main", "DrawStartFinish", Main.DrawStartFinish);
     SAVE_VAL("Main", "GhostBlips", Main.GhostBlips);
     SAVE_VAL("Main", "StartStopBlips", Main.StartStopBlips);
+    SAVE_VAL("Main", "ShowRecordTime", Main.ShowRecordTime);
 
     SAVE_VAL("Record", "AutoGhost", Record.AutoGhost);
     SAVE_VAL("Record", "DeltaMillis", Record.DeltaMillis);

@@ -46,7 +46,7 @@ void UI::Notify(const std::string& message, bool removePrevious) {
 }
 
 void UI::ShowText(float x, float y, float scale, const std::string& text) {
-    HUD::SET_TEXT_FONT(0);
+    HUD::SET_TEXT_FONT(4);
     HUD::SET_TEXT_SCALE(scale, scale);
     HUD::SET_TEXT_COLOUR(255, 255, 255, 255);
     HUD::SET_TEXT_WRAP(0.0, 1.0);

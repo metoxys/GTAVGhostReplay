@@ -13,6 +13,7 @@ public:
         bool DrawStartFinish = true;
         bool GhostBlips = true;
         bool StartStopBlips = true;
+        bool ShowRecordTime = true;
         bool Debug = false;
     } Main;
 

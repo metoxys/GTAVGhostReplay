@@ -642,7 +642,11 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         mbCtx.BoolOption("Track blips", GetSettings().Main.StartStopBlips,
             { "Draws blips for the start and finish.",
               "Setting applies next time a track is selected.",
-              "Draws separate start (blue) and finish (white) blips when they're further apart than 5 meters."});
+              "Draws separate start (blue) and finish (white) blips when they're further apart than 5 meters." });
+
+        mbCtx.BoolOption("Show recording time", GetSettings().Main.ShowRecordTime,
+            { "Shows the time since the lap/recording started.",
+              "Appears on the top left of the screen, when a map is selected." });
 
         mbCtx.MenuOption("Recording settings", "recordsettingsmenu");
         mbCtx.MenuOption("Advanced ghost settings", "advghostsettingsmenu");

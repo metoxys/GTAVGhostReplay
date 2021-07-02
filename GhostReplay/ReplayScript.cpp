@@ -594,6 +594,15 @@ void CReplayScript::updateReplay() {
 
         PAD::DISABLE_CONTROL_ACTION(0, eControl::ControlVehicleExit, true);
     }
+
+    if (mSettings.Main.ShowRecordTime && !IsPassengerModeActive()) {
+        if (IsRecording()) {
+            UI::ShowText(0.005f, 0.0f, 1.0f, Util::FormatMillisTime(gameTime - mRecordStart));
+        }
+        else {
+            UI::ShowText(0.005f, 0.0f, 1.0f, Util::FormatMillisTime(0.0));
+        }
+    }
 }
 
 void CReplayScript::updateRecord(double gameTime, bool startPassedThisTick, bool finishPassedThisTick) {

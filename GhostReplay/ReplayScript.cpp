@@ -591,6 +591,8 @@ void CReplayScript::updateReplay() {
         auto playerPed = PLAYER::PLAYER_PED_ID();
         AUDIO::STOP_CURRENT_PLAYING_SPEECH(playerPed);
         AUDIO::STOP_CURRENT_PLAYING_AMBIENT_SPEECH(playerPed);
+
+        PAD::DISABLE_CONTROL_ACTION(0, eControl::ControlVehicleExit, true);
     }
 }
 

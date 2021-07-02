@@ -261,15 +261,15 @@ void CReplayVehicle::showNode(
         }
     }
 
-    VExt::SetSteeringAngle(mReplayVehicle, nodeCurr->SteeringAngle);
-    VExt::SetThrottle(mReplayVehicle, nodeCurr->Throttle);
-    VExt::SetThrottleP(mReplayVehicle, nodeCurr->Throttle);
-    VExt::SetBrakeP(mReplayVehicle, nodeCurr->Brake);
+    VExt::SetSteeringAngle(mReplayVehicle, lerp(nodeCurr->SteeringAngle, nodeNext->SteeringAngle, progress));
+    VExt::SetThrottle(mReplayVehicle, lerp(nodeCurr->Throttle, nodeNext->Throttle, progress));
+    VExt::SetThrottleP(mReplayVehicle, lerp(nodeCurr->Throttle, nodeNext->Throttle, progress));
+    VExt::SetBrakeP(mReplayVehicle, lerp(nodeCurr->Brake, nodeNext->Brake, progress));
 
     if (nodeCurr->Gear >= 0 && nodeCurr->RPM > 0.0f) {
         VExt::SetGearCurr(mReplayVehicle, static_cast<uint16_t>(nodeCurr->Gear));
         VExt::SetGearNext(mReplayVehicle, static_cast<uint16_t>(nodeCurr->Gear));
-        VExt::SetCurrentRPM(mReplayVehicle, nodeCurr->RPM);
+        VExt::SetCurrentRPM(mReplayVehicle, lerp(nodeCurr->RPM, nodeNext->RPM, progress));
     }
 
     if (VExt::GetNumWheels(mReplayVehicle) == nodeCurr->SuspensionCompressions.size()) {

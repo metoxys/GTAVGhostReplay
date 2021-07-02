@@ -433,7 +433,7 @@ void CReplayScript::DeactivatePassengerMode(Vehicle vehicle) {
 
     Ped playerPed = PLAYER::PLAYER_PED_ID();
     Vehicle playerVehicle = PED::GET_VEHICLE_PED_IS_IN(playerPed, false);
-    if (playerVehicle != vehicle) {
+    if (ENTITY::DOES_ENTITY_EXIST(playerVehicle) && playerVehicle != vehicle) {
         mPassengerModeActive = false;
         return;
     }

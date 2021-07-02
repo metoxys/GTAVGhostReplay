@@ -586,6 +586,12 @@ void CReplayScript::updateReplay() {
     updateRecord(gameTime, !inGhostVehicle && startPassedThisTick, !inGhostVehicle && finishPassedThisTick);
     if (mReplayVehicle)
         mReplayVehicle->UpdatePlayback(gameTime, startPassedThisTick, finishPassedThisTick);
+
+    if (mPassengerModeActive && inGhostVehicle) {
+        auto playerPed = PLAYER::PLAYER_PED_ID();
+        AUDIO::STOP_CURRENT_PLAYING_SPEECH(playerPed);
+        AUDIO::STOP_CURRENT_PLAYING_AMBIENT_SPEECH(playerPed);
+    }
 }
 
 void CReplayScript::updateRecord(double gameTime, bool startPassedThisTick, bool finishPassedThisTick) {

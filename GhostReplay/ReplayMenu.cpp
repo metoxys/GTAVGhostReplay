@@ -665,6 +665,11 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         if (mbCtx.IntOptionCb("Recording timestep", deltaMillis, 0, 1000, 1, MenuUtils::GetKbInt, timestepDescr)) {
             GetSettings().Record.DeltaMillis = deltaMillis;
         }
+
+        mbCtx.BoolOption("Reduce file size", GetSettings().Record.ReduceFileSize,
+            { "Check to save smaller files. Uncheck to save formatted json file, e.g. for inspecting data.",
+              "Saves about 40% when recording each frame at 144Hz.",
+              "Does not affect existing saved files." });
     });
 
     /* mainmenu -> settingsmenu -> advghostsettingsmenu */

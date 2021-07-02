@@ -51,7 +51,7 @@ public:
     std::vector<SReplayNode> Nodes;
 private:
     // Make sure mFileName has been set before calling this.
-    void write();
+    void write(bool pretty);
     // Only run this before asynchronously calling write().
     void generateFileName();
 

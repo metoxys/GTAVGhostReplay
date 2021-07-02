@@ -3,6 +3,7 @@
 #include "Util/Paths.hpp"
 #include "Util/Logger.hpp"
 #include "ReplayScriptUtils.hpp"
+#include "Script.hpp"
 
 #include <nlohmann/json.hpp>
 #include <fmt/format.h>
@@ -86,7 +87,7 @@ CReplayData::CReplayData(std::string fileName)
     , VehicleModel(0)
     , mFileName(std::move(fileName)) {}
 
-void CReplayData::write() {
+void CReplayData::write(bool pretty) {
     nlohmann::ordered_json replayJson;
 
     replayJson["Timestamp"] = Timestamp;
@@ -113,7 +114,12 @@ void CReplayData::write() {
     }
 
     std::ofstream replayFile(mFileName);
-    replayFile << std::setw(2) << replayJson << std::endl;
+
+    if (pretty)
+        replayFile << std::setw(2) << replayJson << std::endl;
+    else
+        replayFile << replayJson.dump();
+
     logger.Write(INFO, "[Replay] Written %s", mFileName.c_str());
 }
 
@@ -141,9 +147,10 @@ void CReplayData::generateFileName() {
 
 void CReplayData::WriteAsync(CReplayData& replayData) {
     replayData.generateFileName();
-    std::thread([replayData]() {
+    bool pretty = !GhostReplay::GetSettings().Record.ReduceFileSize;
+    std::thread([replayData, pretty]() {
         CReplayData myCopy = replayData;
-        myCopy.write();
+        myCopy.write(pretty);
     }).detach();
 }
 

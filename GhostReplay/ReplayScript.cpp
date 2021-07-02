@@ -445,7 +445,10 @@ void CReplayScript::DeactivatePassengerMode(Vehicle vehicle) {
     currCoords.x -= forward.x * 10.0f;
     currCoords.y -= forward.y * 10.0f;
     float groundZ = currCoords.z;
-    MISC::GET_GROUND_Z_FOR_3D_COORD(currCoords.x, currCoords.y, currCoords.z, &groundZ, 0, 0);
+    bool groundZOk = MISC::GET_GROUND_Z_FOR_3D_COORD(currCoords.x, currCoords.y, currCoords.z, &groundZ, 0, 0);
+    if (!groundZOk) {
+        groundZ = currCoords.z;
+    }
 
     if (mPassengerModePlayerVehicle) {
         PED::SET_PED_INTO_VEHICLE(playerPed, mPassengerModePlayerVehicle, -1);

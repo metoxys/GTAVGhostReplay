@@ -354,6 +354,11 @@ void CReplayVehicle::createReplayVehicle(Hash model, CReplayData* activeReplay, 
     ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, 0, false);
     ENTITY::SET_ENTITY_COLLISION(mReplayVehicle, false, false);
 
+    if (VEHICLE::IS_THIS_MODEL_A_PLANE(model) ||
+        VEHICLE::IS_THIS_MODEL_A_HELI(model)) {
+        VEHICLE::CONTROL_LANDING_GEAR(mReplayVehicle, 3);
+    }
+
     VehicleModData modData = mActiveReplay->VehicleMods;
     VehicleModData::ApplyTo(mReplayVehicle, modData);
 }

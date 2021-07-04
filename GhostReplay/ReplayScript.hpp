@@ -46,8 +46,8 @@ public:
         return mUnsavedRuns;
     }
 
-    CReplayData* ActiveReplay() const {
-        return mActiveReplay;
+    std::vector<CReplayData*> ActiveReplays() const {
+        return mActiveReplays;
     }
 
     CTrackData* ActiveTrack() const {
@@ -62,16 +62,7 @@ public:
         mScriptMode = mode;
     }
 
-    EReplayState GetReplayState() {
-        if (mReplayVehicle)
-            return mReplayVehicle->GetReplayState();
-        return EReplayState::Idle;
-    }
-
-    void StopReplay() {
-        if (mReplayVehicle)
-            mReplayVehicle->StopReplay();
-    }
+    void StopAllReplays();
 
     bool IsRecording() {
         return mRecordState == ERecordState::Recording;
@@ -82,14 +73,14 @@ public:
         mCurrentRun = CReplayData("");
     }
 
-    Vehicle GetReplayVehicle() {
-        if (mReplayVehicle)
-            return mReplayVehicle->GetVehicle();
-        return 0;
+    const std::vector<std::unique_ptr<CReplayVehicle>>& GetReplayVehicles() {
+        return mReplayVehicles;
     }
 
     void SetTrack(const std::string& trackName);
-    void SetReplay(const std::string& replayName, unsigned long long timestamp = 0);
+    void SelectReplay(const std::string& replayName, unsigned long long timestamp);
+    void DeselectReplay(const std::string& replayName, unsigned long long timestamp);
+    void ClearSelectedReplays();
     void ClearUnsavedRuns();
     std::vector<CReplayData>::const_iterator EraseUnsavedRun(std::vector<CReplayData>::const_iterator runIt);
 
@@ -112,6 +103,7 @@ public:
 
     // Playback control
     double GetReplayProgress();
+    double GetSlowestActiveReplay();
     void TogglePause(bool pause);
     void ScrubBackward(double step);
     void ScrubForward(double step);
@@ -132,6 +124,10 @@ protected:
     void startRecord(double gameTime, Vehicle vehicle);
     bool saveNode(double gameTime, SReplayNode& node, Vehicle vehicle, bool firstNode);
     void finishRecord(bool saved, const SReplayNode& node);
+    CReplayData* getFastestActiveReplay();
+    CReplayData* getSlowestActiveReplay();
+    void updateSlowestReplay();
+
     void clearPtfx();
     void createPtfx(const CTrackData& trackData);
     void clearTrackBlips();
@@ -149,7 +145,7 @@ protected:
     std::vector<CImage>& mTrackImages;
     std::vector<CTrackData>& mArsTracks;
 
-    CReplayData* mActiveReplay;
+    std::vector<CReplayData*> mActiveReplays;
     CTrackData* mActiveTrack;
 
     std::unique_ptr<CWrappedBlip> mStartBlip;
@@ -161,7 +157,10 @@ protected:
 
     Vector3 mLastPos;
 
-    std::unique_ptr<CReplayVehicle> mReplayVehicle;
+    std::vector<std::unique_ptr<CReplayVehicle>> mReplayVehicles;
+    double mReplayStartTime = 0.0;
+    double mReplayCurrentTime = 0.0;
+    double mSlowestReplayTime = 0.0;
 
     std::vector<CReplayData> mUnsavedRuns;
     CReplayData mCurrentRun;

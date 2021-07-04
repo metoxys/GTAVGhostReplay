@@ -532,8 +532,8 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         mbCtx.Subtitle("");
 
         float offset = static_cast<float>(GetSettings().Replay.OffsetSeconds);
-        bool offsetChanged = mbCtx.FloatOptionCb("Offset (seconds)", offset, -60.0f, 60.0f, 0.05f,
-            MenuUtils::GetKbFloat, { "Ghost offset. Positive is in front, negative is behind." });
+        bool offsetChanged = mbCtx.FloatOptionCb("Offset", offset, -60.0f, 60.0f, 0.05f,
+            MenuUtils::GetKbFloat, { "Ghost offset. Positive is in front, negative is behind, in seconds." });
         if (offsetChanged) {
             GetSettings().Replay.OffsetSeconds = static_cast<double>(offset);
         }
@@ -566,7 +566,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             mbCtx.Option("~m~Replay controls unavailable", { "Select a track and a replay." });
         }
         else {
-            const double scrubDist = 1000.0; // milliseconds
+            const double scrubDist = GetSettings().Replay.ScrubDistanceSeconds * 1000.0; // milliseconds
             const auto& activeReplays = context.ActiveReplays();
             const auto& replayVehicles = context.GetReplayVehicles();
             EReplayState replayState = EReplayState::Idle;
@@ -766,6 +766,15 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
         mbCtx.BoolOption("Auto-load quickest ghost", GetSettings().Replay.AutoLoadGhost, 
             { "Automatically loads the quickest ghost lap when a track is selected, for that specific car model." });
+
+        float scrubDist = static_cast<float>(GetSettings().Replay.ScrubDistanceSeconds);
+        bool scrubDistChanged = mbCtx.FloatOptionCb("Scrub distance", scrubDist, 0.010f, 60.0f, 0.010f,
+            MenuUtils::GetKbFloat,
+            { "How far to skip back and forth, in seconds.",
+              "Hint: Press enter/select to manually input value." });
+        if (scrubDistChanged) {
+            GetSettings().Replay.ScrubDistanceSeconds = static_cast<double>(scrubDist);
+        }
 
         std::string fallbackOpt =
             fmt::format("Fallback vehicle model: {}", GetSettings().Replay.FallbackModel);

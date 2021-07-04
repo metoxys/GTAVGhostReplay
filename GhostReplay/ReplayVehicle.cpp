@@ -54,8 +54,10 @@ bool CReplayVehicle::UpdatePlayback(double replayTime, bool startPassedThisTick,
             break;
         }
         case EReplayState::Playing: {
-            // The time that has elapsed from the viewpoint of the replay.
-            replayTime += mSettings.Replay.OffsetSeconds * 1000.0;
+            if (replayTime < 0.0) {
+                showNode(0.0, mActiveReplay->Nodes.begin(), mActiveReplay->Nodes.begin());
+                break;
+            }
 
             // Find the node where the timestamp is larger than the current virtual timestamp (replayTime).
             auto nodeNext = std::upper_bound(mLastNode, mActiveReplay->Nodes.end(), SReplayNode{ replayTime });
@@ -68,8 +70,15 @@ bool CReplayVehicle::UpdatePlayback(double replayTime, bool startPassedThisTick,
             }
 
             // Update the node passed, if progressed past it.
-            if (mLastNode != std::prev(nodeNext))
-                mLastNode = std::prev(nodeNext);
+            if (mLastNode != std::prev(nodeNext)) {
+                if (nodeNext != mActiveReplay->Nodes.begin()) {
+                    mLastNode = std::prev(nodeNext);
+                }
+                else {
+                    mLastNode = nodeNext;
+                    nodeNext = std::next(nodeNext);
+                }
+            }
 
             // Show the node, with <nodePrev> <now> <nodeNext>.
             showNode(replayTime, mLastNode, nodeNext);

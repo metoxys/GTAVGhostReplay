@@ -561,7 +561,7 @@ void CReplayScript::ScrubBackward(double step) {
 
     for (auto& replayVehicle : mReplayVehicles) {
         if (replayVehicle->GetReplayState() != EReplayState::Idle)
-            replayVehicle->SetReplayTime(mReplayCurrentTime);
+            replayVehicle->SetReplayTime(mReplayCurrentTime + mSettings.Replay.OffsetSeconds * 1000.0);
     }
 }
 
@@ -579,7 +579,7 @@ void CReplayScript::ScrubForward(double step) {
 
     for (auto& replayVehicle : mReplayVehicles) {
         if (replayVehicle->GetReplayState() != EReplayState::Idle)
-            replayVehicle->SetReplayTime(mReplayCurrentTime);
+            replayVehicle->SetReplayTime(mReplayCurrentTime + mSettings.Replay.OffsetSeconds * 1000.0);
     }
 }
 
@@ -699,9 +699,10 @@ void CReplayScript::updateReplay() {
         mReplayCurrentTime = gameTime - mReplayStartTime;
     }
 
+    double replayTime = mReplayCurrentTime + mSettings.Replay.OffsetSeconds * 1000.0;
     bool anyGhostLapTriggered = false;
     for (const auto& replayVehicle : mReplayVehicles)
-        anyGhostLapTriggered |= replayVehicle->UpdatePlayback(mReplayCurrentTime, startPassedThisTick, finishPassedThisTick);
+        anyGhostLapTriggered |= replayVehicle->UpdatePlayback(replayTime, startPassedThisTick, finishPassedThisTick);
 
     if (anyGhostLapTriggered) {
         mReplayStartTime = gameTime;

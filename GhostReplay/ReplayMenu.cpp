@@ -536,6 +536,12 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             MenuUtils::GetKbFloat, { "Ghost offset. Positive is in front, negative is behind, in seconds." });
         if (offsetChanged) {
             GetSettings().Replay.OffsetSeconds = static_cast<double>(offset);
+            auto newTime = context.GetReplayProgress() + offset * 1000.0;
+            for (auto& replayVehicle : context.GetReplayVehicles()) {
+                if (replayVehicle->GetReplayState() != EReplayState::Idle)
+                    replayVehicle->SetReplayTime(newTime);
+            }
+
         }
 
         const std::vector<std::string> replayAlphaDescr{

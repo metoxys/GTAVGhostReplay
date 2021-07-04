@@ -233,22 +233,25 @@ uint32_t GhostReplay::LoadTrackImages() {
 
     for (const auto& file : fs::recursive_directory_iterator(tracksPath)) {
         auto stem = fs::path(file).stem().string();
-        auto okExts = Img::GetAllowedExtensions();
         auto ext = Util::to_lower(fs::path(file).extension().string());
-        if (std::find(okExts.begin(), okExts.end(), ext) == okExts.end()) {
-            logger.Write(DEBUG, "[TrackImg] Skipping [%s] - not .png, .jpg or .jpeg", fs::path(file).string().c_str());
+        if (ext == ".json") {
             continue;
         }
 
         std::string fileName = fs::path(file).string();
+        auto dims = Img::GetIMGDimensions(fileName);
         unsigned width;
         unsigned height;
-        if (!Img::GetIMGDimensions(fileName, &width, &height)) {
-            logger.Write(WARN, "[TrackImg] [%s] Couldn't determine image size, using default 480x270.",
-                fs::path(file).string().c_str());
-            width = 480;
-            height = 270;
+
+        if (dims) {
+            width = dims->first;
+            height = dims->second;
         }
+        else {
+            logger.Write(WARN, "[TrackImg] Skipping [%s]: not an valid image.", fs::path(file).string().c_str());
+            continue;
+        }
+
         int handle = createTexture(fileName.c_str());
         trackImages.emplace_back(handle, stem, width, height);
 

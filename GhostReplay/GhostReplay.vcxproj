@@ -98,9 +98,6 @@
     <ClCompile Include="..\thirdparty\GTAVMenuBase\menusettings.cpp" />
     <ClCompile Include="..\thirdparty\GTAVMenuBase\menuutils.cpp" />
     <ClCompile Include="..\thirdparty\jpegsize\jpegsize.cpp" />
-    <ClCompile Include="..\thirdparty\lodepng\lodepng.cpp">
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
-    </ClCompile>
     <ClCompile Include="..\thirdparty\pugixml\src\pugixml.cpp" />
     <ClCompile Include="Blip.cpp" />
     <ClCompile Include="Compatibility.cpp" />
@@ -135,7 +132,6 @@
     <ClInclude Include="..\thirdparty\GTAVMenuBase\menusettings.h" />
     <ClInclude Include="..\thirdparty\GTAVMenuBase\menuutils.h" />
     <ClInclude Include="..\thirdparty\jpegsize\jpegsize.h" />
-    <ClInclude Include="..\thirdparty\lodepng\lodepng.h" />
     <ClInclude Include="..\thirdparty\pugixml\src\pugiconfig.hpp" />
     <ClInclude Include="..\thirdparty\pugixml\src\pugixml.hpp" />
     <ClInclude Include="Blip.hpp" />

@@ -2,6 +2,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <optional>
 
 class CImage {
 public:
@@ -19,8 +20,9 @@ public:
 };
 
 namespace Img {
-    const std::vector<std::string>& GetAllowedExtensions();
-    bool GetIMGDimensions(std::string file, unsigned* width, unsigned* height);
-    bool GetPNGDimensions(std::string file, unsigned* width, unsigned* height);
-    bool GetJPGDimensions(std::string file, unsigned* width, unsigned* height);
+    std::optional<std::pair<uint32_t, uint32_t>> GetIMGDimensions(const std::string& path);
+
+    std::optional<std::pair<uint32_t, uint32_t>> GetPNGDimensions(const std::string& path);
+    std::optional<std::pair<uint32_t, uint32_t>> GetJPGDimensions(const std::string& path);
+    std::optional<std::pair<uint32_t, uint32_t>> GetWebPDimensions(const std::string& path);
 }

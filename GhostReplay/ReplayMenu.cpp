@@ -145,20 +145,6 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         }
 
         mbCtx.MenuOption("Unsaved runs", "unsavedrunsmenu");
-
-        if (mbCtx.Option("Refresh tracks and ghosts", 
-            { "Refresh tracks and ghosts if they are changed outside the script." } )) {
-            context.StopRecording();
-            context.StopAllReplays();
-            context.ClearSelectedReplays();
-
-            GhostReplay::LoadTracks();
-            GhostReplay::LoadARSTracks();
-            GhostReplay::LoadReplays();
-            GhostReplay::LoadTrackImages();
-            UI::Notify("Tracks and replays refreshed", false);
-        }
-
         mbCtx.MenuOption("Settings", "settingsmenu");
     });
 
@@ -738,6 +724,19 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
         mbCtx.MenuOption("Recording settings", "recordsettingsmenu");
         mbCtx.MenuOption("Advanced ghost settings", "advghostsettingsmenu");
+
+        if (mbCtx.Option("Refresh tracks and ghosts",
+            { "Refresh tracks and ghosts if they are changed outside the script." })) {
+            context.StopRecording();
+            context.StopAllReplays();
+            context.ClearSelectedReplays();
+
+            GhostReplay::LoadTracks();
+            GhostReplay::LoadARSTracks();
+            GhostReplay::LoadReplays();
+            GhostReplay::LoadTrackImages();
+            formattedTrackData.clear();
+        }
     });
 
     /* mainmenu -> settingsmenu -> recordsettingsmenu */

@@ -174,7 +174,6 @@ void CReplayScript::SelectReplay(const std::string& replayName, unsigned long lo
 
         if (nameOK && timeOK) {
             mActiveReplays.push_back(&*replay);
-            mRecordState = ERecordState::Idle;
             mReplayVehicles.push_back(std::make_unique<CReplayVehicle>(mSettings, &*replay,
                 std::bind(static_cast<void(CReplayScript::*)(int)>(&CReplayScript::DeactivatePassengerMode),
                     this, std::placeholders::_1)));
@@ -184,6 +183,28 @@ void CReplayScript::SelectReplay(const std::string& replayName, unsigned long lo
             std::string opponent = Util::GetVehicleName(replay->VehicleModel);
             std::string timestamp = Util::FormatMillisTime(replay->Nodes.back().Timestamp);
             RagePresence::SetCustomDetails(fmt::format("Racing ghost {} | {}", opponent, timestamp).c_str());
+
+            // If the vehicle was added while a replay is running - also let it join!
+            EReplayState replayState = EReplayState::Idle;
+            for (auto& replayVehicle : mReplayVehicles) {
+                if (replayVehicle->GetReplayState() == EReplayState::Playing) {
+                    replayState = EReplayState::Playing;
+                    break;
+                }
+                if (replayVehicle->GetReplayState() == EReplayState::Paused) {
+                    replayState = EReplayState::Paused;
+                }
+            }
+
+            if (replayState != EReplayState::Idle) {
+                // Trigger Idle -> Playing state
+                mReplayVehicles.back()->UpdatePlayback(mReplayCurrentTime, true, false);
+                // Set Paused/Playing state
+                mReplayVehicles.back()->TogglePause(replayState == EReplayState::Paused);
+                // Set correct node
+                mReplayVehicles.back()->SetReplayTime(mReplayCurrentTime);
+            }
+
             return;
         }
     }

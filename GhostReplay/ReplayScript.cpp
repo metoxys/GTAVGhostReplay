@@ -714,7 +714,10 @@ void CReplayScript::updateReplay() {
 
     mLastPos = nowPos;
 
-    updateRecord(gameTime, !inGhostVehicle && startPassedThisTick, !inGhostVehicle && finishPassedThisTick);
+    updateRecord(
+        gameTime,
+        !inGhostVehicle && startPassedThisTick,
+        !inGhostVehicle && finishPassedThisTick);
 
     if (!anyPaused && anyDriving) {
         mReplayCurrentTime = gameTime - mReplayStartTime;
@@ -722,8 +725,12 @@ void CReplayScript::updateReplay() {
 
     double replayTime = mReplayCurrentTime + mSettings.Replay.OffsetSeconds * 1000.0;
     bool anyGhostLapTriggered = false;
-    for (const auto& replayVehicle : mReplayVehicles)
-        anyGhostLapTriggered |= replayVehicle->UpdatePlayback(replayTime, startPassedThisTick, finishPassedThisTick);
+    for (const auto& replayVehicle : mReplayVehicles) {
+        anyGhostLapTriggered |= replayVehicle->UpdatePlayback(
+            replayTime,
+            !inGhostVehicle && startPassedThisTick,
+            !inGhostVehicle && finishPassedThisTick);
+    }
 
     if (anyGhostLapTriggered) {
         mReplayStartTime = gameTime;

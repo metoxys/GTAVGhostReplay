@@ -100,6 +100,9 @@ public:
     void DeactivatePassengerMode();
     void DeactivatePassengerMode(Vehicle vehicle);
     bool IsPassengerModeActive() { return mPassengerModeActive; }
+    void PassengerVehicleNext();
+    void PassengerVehiclePrev();
+    CReplayVehicle* GetPassengerVehicle();
 
     // Playback control
     double GetReplayProgress();
@@ -136,6 +139,8 @@ protected:
     void updateSteppedTime();
     double getSteppedTime();
 
+    void setPlayerIntoVehicleFreeSeat(Vehicle vehicle);
+
     double mCurrentTime;
 
     const CScriptSettings& mSettings;
@@ -168,6 +173,7 @@ protected:
     std::vector<int> mPtfxHandles;
 
     bool mPassengerModeActive = false;
-    Vehicle mPassengerModePlayerVehicle;
+    Vehicle mPassengerModePlayerVehicle = 0;
     bool mPassengerModPlayerVehicleManagedByThisScript = false;
+    CReplayVehicle* mPassengerVehicle = nullptr;
 };

@@ -77,6 +77,9 @@ CReplayScript::~CReplayScript() = default;
 //      c. On finishing a run, prompt the player explicitly. (Menu foreground)
 //          aa. Save new ghost | Discard
 
+// TODO: Something about those loops that check all vehicles' replay states.
+// Maybe update the state each tick?
+
 void CReplayScript::Tick() {
     updateSteppedTime();
 
@@ -98,6 +101,8 @@ void CReplayScript::StopAllReplays() {
     for (const auto& replayVehicle : mReplayVehicles) {
         replayVehicle->StopReplay();
     }
+    mReplayStartTime = 0.0;
+    mReplayCurrentTime = 0.0;
 }
 
 void CReplayScript::SetTrack(const std::string& trackName) {
@@ -166,8 +171,6 @@ void CReplayScript::SetTrack(const std::string& trackName) {
 }
 
 void CReplayScript::SelectReplay(const std::string& replayName, unsigned long long timestamp) {
-    DeactivatePassengerMode();
-
     for (auto& replay : mReplays) {
         bool nameOK = replay->Name == replayName;
         bool timeOK = timestamp == 0 ? true : replay->Timestamp == timestamp;
@@ -238,6 +241,10 @@ void CReplayScript::DeselectReplay(const std::string& replayName, unsigned long 
     }
 
     if (replayVehicleIt != mReplayVehicles.end()) {
+        if (replayVehicleIt->get() == mPassengerVehicle) {
+            DeactivatePassengerMode();
+            mPassengerVehicle = nullptr;
+        }
         mReplayVehicles.erase(replayVehicleIt);
     }
 
@@ -428,10 +435,8 @@ std::string CReplayScript::GetTrackImageMenuString(const std::string& trackName)
 }
 
 void CReplayScript::ActivatePassengerMode() {
-#if 0
-    if (!mActiveTrack || !mActiveReplay) {
+    if (!mActiveTrack || mReplayVehicles.empty()) {
         mPassengerModeActive = false;
-        mPassengerModePlayerVehicle = 0;
         return;
     }
 
@@ -455,27 +460,35 @@ void CReplayScript::ActivatePassengerMode() {
         ENTITY::SET_ENTITY_VISIBLE(playerVehicle, false, false);
     }
 
-    mReplayVehicle->UpdatePlayback(getSteppedTime(), true, false);
+    bool replaying = false;
+    for (const auto& replayVehicle : mReplayVehicles) {
+        if (replayVehicle->GetReplayState() != EReplayState::Idle) {
+            replaying = true;
+            break;
+        }
+    }
 
-    Vehicle replayVehicle = mReplayVehicle->GetVehicle();
-    int numReplayVehicleSeats = VEHICLE::GET_VEHICLE_MODEL_NUMBER_OF_SEATS(ENTITY::GET_ENTITY_MODEL(replayVehicle));
+    // Spawn the vehicles and leave 'em there in paused state.
+    if (!replaying) {
+        TogglePause(true);
+    }
 
-    if (numReplayVehicleSeats > 1) {
-        PED::SET_PED_INTO_VEHICLE(playerPed, replayVehicle, -2);
+    // Move player into a vehicle, if not already in one.
+    if (mPassengerVehicle == nullptr) {
+        Vehicle replayVehicle = mReplayVehicles[0]->GetVehicle();
+        setPlayerIntoVehicleFreeSeat(replayVehicle);
+        mPassengerVehicle = mReplayVehicles[0].get();
     }
     else {
-        PED::SET_PED_INTO_VEHICLE(playerPed, replayVehicle, -1);
+        setPlayerIntoVehicleFreeSeat(mPassengerVehicle->GetVehicle());
     }
     mPassengerModeActive = true;
-#endif
 }
 
 void CReplayScript::DeactivatePassengerMode() {
-#if 0
-    if (mReplayVehicle) {
-        DeactivatePassengerMode(mReplayVehicle->GetVehicle());
+    if (mPassengerVehicle) {
+        DeactivatePassengerMode(mPassengerVehicle->GetVehicle());
     }
-#endif
 }
 
 void CReplayScript::DeactivatePassengerMode(Vehicle vehicle) {
@@ -486,7 +499,8 @@ void CReplayScript::DeactivatePassengerMode(Vehicle vehicle) {
     Ped playerPed = PLAYER::PLAYER_PED_ID();
     Vehicle playerVehicle = PED::GET_VEHICLE_PED_IS_IN(playerPed, false);
     if (ENTITY::DOES_ENTITY_EXIST(playerVehicle) && playerVehicle != vehicle) {
-        mPassengerModeActive = false;
+        // Just skip if the one calling this doesn't match the player vehicle,
+        // allow things after this one to run the restore/cleanup code.
         return;
     }
     Vehicle replayVehicle = vehicle;
@@ -530,6 +544,44 @@ void CReplayScript::DeactivatePassengerMode(Vehicle vehicle) {
     }
 
     mPassengerModeActive = false;
+}
+
+void CReplayScript::PassengerVehicleNext() {
+    if (mReplayVehicles.size() < 2)
+        return;
+
+    auto selectedVehicle = std::find_if(mReplayVehicles.begin(), mReplayVehicles.end(),
+        [&](const auto& replayVehicle) { return replayVehicle.get() == mPassengerVehicle; });
+
+    if (selectedVehicle == mReplayVehicles.end() ||
+        std::next(selectedVehicle) == mReplayVehicles.end())
+        mPassengerVehicle = mReplayVehicles.begin()->get();
+    else
+        mPassengerVehicle = std::next(selectedVehicle)->get();
+
+    if (mPassengerModeActive)
+        setPlayerIntoVehicleFreeSeat(mPassengerVehicle->GetVehicle());
+}
+
+void CReplayScript::PassengerVehiclePrev() {
+    if (mReplayVehicles.size() < 2)
+        return;
+
+    auto selectedVehicle = std::find_if(mReplayVehicles.begin(), mReplayVehicles.end(),
+        [&](const auto& replayVehicle) {return replayVehicle.get() == mPassengerVehicle; });
+
+    if (selectedVehicle == mReplayVehicles.end() ||
+        selectedVehicle == mReplayVehicles.begin())
+        mPassengerVehicle = mReplayVehicles.back().get();
+    else
+        mPassengerVehicle = std::prev(selectedVehicle)->get();
+
+    if (mPassengerModeActive)
+        setPlayerIntoVehicleFreeSeat(mPassengerVehicle->GetVehicle());
+}
+
+CReplayVehicle* CReplayScript::GetPassengerVehicle() {
+    return mPassengerVehicle;
 }
 
 double CReplayScript::GetReplayProgress() {
@@ -636,14 +688,12 @@ void CReplayScript::TeleportToTrack(const CTrackData& trackData) {
     Ped playerPed = PLAYER::PLAYER_PED_ID();
     Vehicle playerVehicle = PED::GET_VEHICLE_PED_IS_IN(playerPed, false);
 
-#if 0
-    if (mReplayVehicle && playerVehicle) {
-        if (mReplayVehicle->GetVehicle() == playerVehicle) {
+    if (mPassengerVehicle && playerVehicle) {
+        if (mPassengerVehicle->GetVehicle() == playerVehicle) {
             UI::Notify("Can't teleport while riding ghost vehicle.");
             return;
         }
     }
-#endif
 
     Vector3 startLineAB = (trackData.StartLine.A + trackData.StartLine.B) * 0.5f;
     Vector3 startOffset = GetPerpendicular(startLineAB, trackData.StartLine.B, 15.0f, false);
@@ -1016,4 +1066,17 @@ void CReplayScript::updateSteppedTime() {
 
 double CReplayScript::getSteppedTime() {
     return mCurrentTime * 1000.0;
+}
+
+void CReplayScript::setPlayerIntoVehicleFreeSeat(Vehicle vehicle) {
+    Ped playerPed = PLAYER::PLAYER_PED_ID();
+    int numReplayVehicleSeats = VEHICLE::GET_VEHICLE_MODEL_NUMBER_OF_SEATS(ENTITY::GET_ENTITY_MODEL(vehicle));
+
+    if (numReplayVehicleSeats > 1) {
+        PED::SET_PED_INTO_VEHICLE(playerPed, vehicle, -2);
+    }
+    else {
+        // Fallback: Driver, but the inputs might conflict.
+        PED::SET_PED_INTO_VEHICLE(playerPed, vehicle, -1);
+    }
 }

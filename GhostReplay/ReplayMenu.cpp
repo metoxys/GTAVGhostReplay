@@ -619,6 +619,13 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 }
             }
 
+            std::string secondsFormat = fmt::format("{:.3f} second{}",
+                GetSettings().Replay.ScrubDistanceSeconds,
+                Math::Near(GetSettings().Replay.ScrubDistanceSeconds, 1.0, 0.0005) ? "" : "s");
+            std::string playbackDescription =
+                fmt::format("Playback controls. Select to play or pause. "
+                    "Press left and right to jump backward or forward {}.", secondsFormat);
+
             bool togglePause = mbCtx.OptionPlus(
                 fmt::format("<< {} >>", replayState != EReplayState::Playing ? "Play" : "Pause"),
                 playbackDetails,
@@ -626,7 +633,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 [&]() { context.ScrubForward(scrubDist); },
                 [&]() { context.ScrubBackward(scrubDist); },
                 "Playback controls",
-                { "Playback controls. Select to play or pause. Left or right to jump backward or forward 1 second." });
+                { playbackDescription });
             if (togglePause) {
                 context.TogglePause(replayState == EReplayState::Playing);
             }
@@ -662,35 +669,46 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                     context.StopAllReplays();
             }
 
-#if 0
-            if (!context.IsPassengerModeActive()) {
-                std::string optionName = "Replay as passenger";
-                std::vector<std::string> passengerDescr{ "Start the selected ghost lap while being a passenger.",
-                    "Aborts your current lap, if any is in progress." };
+            bool passengerModeAvailable = context.ActiveTrack() && context.ActiveReplays().size() > 0;
 
-                bool available;
-                if (context.ActiveTrack() && context.ActiveReplay()) {
-                    available = true;
-                }
-                else {
-                    available = false;
-                    passengerDescr.push_back("Currently unavailable, select a track and a replay.");
-                    optionName += " (Unavailable)";
+            if (passengerModeAvailable) {
+                bool active = context.IsPassengerModeActive();
+                std::string optionText = active ?
+                    "<< Leave passenger mode >>" :
+                    "<< Enter passenger mode >>";
+
+                std::vector<std::string> passengerDetails;
+                for (const auto& replayVehicle : context.GetReplayVehicles()) {
+                    std::string selectMarker;
+                    if (replayVehicle.get() == context.GetPassengerVehicle()) {
+                        selectMarker = "-> ";
+                    }
+                    passengerDetails.push_back(fmt::format("{}{} - {}",
+                        selectMarker,
+                        Util::GetVehicleName(replayVehicle->GetReplay()->VehicleModel),
+                        Util::FormatMillisTime(replayVehicle->GetReplay()->Nodes.back().Timestamp)));
                 }
 
-                if (mbCtx.Option(optionName, passengerDescr) && available) {
-                    context.ActivatePassengerMode();
-                    context.TogglePause(true);
+                bool toggle = mbCtx.OptionPlus(
+                    optionText,
+                    passengerDetails,
+                    nullptr,
+                    [&]() { context.PassengerVehicleNext(); },
+                    [&]() { context.PassengerVehiclePrev(); },
+                    "Passenger mode",
+                    { "Select to enter or exit passenger mode.",
+                      "Press left and right to select different vehicles." });
+                if (toggle) {
+                    if (active)
+                        context.DeactivatePassengerMode();
+                    else
+                        context.ActivatePassengerMode();
                 }
             }
             else {
-                const std::vector<std::string> passengerDescr{ "Stops replay and puts you back in control of your car, "
-                    "if you had one." };
-                if (mbCtx.Option("Stop passenger mode", passengerDescr)) {
-                    context.DeactivatePassengerMode();
-                }
+                mbCtx.Option("~m~Passenger mode unavailable",
+                    { "Passenger mode is available when a track and one or more replays are selected." });
             }
-#endif
         }
     });
 

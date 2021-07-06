@@ -449,6 +449,11 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             if (triggerBreak)
                 break;
         }
+
+        if (mbCtx.Option("Deselect all replays")) {
+            context.StopAllReplays();
+            context.ClearSelectedReplays();
+        }
     });
 
     /* mainmenu -> unsavedrunsmenu */

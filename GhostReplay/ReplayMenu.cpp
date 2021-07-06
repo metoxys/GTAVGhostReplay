@@ -107,13 +107,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
         mbCtx.MenuOption("Ghost controls", "ghostoptionsmenu");
 
-        bool replaying = false;
-        for (const auto& replayVehicle : context.GetReplayVehicles()) {
-            if (replayVehicle->GetReplayState() != EReplayState::Idle) {
-                replaying = true;
-                break;
-            }
-        }
+        bool replaying = context.GetReplayState() != EReplayState::Idle;
         std::string replayAbortOption = replaying ? "Cancel playing ghosts" : "~m~Cancel playing ghosts";
         std::vector<std::string> replayAbortDetail;
         if (replaying) {
@@ -561,17 +555,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             const double scrubDist = GetSettings().Replay.ScrubDistanceSeconds * 1000.0; // milliseconds
             const auto& activeReplays = context.ActiveReplays();
             const auto& replayVehicles = context.GetReplayVehicles();
-            EReplayState replayState = EReplayState::Idle;
-
-            for (auto& replayVehicle : replayVehicles) {
-                if (replayVehicle->GetReplayState() == EReplayState::Playing) {
-                    replayState = EReplayState::Playing;
-                    break;
-                }
-                if (replayVehicle->GetReplayState() == EReplayState::Paused) {
-                    replayState = EReplayState::Paused;
-                }
-            }
+            EReplayState replayState = context.GetReplayState();
 
             std::string replayStateName;
             switch (replayState) {
@@ -656,13 +640,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                     { "Frame controls are only available with 1 active replay." });
             }
 
-            bool replaying = false;
-            for (const auto& replayVehicle : context.GetReplayVehicles()) {
-                if (replayVehicle->GetReplayState() != EReplayState::Idle) {
-                    replaying = true;
-                    break;
-                }
-            }
+            bool replaying = replayState != EReplayState::Idle;
             std::string replayAbortOption = replaying ? "Stop playback" : "~m~Stop playback";
             if (mbCtx.Option(replayAbortOption)) {
                 if (replaying)

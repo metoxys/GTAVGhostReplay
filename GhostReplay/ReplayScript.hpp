@@ -105,6 +105,9 @@ public:
     CReplayVehicle* GetPassengerVehicle();
 
     // Playback control
+
+    // Gets the highest replay state of all ghosts.
+    EReplayState GetReplayState() { return mGlobalReplayState; }
     double GetReplayProgress();
     double GetSlowestActiveReplay();
     void TogglePause(bool pause);
@@ -120,6 +123,7 @@ public:
     void TeleportToTrack(const CTrackData& trackData);
 
 protected:
+    void updateGlobalStates();
     void updateReplay();
     void updateRecord(double gameTime, bool startPassedThisTick, bool finishPassedThisTick);
     void updateTrackDefine();
@@ -142,6 +146,8 @@ protected:
     void setPlayerIntoVehicleFreeSeat(Vehicle vehicle);
 
     double mCurrentTime;
+
+    EReplayState mGlobalReplayState;
 
     const CScriptSettings& mSettings;
     std::vector<std::shared_ptr<CReplayData>>& mReplays;

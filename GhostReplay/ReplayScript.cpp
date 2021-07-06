@@ -45,47 +45,8 @@ CReplayScript::CReplayScript(
 
 CReplayScript::~CReplayScript() = default;
 
-// Play usage
-// So, this is how it works:
-// 1. The player selects a track.
-// 2. The player selects a ghost.
-//      a. The ghost list is filtered by proximity of the ghost recording to the starting line.
-// 3. The ghost replay starts as soon as the player vehicle passed the track.
-//      a. The ghost replay stops (clears) when the player passes the finish.
-//      b. The ghost replay restarts when the player passes the start again.
-// 4. The current run is recorded in the background.
-//      a. The run starts and stops recording data when passing the corresponding lines.
-//      b. The run ignores < 5.0 second runs.
-//      c. On a faster-than-recorded run gives the player choices. (Notify -> menu)
-//          aa. Overwrite ghost | Save new ghost | Discard
-
-// Record usage
-// Track:
-// 1. Record start line.
-//      a. Save point A.
-//      b. Save point B.
-// 2. Record finish line.
-//      a. Save point A.
-//      b. Save point B.
-//
-// Replay:
-// 1. A track is selected, but no ghost.
-// 2. The player just does the run.
-// 3. The run is recorded in the foreground.
-//      a. The run starts and stops recording data when passing the corresponding lines.
-//      b. The run ignores < 5.0 second runs.
-//      c. On finishing a run, prompt the player explicitly. (Menu foreground)
-//          aa. Save new ghost | Discard
-
-// TODO: Something about those loops that check all vehicles' replay states.
-// Maybe update the state each tick?
-
 void CReplayScript::Tick() {
     updateSteppedTime();
-
-    // UI::ShowText(0.65f, 0.30f, 0.5f, fmt::format("{:.9f}", MISC::GET_FRAME_TIME()));
-    // UI::ShowText(0.65f, 0.35f, 0.5f, fmt::format("{:.9f}", mCurrentTime));
-    // UI::ShowText(0.65f, 0.40f, 0.5f, fmt::format("{:.9f}", getSteppedTime()));
 
     switch(mScriptMode) {
         case EScriptMode::DefineTrack:
@@ -188,22 +149,11 @@ void CReplayScript::SelectReplay(const std::string& replayName, unsigned long lo
             RagePresence::SetCustomDetails(fmt::format("Racing ghost {} | {}", opponent, timestamp).c_str());
 
             // If the vehicle was added while a replay is running - also let it join!
-            EReplayState replayState = EReplayState::Idle;
-            for (auto& replayVehicle : mReplayVehicles) {
-                if (replayVehicle->GetReplayState() == EReplayState::Playing) {
-                    replayState = EReplayState::Playing;
-                    break;
-                }
-                if (replayVehicle->GetReplayState() == EReplayState::Paused) {
-                    replayState = EReplayState::Paused;
-                }
-            }
-
-            if (replayState != EReplayState::Idle) {
+            if (mGlobalReplayState != EReplayState::Idle) {
                 // Trigger Idle -> Playing state
                 mReplayVehicles.back()->UpdatePlayback(mReplayCurrentTime, true, false);
                 // Set Paused/Playing state
-                mReplayVehicles.back()->TogglePause(replayState == EReplayState::Paused);
+                mReplayVehicles.back()->TogglePause(mGlobalReplayState == EReplayState::Paused);
                 // Set correct node
                 mReplayVehicles.back()->SetReplayTime(mReplayCurrentTime);
             }
@@ -460,13 +410,7 @@ void CReplayScript::ActivatePassengerMode() {
         ENTITY::SET_ENTITY_VISIBLE(playerVehicle, false, false);
     }
 
-    bool replaying = false;
-    for (const auto& replayVehicle : mReplayVehicles) {
-        if (replayVehicle->GetReplayState() != EReplayState::Idle) {
-            replaying = true;
-            break;
-        }
-    }
+    bool replaying = mGlobalReplayState != EReplayState::Idle;
 
     // Spawn the vehicles and leave 'em there in paused state.
     if (!replaying) {
@@ -593,14 +537,7 @@ double CReplayScript::GetSlowestActiveReplay() {
 }
 
 void CReplayScript::TogglePause(bool pause) {
-    bool anyDriving = false;
-
-    for (auto& replayVehicle : mReplayVehicles) {
-        if (replayVehicle->GetReplayState() != EReplayState::Idle) {
-            anyDriving = true;
-            break;
-        }
-    }
+    bool anyDriving = mGlobalReplayState != EReplayState::Idle;
 
     for (auto& replayVehicle : mReplayVehicles) {
         if (!anyDriving) {
@@ -714,9 +651,25 @@ void CReplayScript::TeleportToTrack(const CTrackData& trackData) {
     }
 }
 
+// Prevent needlessly traversing mReplayVehicles multiple times per tick
+void CReplayScript::updateGlobalStates() {
+    mGlobalReplayState = EReplayState::Idle;
+    for (auto& replayVehicle : mReplayVehicles) {
+        if (replayVehicle->GetReplayState() == EReplayState::Playing) {
+            mGlobalReplayState = EReplayState::Playing;
+            break;
+        }
+        if (replayVehicle->GetReplayState() == EReplayState::Paused) {
+            mGlobalReplayState = EReplayState::Paused;
+        }
+    }
+}
+
 void CReplayScript::updateReplay() {
     if (!mActiveTrack)
         return;
+
+    updateGlobalStates();
 
     Vehicle vehicle = PED::GET_VEHICLE_PED_IS_IN(PLAYER::PLAYER_PED_ID(), false);
     Vector3 nowPos;
@@ -725,22 +678,6 @@ void CReplayScript::updateReplay() {
     for (const auto& replayVehicle : mReplayVehicles) {
         if (vehicle == replayVehicle->GetVehicle()) {
             inGhostVehicle = true;
-            break;
-        }
-    }
-
-    bool anyPaused = false;
-    for (const auto& replayVehicle : mReplayVehicles) {
-        if (replayVehicle->GetReplayState() == EReplayState::Paused) {
-            anyPaused = true;
-            break;
-        }
-    }
-
-    bool anyDriving = false;
-    for (auto& replayVehicle : mReplayVehicles) {
-        if (replayVehicle->GetReplayState() != EReplayState::Idle) {
-            anyDriving = true;
             break;
         }
     }
@@ -769,7 +706,7 @@ void CReplayScript::updateReplay() {
         !inGhostVehicle && startPassedThisTick,
         !inGhostVehicle && finishPassedThisTick);
 
-    if (!anyPaused && anyDriving) {
+    if (mGlobalReplayState == EReplayState::Playing) {
         mReplayCurrentTime = gameTime - mReplayStartTime;
     }
 

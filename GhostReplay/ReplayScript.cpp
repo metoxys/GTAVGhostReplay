@@ -539,12 +539,9 @@ double CReplayScript::GetSlowestActiveReplay() {
 
 void CReplayScript::TogglePause(bool pause) {
     bool anyDriving = mGlobalReplayState != EReplayState::Idle;
-
     for (auto& replayVehicle : mReplayVehicles) {
-        if (!anyDriving) {
-            replayVehicle->TogglePause(pause);
-        }
-        else if (replayVehicle->GetReplayState() != EReplayState::Idle) {
+        if (!anyDriving ||
+            replayVehicle->GetReplayState() != EReplayState::Idle) {
             replayVehicle->TogglePause(pause);
         }
     }

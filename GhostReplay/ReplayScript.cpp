@@ -679,21 +679,33 @@ void CReplayScript::TeleportToTrack(const CTrackData& trackData) {
 
 // Prevent needlessly traversing mReplayVehicles multiple times per tick
 void CReplayScript::updateGlobalStates() {
-    mGlobalReplayState = EReplayState::Idle;
+    auto replayState = EReplayState::Idle;
     for (auto& replayVehicle : mReplayVehicles) {
         if (replayVehicle->GetReplayState() == EReplayState::Playing) {
-            mGlobalReplayState = EReplayState::Playing;
+            replayState = EReplayState::Playing;
             break;
         }
         if (replayVehicle->GetReplayState() == EReplayState::Paused) {
-            mGlobalReplayState = EReplayState::Paused;
+            replayState = EReplayState::Paused;
         }
     }
+
+    // On transition to idle, reset timers.
+    if (mGlobalReplayState != replayState &&
+        replayState == EReplayState::Idle) {
+        mReplayStartTime = 0.0;
+        mReplayCurrentTime = 0.0;
+    }
+    mGlobalReplayState = replayState;
 }
 
 void CReplayScript::updateReplay() {
-    if (!mActiveTrack)
+    if (!mActiveTrack) {
+        mGlobalReplayState = EReplayState::Idle;
+        mReplayStartTime = 0.0;
+        mReplayCurrentTime = 0.0;
         return;
+    }
 
     updateGlobalStates();
 

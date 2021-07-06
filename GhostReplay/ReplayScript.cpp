@@ -68,6 +68,7 @@ void CReplayScript::StopAllReplays() {
 }
 
 void CReplayScript::SetTrack(const std::string& trackName) {
+    StopAllReplays();
     ClearSelectedReplays();
     mCompatibleReplays.clear();
     clearPtfx();

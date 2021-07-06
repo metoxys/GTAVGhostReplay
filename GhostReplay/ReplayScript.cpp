@@ -30,6 +30,7 @@ CReplayScript::CReplayScript(
     std::vector<CImage>& trackImages,
     std::vector<CTrackData>& arsTracks)
     : mCurrentTime(static_cast<double>(MISC::GET_GAME_TIMER()))
+    , mGlobalReplayState(EReplayState::Idle)
     , mSettings(settings)
     , mReplays(replays)
     , mCompatibleReplays()

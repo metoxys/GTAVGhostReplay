@@ -141,7 +141,7 @@ void CReplayScript::SelectReplay(const std::string& replayName, unsigned long lo
         if (nameOK && timeOK) {
             mActiveReplays.push_back(&*replay);
             mReplayVehicles.push_back(std::make_unique<CReplayVehicle>(mSettings, &*replay,
-                std::bind(static_cast<void(CReplayScript::*)(int)>(&CReplayScript::DeactivatePassengerMode),
+                std::bind(static_cast<void(CReplayScript::*)(int)>(&CReplayScript::ghostCleanup),
                     this, std::placeholders::_1)));
 
             updateSlowestReplay();
@@ -194,7 +194,7 @@ void CReplayScript::DeselectReplay(const std::string& replayName, unsigned long 
 
     if (replayVehicleIt != mReplayVehicles.end()) {
         if (replayVehicleIt->get() == mPassengerVehicle) {
-            DeactivatePassengerMode();
+            DeactivatePassengerMode(mPassengerVehicle->GetVehicle());
             mPassengerVehicle = nullptr;
         }
         mReplayVehicles.erase(replayVehicleIt);
@@ -453,12 +453,6 @@ void CReplayScript::DeactivatePassengerMode(Vehicle vehicle) {
     }
 
     Ped playerPed = PLAYER::PLAYER_PED_ID();
-    Vehicle playerVehicle = PED::GET_VEHICLE_PED_IS_IN(playerPed, false);
-    if (ENTITY::DOES_ENTITY_EXIST(playerVehicle) && playerVehicle != vehicle) {
-        // Just skip if the one calling this doesn't match the player vehicle,
-        // allow things after this one to run the restore/cleanup code.
-        return;
-    }
     Vehicle replayVehicle = vehicle;
 
     Vector3 currRot = ENTITY::GET_ENTITY_ROTATION(replayVehicle, 0);
@@ -1055,4 +1049,16 @@ void CReplayScript::setPlayerIntoVehicleFreeSeat(Vehicle vehicle) {
         // Fallback: Driver, but the inputs might conflict.
         PED::SET_PED_INTO_VEHICLE(playerPed, vehicle, -1);
     }
+}
+
+void CReplayScript::ghostCleanup(Vehicle vehicle) {
+    Ped playerPed = PLAYER::PLAYER_PED_ID();
+    Vehicle playerVehicle = PED::GET_VEHICLE_PED_IS_IN(playerPed, false);
+
+    // Only deactivate passenger mode if the player is in the ghost.
+    if (ENTITY::DOES_ENTITY_EXIST(playerVehicle) && playerVehicle != vehicle) {
+        return;
+    }
+
+    DeactivatePassengerMode(vehicle);
 }

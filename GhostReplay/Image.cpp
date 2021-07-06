@@ -4,7 +4,6 @@
 #include "Util/String.hpp"
 
 #include <jpegsize/jpegsize.h>
-#include <lodepng/lodepng.h>
 
 #include <filesystem>
 #include <fstream>

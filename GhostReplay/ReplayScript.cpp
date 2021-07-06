@@ -391,6 +391,16 @@ void CReplayScript::ActivatePassengerMode() {
         return;
     }
 
+    CReplayVehicle* passengerVehicle = mPassengerVehicle;
+    if (passengerVehicle == nullptr) {
+        passengerVehicle = mReplayVehicles[0].get();
+    }
+    if (mGlobalReplayState != EReplayState::Idle &&
+        passengerVehicle->GetReplayState() == EReplayState::Idle) {
+        UI::Notify("Can't enter passenger mode, vehicle is not driving.");
+        return;
+    }
+
     StopRecording();
 
     Ped playerPed = PLAYER::PLAYER_PED_ID();
@@ -504,8 +514,17 @@ void CReplayScript::PassengerVehicleNext() {
     else
         mPassengerVehicle = std::next(selectedVehicle)->get();
 
-    if (mPassengerModeActive)
+    if (mPassengerModeActive) {
+        if (mGlobalReplayState != EReplayState::Idle &&
+            mPassengerVehicle->GetReplayState() == EReplayState::Idle) {
+            UI::Notify("Can't switch to vehicle, vehicle is not driving.");
+            if (selectedVehicle != mReplayVehicles.end()) {
+                DeactivatePassengerMode(selectedVehicle->get()->GetVehicle());
+            }
+            return;
+        }
         setPlayerIntoVehicleFreeSeat(mPassengerVehicle->GetVehicle());
+    }
 }
 
 void CReplayScript::PassengerVehiclePrev() {
@@ -521,8 +540,17 @@ void CReplayScript::PassengerVehiclePrev() {
     else
         mPassengerVehicle = std::prev(selectedVehicle)->get();
 
-    if (mPassengerModeActive)
+    if (mPassengerModeActive) {
+        if (mGlobalReplayState != EReplayState::Idle &&
+            mPassengerVehicle->GetReplayState() == EReplayState::Idle) {
+            UI::Notify("Can't switch to vehicle, vehicle is not driving.");
+            if (selectedVehicle != mReplayVehicles.end()) {
+                DeactivatePassengerMode(selectedVehicle->get()->GetVehicle());
+            }
+            return;
+        }
         setPlayerIntoVehicleFreeSeat(mPassengerVehicle->GetVehicle());
+    }
 }
 
 CReplayVehicle* CReplayScript::GetPassengerVehicle() {

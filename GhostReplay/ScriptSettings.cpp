@@ -42,6 +42,7 @@ void CScriptSettings::Load() {
     LOAD_VAL("Replay", "VehicleAlpha", Replay.VehicleAlpha);
     LOAD_VAL("Replay", "ForceLights", Replay.ForceLights);
 
+    LOAD_VAL("Replay", "ScrubDistanceSeconds", Replay.ScrubDistanceSeconds);
     LOAD_VAL("Replay", "FallbackModel", Replay.FallbackModel);
     LOAD_VAL("Replay", "ForceFallbackModel", Replay.ForceFallbackModel);
     LOAD_VAL("Replay", "AutoLoadGhost", Replay.AutoLoadGhost);
@@ -67,6 +68,7 @@ void CScriptSettings::Save() {
     SAVE_VAL("Replay", "VehicleAlpha", Replay.VehicleAlpha);
     SAVE_VAL("Replay", "ForceLights", Replay.ForceLights);
 
+    SAVE_VAL("Replay", "ScrubDistanceSeconds", Replay.ScrubDistanceSeconds);
     SAVE_VAL("Replay", "FallbackModel", Replay.FallbackModel);
     SAVE_VAL("Replay", "ForceFallbackModel", Replay.ForceFallbackModel);
     SAVE_VAL("Replay", "AutoLoadGhost", Replay.AutoLoadGhost);

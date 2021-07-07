@@ -30,6 +30,7 @@ public:
         int ForceLights = 0;
 
         // Advanced
+        double ScrubDistanceSeconds = 1.0;
         std::string FallbackModel = "sultan";
         bool ForceFallbackModel = false;
         bool AutoLoadGhost = true;

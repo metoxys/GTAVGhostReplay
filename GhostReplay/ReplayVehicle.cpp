@@ -26,18 +26,20 @@ CReplayVehicle::~CReplayVehicle() {
         resetReplay();
 }
 
-void CReplayVehicle::UpdatePlayback(double gameTime, bool startPassedThisTick, bool finishPassedThisTick) {
+bool CReplayVehicle::UpdatePlayback(double replayTime, bool startPassedThisTick, bool finishPassedThisTick) {
+    bool startedReplayThisTick = false;
     if (!mActiveReplay) {
         mReplayState = EReplayState::Idle;
         resetReplay();
-        return;
+        return startedReplayThisTick;
     }
 
     switch (mReplayState) {
         case EReplayState::Idle: {
             if (startPassedThisTick) {
                 mReplayState = EReplayState::Playing;
-                startReplay(gameTime);
+                startReplay();
+                startedReplayThisTick = true;
             }
             break;
         }
@@ -45,15 +47,17 @@ void CReplayVehicle::UpdatePlayback(double gameTime, bool startPassedThisTick, b
             if (mActiveReplay && mLastNode == mActiveReplay->Nodes.end()) {
                 logger.Write(DEBUG, "Updating currentNode to activeReplay begin");
                 mLastNode = mActiveReplay->Nodes.begin();
-                startReplay(gameTime);
+                startReplay();
+                startedReplayThisTick = true;
             }
             showNode(mLastNode->Timestamp, mLastNode, mLastNode);
             break;
         }
         case EReplayState::Playing: {
-            // The time that has elapsed from the viewpoint of the replay.
-            auto replayTime = gameTime - mReplayStart;
-            replayTime += mSettings.Replay.OffsetSeconds * 1000.0;
+            if (replayTime < 0.0) {
+                showNode(0.0, mActiveReplay->Nodes.begin(), mActiveReplay->Nodes.begin());
+                break;
+            }
 
             // Find the node where the timestamp is larger than the current virtual timestamp (replayTime).
             auto nodeNext = std::upper_bound(mLastNode, mActiveReplay->Nodes.end(), SReplayNode{ replayTime });
@@ -66,25 +70,37 @@ void CReplayVehicle::UpdatePlayback(double gameTime, bool startPassedThisTick, b
             }
 
             // Update the node passed, if progressed past it.
-            if (mLastNode != std::prev(nodeNext))
-                mLastNode = std::prev(nodeNext);
+            if (mLastNode != std::prev(nodeNext)) {
+                if (nodeNext != mActiveReplay->Nodes.begin()) {
+                    mLastNode = std::prev(nodeNext);
+                }
+                else {
+                    mLastNode = nodeNext;
+                    nodeNext = std::next(nodeNext);
+                }
+            }
 
             // Show the node, with <nodePrev> <now> <nodeNext>.
             showNode(replayTime, mLastNode, nodeNext);
-
-            // On a faster player lap, the current replay is nuked and this doesn't run, but better to
-            // not rely on that behavior and have this here anyway, in case that part changes.
-            if (finishPassedThisTick) {
-                mReplayState = EReplayState::Idle;
-                resetReplay();
-                if (startPassedThisTick) {
-                    mReplayState = EReplayState::Playing;
-                    startReplay(gameTime);
-                }
-            }
             break;
         }
     }
+
+    // Always abort a paused or slower ghost lap when the player has finished.
+    // And restart it again, if the start was passed in the same tick.
+    if (mReplayState != EReplayState::Idle) {
+        if (finishPassedThisTick) {
+            mReplayState = EReplayState::Idle;
+            resetReplay();
+            if (startPassedThisTick) {
+                mReplayState = EReplayState::Playing;
+                startReplay();
+                startedReplayThisTick = true;
+            }
+        }
+    }
+
+    return startedReplayThisTick;
 }
 
 double CReplayVehicle::GetReplayProgress() {
@@ -94,65 +110,39 @@ double CReplayVehicle::GetReplayProgress() {
     return 0;
 }
 
-void CReplayVehicle::TogglePause(bool pause, double gameTime) {
+void CReplayVehicle::TogglePause(bool pause) {
     if (mReplayState == EReplayState::Idle) {
-        startReplay(gameTime);
+        startReplay();
     }
     if (pause) {
         mReplayState = EReplayState::Paused;
     }
     else {
         mReplayState = EReplayState::Playing;
-        double offset = 0.0;
-        if (mActiveReplay && mLastNode != mActiveReplay->Nodes.end()) {
-            offset = mLastNode->Timestamp;
-        }
-        mReplayStart = gameTime - offset;
     }
 }
 
-void CReplayVehicle::ScrubBackward(double step) {
-    if (mActiveReplay && mLastNode != mActiveReplay->Nodes.end()) {
-        bool wouldSkipPastBegin = mLastNode->Timestamp < step;
-        auto minMillis = wouldSkipPastBegin ?
-            mLastNode->Timestamp :
-            step;
+void CReplayVehicle::SetReplayTime(double replayTime) {
+    // Find node with smaller timestamp than our replayTime
+    auto nodeCurr = std::lower_bound(
+        mActiveReplay->Nodes.begin(),
+        mActiveReplay->Nodes.end(),
+        SReplayNode{ replayTime });
 
-        auto replayTime = mLastNode->Timestamp - minMillis;
-        auto nodeCurr = std::lower_bound(mActiveReplay->Nodes.begin(), mLastNode, SReplayNode{ replayTime });
-
-        // Step is smaller than delta-time, so just go to the previous frame.
-        if (nodeCurr != mActiveReplay->Nodes.begin() && nodeCurr == mLastNode) {
-            FramePrev();
+    // Allow ghost to end when scrubbing when not paused
+    if (mReplayState == EReplayState::Playing) {
+        // The ghost has reached the end of the recording
+        if (nodeCurr == mActiveReplay->Nodes.end() || std::next(nodeCurr) == mActiveReplay->Nodes.end()) {
+            mReplayState = EReplayState::Idle;
+            resetReplay();
             return;
         }
-
-        mLastNode = nodeCurr;
-        mReplayStart += minMillis;
     }
-}
 
-void CReplayVehicle::ScrubForward(double step) {
-    if (mActiveReplay && mLastNode != mActiveReplay->Nodes.end()) {
-        bool wouldSkipPastEnd = mLastNode->Timestamp + step > mActiveReplay->Nodes.back().Timestamp;
-        auto minMillis = wouldSkipPastEnd ?
-            mActiveReplay->Nodes.back().Timestamp - mLastNode->Timestamp :
-            step;
-
-        auto replayTime = mLastNode->Timestamp + minMillis;
-        auto nodeCurr = std::upper_bound(mLastNode, mActiveReplay->Nodes.end(), SReplayNode{ replayTime });
-        if (nodeCurr != mActiveReplay->Nodes.begin()) {
-            nodeCurr = std::prev(nodeCurr);
-        }
-
-        // Step is smaller than delta-time, so just go to the next frame.
-        if (std::next(nodeCurr) != mActiveReplay->Nodes.end() && nodeCurr == mLastNode) {
-            FrameNext();
-            return;
-        }
-
+    if (nodeCurr != mActiveReplay->Nodes.begin())
+        mLastNode = std::prev(nodeCurr);
+    else {
         mLastNode = nodeCurr;
-        mReplayStart -= minMillis;
     }
 }
 
@@ -175,34 +165,33 @@ uint64_t CReplayVehicle::GetFrameIndex() {
     return 0;
 }
 
-void CReplayVehicle::FramePrev() {
+double CReplayVehicle::FramePrev() {
     if (!mActiveReplay)
-        return;
+        return 0.0;
 
     if (mLastNode == mActiveReplay->Nodes.begin())
-        return;
+        return 0.0;
 
     auto prevIt = std::prev(mLastNode);
     auto delta = mLastNode->Timestamp - prevIt->Timestamp;
     mLastNode = prevIt;
-    mReplayStart += delta;
+    return delta;
 }
 
-void CReplayVehicle::FrameNext() {
+double CReplayVehicle::FrameNext() {
     if (!mActiveReplay || mLastNode == mActiveReplay->Nodes.end())
-        return;
+        return 0.0;
 
     if (std::next(mLastNode) == mActiveReplay->Nodes.end())
-        return;
+        return 0.0;
 
     auto nextIt = std::next(mLastNode);
     auto delta = nextIt->Timestamp - mLastNode->Timestamp;
     mLastNode = nextIt;
-    mReplayStart -= delta;
+    return delta;
 }
 
-void CReplayVehicle::startReplay(double gameTime) {
-    mReplayStart = gameTime;
+void CReplayVehicle::startReplay() {
     unhideVehicle();
     mLastNode = mActiveReplay->Nodes.begin();
 

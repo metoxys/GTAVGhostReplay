@@ -22,8 +22,10 @@ public:
     ~CReplayVehicle();
 
     Vehicle GetVehicle() { return mReplayVehicle; }
+    CReplayData* GetReplay() { return mActiveReplay; }
 
-    void UpdatePlayback(double gameTime, bool startPassedThisTick, bool finishPassedThisTick);
+    // Returns true when the replay was (re)started this tick.
+    bool UpdatePlayback(double replayTime, bool startPassedThisTick, bool finishPassedThisTick);
 
     EReplayState GetReplayState() {
         return mReplayState;
@@ -36,15 +38,14 @@ public:
 
     // Playback control
     double GetReplayProgress();
-    void TogglePause(bool pause, double gameTime);
-    void ScrubBackward(double step);
-    void ScrubForward(double step);
+    void TogglePause(bool pause);
+    void SetReplayTime(double replayTime);
 
     // Debugging playback
     uint64_t GetNumFrames();
     uint64_t GetFrameIndex();
-    void FramePrev();
-    void FrameNext();
+    double FramePrev();
+    double FrameNext();
 
 private:
     const CScriptSettings& mSettings;
@@ -54,12 +55,11 @@ private:
     std::unique_ptr<CWrappedBlip> mReplayVehicleBlip;
 
     EReplayState mReplayState;
-    double mReplayStart = 0.0;
     std::vector<SReplayNode>::iterator mLastNode;
 
     std::function<void(Vehicle)> mOnCleanup;
 
-    void startReplay(double gameTime);
+    void startReplay();
     void showNode(double replayTime,
         std::vector<SReplayNode>::iterator nodeCurr,
         std::vector<SReplayNode>::iterator nodeNext);

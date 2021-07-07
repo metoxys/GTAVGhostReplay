@@ -122,7 +122,6 @@ std::string GhostReplay::CurrentLoadingReplay() {
     return currentLoadingReplay;
 }
 
-// TODO: Do this in background somehow
 void GhostReplay::LoadReplays() {
     const std::string replaysPath =
         Paths::GetModuleFolder(Paths::GetOurModuleHandle()) +

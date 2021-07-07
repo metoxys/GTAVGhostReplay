@@ -915,8 +915,6 @@ void CReplayScript::finishRecord(bool saved, const SReplayNode& node) {
                                       fastestLap ? "~p~" : fasterLap ? "~g~" : "~y~",
                                       Util::FormatMillisTime(node.Timestamp));
 
-    // TODO: Movable UI element with current time & laptime & delta?
-
     if (mSettings.Main.NotifyLaps) {
         UI::Notify(lapInfo, false);
     }

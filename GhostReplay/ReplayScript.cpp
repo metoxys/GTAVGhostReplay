@@ -894,7 +894,7 @@ void CReplayScript::finishRecord(bool saved, const SReplayNode& node) {
         fastestLap = IsFastestLap(mCurrentRun.Track, 0, node.Timestamp);
     }
 
-    if (mSettings.Record.AutoGhost && (mActiveReplays.size() == 1 || fasterLap)) {
+    if (mSettings.Record.AutoGhost && (mActiveReplays.empty() || fasterLap)) {
         // Just deselect when there's 1 ghost, otherwise keep adding to the mayhem!
         if (mActiveReplays.size() == 1)
             DeselectReplay(mActiveReplays[0]->Name, mActiveReplays[0]->Timestamp);

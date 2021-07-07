@@ -206,8 +206,9 @@ void CReplayScript::DeselectReplay(const std::string& replayName, unsigned long 
 void CReplayScript::ClearSelectedReplays() {
     mActiveReplays.clear();
     mReplayVehicles.clear();
-    mRecordState = ERecordState::Idle;
     mSlowestReplayTime = 0.0;
+    mPassengerVehicle = nullptr;
+    mGlobalReplayState = EReplayState::Idle;
 }
 
 void CReplayScript::ClearUnsavedRuns() {

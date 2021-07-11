@@ -48,6 +48,7 @@ BOOL APIENTRY DllMain(HMODULE hInstance, DWORD reason, LPVOID lpReserved) {
         }
         case DLL_PROCESS_DETACH: {
             Dll::unloading = true;
+            GhostReplay::TriggerLoadStop();
             scriptUnregister(hInstance);
             break;
         }

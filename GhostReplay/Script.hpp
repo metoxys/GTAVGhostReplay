@@ -25,6 +25,8 @@ namespace GhostReplay {
 
 
     void AddReplay(const CReplayData& replay);
+
+    void TriggerLoadStop();
 }
 
 namespace Dll {

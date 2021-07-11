@@ -25,6 +25,7 @@ namespace {
     std::shared_ptr<CScriptSettings> settings;
     std::shared_ptr<CReplayScript> scriptInst;
 
+    std::atomic_bool stopLoading = false;
     std::atomic<uint32_t> totalReplays = 0;
     std::atomic<uint32_t> loadedReplays = 0;
     std::vector<std::string> pendingReplays;
@@ -51,6 +52,8 @@ namespace {
 }
 
 void GhostReplay::ScriptMain() {
+    stopLoading = false;
+
     const std::string settingsGeneralPath =
         Paths::GetModuleFolder(Paths::GetOurModuleHandle()) +
         Constants::ModDir +
@@ -158,6 +161,10 @@ void GhostReplay::LoadReplays() {
             {
                 std::lock_guard nameMutex(currentLoadingReplayMutex);
                 currentLoadingReplay = std::filesystem::path(file).stem().string();
+            }
+
+            if (stopLoading) {
+                return;
             }
 
             CReplayData replay = CReplayData::Read(file);
@@ -297,4 +304,8 @@ uint32_t GhostReplay::LoadARSTracks() {
 void GhostReplay::AddReplay(const CReplayData& replay) {
     std::lock_guard replaysLock(replaysMutex);
     replays.push_back(std::make_shared<CReplayData>(replay));
+}
+
+void GhostReplay::TriggerLoadStop() {
+    stopLoading = true;
 }

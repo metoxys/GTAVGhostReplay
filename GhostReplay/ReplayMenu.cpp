@@ -666,8 +666,8 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             if (passengerModeAvailable) {
                 bool active = context.IsPassengerModeActive();
                 std::string optionText = active ?
-                    "<< Leave passenger mode >>" :
-                    "<< Enter passenger mode >>";
+                    "<< Stop spectating >>" :
+                    "<< Spectate >>";
 
                 std::vector<std::string> passengerDetails;
                 for (const auto& replayVehicle : context.GetReplayVehicles()) {
@@ -687,8 +687,8 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                     nullptr,
                     [&]() { context.PassengerVehicleNext(); },
                     [&]() { context.PassengerVehiclePrev(); },
-                    "Passenger mode",
-                    { "Select to enter or exit passenger mode.",
+                    "Spectating",
+                    { "Select to enter or exit spectator mode.",
                       "Press left and right to select different vehicles." });
                 if (toggle) {
                     if (active)
@@ -698,8 +698,8 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 }
             }
             else {
-                mbCtx.Option("~m~Passenger mode unavailable",
-                    { "Passenger mode is available when a track and one or more replays are selected." });
+                mbCtx.Option("~m~Spectator mode unavailable",
+                    { "Spectator mode is available when a track and one or more replays are selected." });
             }
         }
     });

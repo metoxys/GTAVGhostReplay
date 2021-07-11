@@ -628,21 +628,30 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             }
 
             if (GetSettings().Main.Debug && activeReplays.size() == 1 && replayVehicles.size() == 1) {
-                bool pause = mbCtx.OptionPlus(
+                bool togglePause = mbCtx.OptionPlus(
                     fmt::format("<< [{}/{}] >>", context.GetFrameIndex(), context.GetNumFrames() - 1),
                     playbackDetails,
                     nullptr,
                     [&]() { context.FrameNext(); },
                     [&]() { context.FramePrev(); },
                     "Frame controls",
-                    { "Frame controls. Select to pause. Left = previous frame. Right = next frame." });
-                if (pause) {
+                    { "Frame controls. Select to play/pause. Left = previous frame. Right = next frame." });
+                if (togglePause) {
                     context.TogglePause(true);
                 }
             }
             else if (GetSettings().Main.Debug) {
-                mbCtx.Option("~m~Frame controls unavailable",
-                    { "Frame controls are only available with 1 active replay." });
+                bool togglePause = mbCtx.OptionPlus(
+                    fmt::format("<< {} >>", replayState != EReplayState::Playing ? "Play" : "Pause"),
+                    playbackDetails,
+                    nullptr,
+                    [&]() { context.ScrubForward(5.0); },
+                    [&]() { context.ScrubBackward(5.0); },
+                    "Step controls",
+                    { "Frame controls replaced by 5ms step for multiple vehicles." });
+                if (togglePause) {
+                    context.TogglePause(replayState == EReplayState::Playing);
+                }
             }
 
             bool replaying = replayState != EReplayState::Idle;

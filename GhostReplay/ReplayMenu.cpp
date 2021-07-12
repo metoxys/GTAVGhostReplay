@@ -545,6 +545,9 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 ENTITY::SET_ENTITY_ALPHA(
                     replayVehicle->GetVehicle(),
                     map(GetSettings().Replay.VehicleAlpha, 0, 100, 0, 255), false);
+                if (GetSettings().Replay.VehicleAlpha == 100) {
+                    ENTITY::RESET_ENTITY_ALPHA(replayVehicle->GetVehicle());
+                }
             }
         }
 

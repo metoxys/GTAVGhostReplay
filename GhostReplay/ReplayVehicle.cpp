@@ -383,6 +383,9 @@ void CReplayVehicle::unhideVehicle() {
     ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, true, true);
     ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, map(mSettings.Replay.VehicleAlpha, 0, 100, 0, 255), false);
     ENTITY::SET_ENTITY_COMPLETELY_DISABLE_COLLISION(mReplayVehicle, false, false);
+    if (mSettings.Replay.VehicleAlpha == 100) {
+        ENTITY::RESET_ENTITY_ALPHA(mReplayVehicle);
+    }
     VEHICLE::SET_VEHICLE_ENGINE_ON(mReplayVehicle, true, true, false);
     ENTITY::FREEZE_ENTITY_POSITION(mReplayVehicle, false);
-}
+}}

@@ -1,6 +1,12 @@
 #pragma once
 #include <string>
 
+constexpr int ESyncTypeMax = 1;
+enum class ESyncType {
+    Constant,
+    Distance,
+};
+
 class CScriptSettings {
 public:
     CScriptSettings(std::string settingsFile);
@@ -27,6 +33,7 @@ public:
         // Normal
         double OffsetSeconds = 0.0;
         int VehicleAlpha = 40;
+        // 0: Default, 1: Force off, 2: Force on
         int ForceLights = 0;
 
         // Advanced
@@ -35,6 +42,9 @@ public:
         bool ForceFallbackModel = false;
         bool AutoLoadGhost = true;
         bool ZeroVelocityOnPause = true;
+        ESyncType SyncType = ESyncType::Constant;
+        float SyncDistance = 0.01f;
+        float SyncCompensation = 10.00f;
     } Replay;
 
 private:

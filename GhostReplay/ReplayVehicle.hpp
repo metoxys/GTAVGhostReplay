@@ -24,6 +24,8 @@ public:
     Vehicle GetVehicle() { return mReplayVehicle; }
     CReplayData* GetReplay() { return mActiveReplay; }
 
+    void UpdateCollision(bool enable);
+
     // Returns true when the replay was (re)started this tick.
     bool UpdatePlayback(double replayTime, bool startPassedThisTick, bool finishPassedThisTick);
 

@@ -2,6 +2,7 @@
 #include "SettingsCommon.h"
 
 #include "Util/Logger.hpp"
+#include "Util/Misc.hpp"
 
 #include <simpleini/SimpleIni.h>
 
@@ -47,6 +48,15 @@ void CScriptSettings::Load() {
     LOAD_VAL("Replay", "ForceFallbackModel", Replay.ForceFallbackModel);
     LOAD_VAL("Replay", "AutoLoadGhost", Replay.AutoLoadGhost);
     LOAD_VAL("Replay", "ZeroVelocityOnPause", Replay.ZeroVelocityOnPause);
+
+    auto syncType = as_int(Replay.SyncType);
+    LOAD_VAL("Replay", "SyncType", syncType);
+    if (syncType > ESyncTypeMax)
+        syncType = ESyncTypeMax;
+    Replay.SyncType = static_cast<ESyncType>(syncType);
+
+    LOAD_VAL("Replay", "SyncDistance", Replay.SyncDistance);
+    LOAD_VAL("Replay", "SyncCompensation", Replay.SyncCompensation);
 }
 
 void CScriptSettings::Save() {
@@ -73,6 +83,10 @@ void CScriptSettings::Save() {
     SAVE_VAL("Replay", "ForceFallbackModel", Replay.ForceFallbackModel);
     SAVE_VAL("Replay", "AutoLoadGhost", Replay.AutoLoadGhost);
     SAVE_VAL("Replay", "ZeroVelocityOnPause", Replay.ZeroVelocityOnPause);
+
+    SAVE_VAL("Replay", "SyncType", as_int(Replay.SyncType));
+    SAVE_VAL("Replay", "SyncDistance", Replay.SyncDistance);
+    SAVE_VAL("Replay", "SyncCompensation", Replay.SyncCompensation);
 
     result = ini.SaveFile(mSettingsFile.c_str());
     CHECK_LOG_SI_ERROR(result, "save");

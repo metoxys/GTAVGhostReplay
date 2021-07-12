@@ -1,5 +1,6 @@
 #include "ReplayVehicle.hpp"
 #include "Script.hpp"
+#include "ReplayScriptUtils.hpp"
 #include "Util/UI.hpp"
 #include "Util/Logger.hpp"
 #include "Util/Math.hpp"
@@ -24,6 +25,15 @@ CReplayVehicle::CReplayVehicle(const CScriptSettings& settings, CReplayData* act
 CReplayVehicle::~CReplayVehicle() {
     if (!Dll::Unloading())
         resetReplay();
+}
+
+void CReplayVehicle::UpdateCollision(bool enable) {
+    if (enable) {
+        ENTITY::SET_ENTITY_COLLISION(mReplayVehicle, true, true);
+    }
+    else {
+        ENTITY::SET_ENTITY_COLLISION(mReplayVehicle, false, false);
+    }
 }
 
 bool CReplayVehicle::UpdatePlayback(double replayTime, bool startPassedThisTick, bool finishPassedThisTick) {
@@ -220,12 +230,50 @@ void CReplayVehicle::showNode(
     double deltaT = ((nodeNext->Timestamp - nodeCurr->Timestamp) * 0.001); // Seconds
     Vector3 pos = lerp(nodeCurr->Pos, nodeNext->Pos, progress);
     Vector3 rot = lerp(nodeCurr->Rot, nodeNext->Rot, progress, -180.0f, 180.0f);
-    ENTITY::SET_ENTITY_COORDS_NO_OFFSET(mReplayVehicle, pos.x, pos.y, pos.z, false, false, false);
+
+    auto posEntity = ENTITY::GET_ENTITY_COORDS(mReplayVehicle, !ENTITY::IS_ENTITY_DEAD(mReplayVehicle, false));
+
+    float dist = Distance(pos, posEntity);
+
+    if (mSettings.Main.Debug) {
+        UI::DrawSphere(pos, 0.125f, 0, 255, 0, 128);
+        UI::DrawSphere(posEntity, 0.125f, 0, 0, 255, 128);
+        UI::DrawLine(pos, posEntity, 255, 255, 255, 255);
+        std::string syncType;
+        switch (mSettings.Replay.SyncType) {
+            case ESyncType::Distance: syncType = "Distance"; break;
+            case ESyncType::Constant: syncType = "Constant"; break;
+            default: syncType = fmt::format("Invalid: {}", mSettings.Replay.SyncType);
+        }
+        Vector3 vehUp = posEntity;
+        Vector3 dimMin, dimMax;
+        MISC::GET_MODEL_DIMENSIONS(ENTITY::GET_ENTITY_MODEL(mReplayVehicle), &dimMin, &dimMax);
+        vehUp.z += dimMax.z + 1.0f;
+        UI::ShowText3D(vehUp, 10.0f, {
+            Util::FormatMillisTime(mActiveReplay->Nodes.back().Timestamp),
+            Util::FormatMillisTime(GetReplayProgress()),
+            fmt::format("Type: {}", syncType),
+            fmt::format("Limit: {:.3f}", mSettings.Replay.SyncDistance),
+            fmt::format("Drift: {:.3f}", dist),
+        });
+    }
+
+    if (nodeCurr == mActiveReplay->Nodes.begin() || paused ||
+        mSettings.Replay.SyncType == ESyncType::Distance && dist > mSettings.Replay.SyncDistance ||
+        mSettings.Replay.SyncType == ESyncType::Constant) {
+        ENTITY::SET_ENTITY_COORDS_NO_OFFSET(mReplayVehicle, pos.x, pos.y, pos.z, false, false, false);
+    }
     ENTITY::SET_ENTITY_ROTATION(mReplayVehicle, rot.x, rot.y, rot.z, 0, false);
 
     // Prevent the third person camera from rotating backwards
     if (!(paused && mSettings.Replay.ZeroVelocityOnPause)) {
         Vector3 vel = (nodeNext->Pos - nodeCurr->Pos) * static_cast<float>(1.0 / deltaT);
+
+        if (mSettings.Replay.SyncType != ESyncType::Constant) {
+            Vector3 dVel = (pos - posEntity) * mSettings.Replay.SyncCompensation;
+            vel = vel + dVel;
+        }
+
         ENTITY::SET_ENTITY_VELOCITY(mReplayVehicle, vel.x, vel.y, vel.z);
     }
 
@@ -341,12 +389,17 @@ void CReplayVehicle::createReplayVehicle(Hash model, CReplayData* activeReplay, 
 
     ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, false, false);
     ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, 0, false);
-    ENTITY::SET_ENTITY_COLLISION(mReplayVehicle, false, false);
+    UpdateCollision(false);
 
     if (VEHICLE::IS_THIS_MODEL_A_PLANE(model) ||
         VEHICLE::IS_THIS_MODEL_A_HELI(model)) {
         VEHICLE::CONTROL_LANDING_GEAR(mReplayVehicle, 3);
     }
+
+    ENTITY::SET_ENTITY_INVINCIBLE(mReplayVehicle, true);
+    ENTITY::SET_ENTITY_CAN_BE_DAMAGED(mReplayVehicle, false);
+    VEHICLE::SET_VEHICLE_CAN_BE_VISIBLY_DAMAGED(mReplayVehicle, false);
+    VEHICLE::_SET_VEHICLE_LIGHTS_CAN_BE_VISIBLY_DAMAGED(mReplayVehicle, false);
 
     VehicleModData modData = mActiveReplay->VehicleMods;
     VehicleModData::ApplyTo(mReplayVehicle, modData);
@@ -369,7 +422,7 @@ void CReplayVehicle::hideVehicle() {
 
     ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, false, false);
     ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, 0, false);
-    ENTITY::SET_ENTITY_COLLISION(mReplayVehicle, false, false);
+    UpdateCollision(false);
     VEHICLE::SET_VEHICLE_ENGINE_ON(mReplayVehicle, false, true, true);
 
     // Freeze invisible vehicle in air, so it won't get damaged (falling in water, etc).
@@ -382,10 +435,10 @@ void CReplayVehicle::hideVehicle() {
 void CReplayVehicle::unhideVehicle() {
     ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, true, true);
     ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, map(mSettings.Replay.VehicleAlpha, 0, 100, 0, 255), false);
-    ENTITY::SET_ENTITY_COMPLETELY_DISABLE_COLLISION(mReplayVehicle, false, false);
     if (mSettings.Replay.VehicleAlpha == 100) {
         ENTITY::RESET_ENTITY_ALPHA(mReplayVehicle);
     }
+    UpdateCollision(mSettings.Replay.SyncType != ESyncType::Constant);
     VEHICLE::SET_VEHICLE_ENGINE_ON(mReplayVehicle, true, true, false);
     ENTITY::FREEZE_ENTITY_POSITION(mReplayVehicle, false);
-}}
+}

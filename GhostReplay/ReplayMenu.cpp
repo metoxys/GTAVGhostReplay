@@ -13,6 +13,7 @@
 #include "Util/UI.hpp"
 #include "Util/Math.hpp"
 #include "Util/String.hpp"
+#include "Util/Misc.hpp"
 
 #include <menukeyboard.h>
 #include <fmt/format.h>
@@ -41,6 +42,11 @@ namespace GhostReplay {
     std::unordered_map<std::string, SFormattedTrackData> formattedTrackData;
 
     const std::vector<std::string> lightsOptions = { "Default", "Force Off", "Force On" };
+    const std::vector<std::string> syncOptions = { "Absolute", "Approximate" };
+    const std::vector<std::vector<std::string>> syncDescriptions = {
+        {"Absolute: Perfect playback, but lacks effects like tyre trails, dirt and smoke. Good for hotlaps."},
+        {"Approximate: Effects are present, but vehicle may get knocked off-course by terrain or props."},
+    };
 }
 
 std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
@@ -812,6 +818,29 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         mbCtx.BoolOption("Zero velocity on pause", GetSettings().Replay.ZeroVelocityOnPause,
             { "When paused, no velocity is set. This stops the third person gameplay camera from moving, "
               "but will cause glitched suspension for vehicles with advanced handling flag 0x0800000." });
+
+        auto syncType = as_int(GetSettings().Replay.SyncType);
+        const auto& description = syncDescriptions[syncType];
+        if (mbCtx.StringArray("Replay sync type", syncOptions, syncType, description)) {
+            GetSettings().Replay.SyncType = static_cast<ESyncType>(syncType);
+            for (auto& replayVehicle : context.GetReplayVehicles()) {
+                if (replayVehicle->GetReplayState() != EReplayState::Idle) {
+                    replayVehicle->UpdateCollision(GetSettings().Replay.SyncType != ESyncType::Constant);
+                }
+            }
+        }
+
+        if (GetSettings().Replay.SyncType == ESyncType::Distance) {
+            mbCtx.FloatOptionCb("Resync distance", GetSettings().Replay.SyncDistance, 0.01f, 1.00f, 0.01f,
+                MenuUtils::GetKbFloat,
+                { "When the vehicle drifts too far off its intended position, it needs to re-sync positions.",
+                  "This value is the drift distance after which it re-syncs, in meters." });
+
+            mbCtx.FloatOptionCb("Sync compensation", GetSettings().Replay.SyncCompensation, 0.00f, 20.00f, 0.10f,
+                MenuUtils::GetKbFloat,
+                { "Compensate for drift by pulling the vehicle to its intended position.",
+                  "This value is the pull strength." });
+        }
     });
 
     return submenus;

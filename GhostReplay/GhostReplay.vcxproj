@@ -157,6 +157,7 @@
     <ClInclude Include="Util\Inputs.hpp" />
     <ClInclude Include="Util\Logger.hpp" />
     <ClInclude Include="Util\Math.hpp" />
+    <ClInclude Include="Util\Misc.hpp" />
     <ClInclude Include="Util\Paths.hpp" />
     <ClInclude Include="Util\String.hpp" />
     <ClInclude Include="Util\UI.hpp" />

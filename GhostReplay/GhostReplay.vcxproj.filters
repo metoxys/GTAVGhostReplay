@@ -187,5 +187,8 @@
     </ClInclude>
     <ClInclude Include="Blip.hpp" />
     <ClInclude Include="ReplayVehicle.hpp" />
+    <ClInclude Include="Util\Misc.hpp">
+      <Filter>Util</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

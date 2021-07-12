@@ -53,13 +53,13 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
     std::vector<CScriptMenu<CReplayScript>::CSubmenu> submenus;
     /* mainmenu */
     submenus.emplace_back("mainmenu", [](NativeMenu::Menu& mbCtx, CReplayScript& context) {
-        mbCtx.Title("Ghost Car");
+        mbCtx.Title("Ghost Replay");
         mbCtx.Subtitle(fmt::format("~b~{}{}", Constants::DisplayVersion, GIT_DIFF));
 
         if (GhostReplay::ReplaysLocked()) {
             mbCtx.Option(fmt::format("Loading replays ({}/{})",
                 GhostReplay::ReplaysLoaded(), GhostReplay::ReplaysTotal()), {
-                    "Please wait, replays are currently loading.",
+                    "Please wait, replays are loading.",
                     "Currently processing:",
                     GhostReplay::CurrentLoadingReplay()
                 });
@@ -81,7 +81,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             currentGhostName = activeReplay->Name;
             ghostDetails = {
                 fmt::format("Track: {}", activeReplay->Track),
-                fmt::format("Car: {} {}",
+                fmt::format("Vehicle: {} {}",
                     Util::GetVehicleMake(activeReplay->VehicleModel),
                     Util::GetVehicleName(activeReplay->VehicleModel)),
                 fmt::format("Time: {}", Util::FormatMillisTime(activeReplay->Nodes.back().Timestamp))
@@ -117,8 +117,8 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         std::string replayAbortOption = replaying ? "Cancel playing ghosts" : "~m~Cancel playing ghosts";
         std::vector<std::string> replayAbortDetail;
         if (replaying) {
-            replayAbortDetail = { "Currently replaying a ghost car.",
-                "Want to re-do your lap, but not cross the finish line? Use this to stop and reset the ghost car." };
+            replayAbortDetail = { "Currently replaying a ghost.",
+                "Want to re-do your lap, but not cross the finish line? Use this to stop and reset the ghost." };
         }
         if (mbCtx.Option(replayAbortOption, replayAbortDetail)) {
             if (replaying)
@@ -129,7 +129,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         std::string recordAbortOption = recording ? "Cancel recording" : "~m~Cancel recording";
         std::vector<std::string> recordAbortDetail;
         if (recording) {
-            recordAbortDetail = { "Currently recording a ghost car.",
+            recordAbortDetail = { "Currently recording a ghost replay.",
                 "Not racing anymore? Use this to stop and discard the recording." };
         }
         if (mbCtx.Option(recordAbortOption, recordAbortDetail)) {
@@ -439,7 +439,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             std::vector<std::string> extras
             {
                 fmt::format("Track: {}", replay->Track),
-                fmt::format("Car: {} {}",
+                fmt::format("Vehicle: {} {}",
                     Util::GetVehicleMake(replay->VehicleModel),
                     Util::GetVehicleName(replay->VehicleModel)),
                 fmt::format("Time: {}",  Util::FormatMillisTime(replay->Nodes.back().Timestamp)),
@@ -491,7 +491,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             std::vector<std::string> ghostDetails = {
                 "Select to save ghost.",
                 fmt::format("Track: {}", unsavedRun.Track),
-                fmt::format("Car: {} {}",
+                fmt::format("Vehicle: {} {}",
                     Util::GetVehicleMake(unsavedRun.VehicleModel),
                     Util::GetVehicleName(unsavedRun.VehicleModel)),
                 fmt::format("Time: {}", Util::FormatMillisTime(unsavedRun.Nodes.back().Timestamp)),
@@ -789,7 +789,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         mbCtx.Subtitle("Advanced");
 
         mbCtx.BoolOption("Auto-load quickest ghost", GetSettings().Replay.AutoLoadGhost, 
-            { "Automatically loads the quickest ghost lap when a track is selected, for that specific car model." });
+            { "Automatically loads the quickest ghost lap when a track is selected, for that specific vehicle model." });
 
         float scrubDist = static_cast<float>(GetSettings().Replay.ScrubDistanceSeconds);
         bool scrubDistChanged = mbCtx.FloatOptionCb("Scrub distance", scrubDist, 0.010f, 60.0f, 0.010f,

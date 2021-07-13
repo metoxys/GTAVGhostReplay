@@ -720,7 +720,8 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                     [&]() { context.PassengerVehiclePrev(); },
                     "Spectating",
                     { "Select to enter or exit spectator mode.",
-                      "Press left and right to select different vehicles." });
+                      "Press left and right to select different vehicles."
+                      "Spectator mode places you in the passenger seat of the replay vehicle." });
                 if (toggle) {
                     if (active)
                         context.DeactivatePassengerMode();

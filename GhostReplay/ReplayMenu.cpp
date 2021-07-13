@@ -693,10 +693,11 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                     if (replayVehicle.get() == context.GetPassengerVehicle()) {
                         selectMarker = "-> ";
                     }
-                    passengerDetails.push_back(fmt::format("{}{} - {}",
+                    passengerDetails.push_back(fmt::format("{}{} - {} ({})",
                         selectMarker,
                         Util::GetVehicleName(replayVehicle->GetReplay()->VehicleModel),
-                        Util::FormatMillisTime(replayVehicle->GetReplay()->Nodes.back().Timestamp)));
+                        Util::FormatMillisTime(replayVehicle->GetReplay()->Nodes.back().Timestamp),
+                        replayVehicle->GetReplayState() == EReplayState::Idle ? "Stopped" : "Playing"));
                 }
 
                 bool toggle = mbCtx.OptionPlus(

@@ -667,7 +667,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                     "Frame controls",
                     { "Frame controls. Select to play/pause. Left = previous frame. Right = next frame." });
                 if (togglePause) {
-                    context.TogglePause(true);
+                    context.TogglePause(replayState == EReplayState::Playing);
                 }
             }
             else if (GetSettings().Main.Debug) {

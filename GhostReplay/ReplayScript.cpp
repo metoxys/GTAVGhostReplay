@@ -504,22 +504,27 @@ void CReplayScript::PassengerVehicleNext() {
     auto selectedVehicle = std::find_if(mReplayVehicles.begin(), mReplayVehicles.end(),
         [&](const auto& replayVehicle) { return replayVehicle.get() == mPassengerVehicle; });
 
-    if (selectedVehicle == mReplayVehicles.end() ||
-        std::next(selectedVehicle) == mReplayVehicles.end())
-        mPassengerVehicle = mReplayVehicles.begin()->get();
-    else
-        mPassengerVehicle = std::next(selectedVehicle)->get();
-
-    if (mPassengerModeActive) {
-        if (mGlobalReplayState != EReplayState::Idle &&
-            mPassengerVehicle->GetReplayState() == EReplayState::Idle) {
-            UI::Notify("Can't switch to vehicle, vehicle is not driving.");
-            if (selectedVehicle != mReplayVehicles.end()) {
-                DeactivatePassengerMode(selectedVehicle->get()->GetVehicle());
-            }
-            return;
+    if (!mPassengerModeActive) {
+        if (selectedVehicle == mReplayVehicles.end() ||
+            std::next(selectedVehicle) == mReplayVehicles.end())
+            mPassengerVehicle = mReplayVehicles.begin()->get();
+        else
+            mPassengerVehicle = std::next(selectedVehicle)->get();
+    }
+    else {
+        if (mGlobalReplayState != EReplayState::Idle) {
+            do {
+                if (selectedVehicle == mReplayVehicles.end()) {
+                    selectedVehicle = mReplayVehicles.begin();
+                }
+                else {
+                    selectedVehicle = std::next(selectedVehicle);
+                }
+            } while (selectedVehicle == mReplayVehicles.end() ||
+                selectedVehicle->get()->GetReplayState() == EReplayState::Idle);
+            mPassengerVehicle = selectedVehicle->get();
+            setPlayerIntoVehicleFreeSeat(mPassengerVehicle->GetVehicle());
         }
-        setPlayerIntoVehicleFreeSeat(mPassengerVehicle->GetVehicle());
     }
 }
 
@@ -530,22 +535,28 @@ void CReplayScript::PassengerVehiclePrev() {
     auto selectedVehicle = std::find_if(mReplayVehicles.begin(), mReplayVehicles.end(),
         [&](const auto& replayVehicle) {return replayVehicle.get() == mPassengerVehicle; });
 
-    if (selectedVehicle == mReplayVehicles.end() ||
-        selectedVehicle == mReplayVehicles.begin())
-        mPassengerVehicle = mReplayVehicles.back().get();
-    else
-        mPassengerVehicle = std::prev(selectedVehicle)->get();
-
-    if (mPassengerModeActive) {
-        if (mGlobalReplayState != EReplayState::Idle &&
-            mPassengerVehicle->GetReplayState() == EReplayState::Idle) {
-            UI::Notify("Can't switch to vehicle, vehicle is not driving.");
-            if (selectedVehicle != mReplayVehicles.end()) {
-                DeactivatePassengerMode(selectedVehicle->get()->GetVehicle());
-            }
-            return;
+    if (!mPassengerModeActive) {
+        if (selectedVehicle == mReplayVehicles.end() ||
+            selectedVehicle == mReplayVehicles.begin())
+            mPassengerVehicle = mReplayVehicles.back().get();
+        else
+            mPassengerVehicle = std::prev(selectedVehicle)->get();
+    }
+    else {
+        if (mGlobalReplayState != EReplayState::Idle) {
+            do {
+                if (selectedVehicle == mReplayVehicles.end() ||
+                    selectedVehicle == mReplayVehicles.begin()) {
+                    selectedVehicle = std::prev(mReplayVehicles.end());
+                }
+                else {
+                    selectedVehicle = std::prev(selectedVehicle);
+                }
+            } while (selectedVehicle == mReplayVehicles.end() ||
+                selectedVehicle->get()->GetReplayState() == EReplayState::Idle);
+            mPassengerVehicle = selectedVehicle->get();
+            setPlayerIntoVehicleFreeSeat(mPassengerVehicle->GetVehicle());
         }
-        setPlayerIntoVehicleFreeSeat(mPassengerVehicle->GetVehicle());
     }
 }
 

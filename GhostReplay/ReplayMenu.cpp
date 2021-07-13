@@ -44,8 +44,14 @@ namespace GhostReplay {
     const std::vector<std::string> lightsOptions = { "Default", "Force Off", "Force On" };
     const std::vector<std::string> syncOptions = { "Absolute", "Approximate" };
     const std::vector<std::vector<std::string>> syncDescriptions = {
-        {"Absolute: Perfect playback, but lacks effects like tyre trails, dirt and smoke. Good for hotlaps."},
-        {"Approximate: Effects are present, but vehicle may get knocked off-course by terrain or props."},
+        { "Absolute: Perfect playback, but lacks effects like tyre trails, dirt and smoke. Good for hotlaps." },
+        { "Approximate: Effects are present, but vehicle may get knocked off-course by terrain or props." },
+    };
+    const std::vector<std::string> replaySortOptions = { "Name", "Lap time", "Date" };
+    const std::vector<std::string> replaySortDescriptions = { 
+        { "Sorts by replay name alphabetically, ascending." },
+        { "Sorts by lap time, ascending (fastest first)." },
+        { "Sorts by date, ascending (oldest first)." }
     };
 }
 
@@ -374,6 +380,10 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         if (context.GetReplays().empty()) {
             mbCtx.Option("No ghosts");
             return;
+        }
+
+        if (mbCtx.StringArray("Sort by", replaySortOptions, GetSettings().Main.ReplaySortBy, replaySortDescriptions)) {
+            UpdateReplayFilter(context);
         }
 
         if (replaySearchSelected) {
@@ -1005,5 +1015,24 @@ void GhostReplay::UpdateReplayFilter(CReplayScript& context) {
             Util::FindSubstring(datetime, replaySelectSearch) != -1) {
             filteredReplays.push_back(replay);
         }
+    }
+
+    auto dateLess = [](const std::shared_ptr<CReplayData>& replaya,
+        const std::shared_ptr<CReplayData>& replayb) {
+            return replaya->Timestamp < replayb->Timestamp;
+    };
+
+    auto timeLess = [](const std::shared_ptr<CReplayData>& replaya,
+        const std::shared_ptr<CReplayData>& replayb) {
+        return replaya->Nodes.back().Timestamp < replayb->Nodes.back().Timestamp;
+    };
+
+    // Lap time
+    if (GetSettings().Main.ReplaySortBy == 1) {
+        std::sort(filteredReplays.begin(), filteredReplays.end(), timeLess);
+    }
+    // Date
+    else if (GetSettings().Main.ReplaySortBy == 2) {
+        std::sort(filteredReplays.begin(), filteredReplays.end(), dateLess);
     }
 }

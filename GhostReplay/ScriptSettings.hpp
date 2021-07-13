@@ -20,6 +20,7 @@ public:
         bool GhostBlips = true;
         bool StartStopBlips = true;
         bool ShowRecordTime = true;
+        int ReplaySortBy = 0;
         bool Debug = false;
     } Main;
 

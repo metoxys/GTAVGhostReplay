@@ -1002,6 +1002,7 @@ void GhostReplay::UpdateReplayFilter(CReplayScript& context) {
     auto splitSearchTerms = Util::split(replaySelectSearch, ' ');
 
     for (const auto& replay : context.GetCompatibleReplays(context.ActiveTrack()->Name)) {
+        std::string vehicleMake = Util::GetVehicleMake(replay->VehicleModel);
         std::string vehicleName = Util::GetVehicleName(replay->VehicleModel);
         std::string tracktime = Util::FormatMillisTime(replay->Nodes.back().Timestamp);
         std::string datetime;
@@ -1015,6 +1016,7 @@ void GhostReplay::UpdateReplayFilter(CReplayScript& context) {
         uint32_t matchedTerms = 0;
         for (const auto& searchTerm : splitSearchTerms) {
             if (Util::FindSubstring(replay->Name, searchTerm) != -1 ||
+                Util::FindSubstring(vehicleMake, searchTerm) != -1 ||
                 Util::FindSubstring(vehicleName, searchTerm) != -1 ||
                 Util::FindSubstring(tracktime, searchTerm) != -1 ||
                 Util::FindSubstring(datetime, searchTerm) != -1) {

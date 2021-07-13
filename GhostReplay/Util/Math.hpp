@@ -89,23 +89,26 @@ inline Vector3 lerp(Vector3 a, Vector3 b, float f, float min, float max) {
     };
 }
 
-template <typename Vector3T>
+template<typename T>
+concept TVec3 = requires(T t) { t.z; };
+
+template <TVec3 Vector3T>
 auto Length(Vector3T vec) {
     return std::sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 auto Distance(Vector3T vec1, Vector3T vec2) {
     Vector3T distance = vec1 - vec2;
     return Length(distance);
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 auto Dot(Vector3T a, Vector3T b)  {
     return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 Vector3T Cross(Vector3T left, Vector3T right) {
     Vector3T result{};
     result.x = left.y * right.z - left.z * right.y;
@@ -114,7 +117,7 @@ Vector3T Cross(Vector3T left, Vector3T right) {
     return result;
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 Vector3T operator + (Vector3T left, Vector3T right) {
     Vector3T v{};
     v.x = left.x + right.x;
@@ -123,7 +126,7 @@ Vector3T operator + (Vector3T left, Vector3T right) {
     return v;
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 Vector3T operator - (Vector3T left, Vector3T right) {
     Vector3T v{};
     v.x = left.x - right.x;
@@ -132,7 +135,7 @@ Vector3T operator - (Vector3T left, Vector3T right) {
     return v;
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 Vector3T operator * (Vector3T value, decltype(value.x) scale) {
     Vector3T v{};
     v.x = value.x * scale;
@@ -141,12 +144,12 @@ Vector3T operator * (Vector3T value, decltype(value.x) scale) {
     return v;
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 Vector3T operator * (decltype(std::declval<Vector3T>().x) scale, Vector3T vec) {
     return vec * scale;
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 Vector3T Normalize(Vector3T vec) {
     Vector3T vector = {};
     auto length = Length(vec);
@@ -160,7 +163,7 @@ Vector3T Normalize(Vector3T vec) {
     return vector;
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 Vector3T GetOffsetInWorldCoords(Vector3T position, Vector3T rotation, Vector3T forward, Vector3T offset) {
     auto num1 = cos(rotation.y);
     auto x = num1 * cos(-rotation.z);
@@ -182,7 +185,7 @@ T GetAngleBetween(T h1, T h2, T separation) {
     return separation;
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 auto GetAngleBetween(Vector3T a, Vector3T b) {
     Vector3T normal{};
     normal.z = static_cast < decltype(a.x) >(1.0);
@@ -192,7 +195,7 @@ auto GetAngleBetween(Vector3T a, Vector3T b) {
     return angle;
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 Vector3T RotationToDirection(Vector3T rot) {
     auto rotZ = (rot.z);
     auto rotX = (rot.x);
@@ -204,7 +207,7 @@ Vector3T RotationToDirection(Vector3T rot) {
     return v;
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 Vector3T RelativeRightVector(Vector3T rot) {
     auto num = cos(rot.y);
     Vector3T v{};
@@ -214,7 +217,7 @@ Vector3T RelativeRightVector(Vector3T rot) {
     return v;
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 inline Vector3T GetRelativeOffsetGivenWorldCoords(Vector3T position1, Vector3T position2, Vector3T rot) {
     Vector3T right = RelativeRightVector(rot);
     Vector3T forward = RotationToDirection(rot);

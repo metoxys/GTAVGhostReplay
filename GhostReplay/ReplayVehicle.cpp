@@ -166,13 +166,7 @@ uint64_t CReplayVehicle::GetFrameIndex() {
     if (!mActiveReplay || mLastNode == mActiveReplay->Nodes.end())
         return 0;
 
-    //return static_cast<uint64_t>(std::distance(mActiveReplay->Nodes.begin(), mLastNode));
-
-    for (uint64_t i = 0; i < mActiveReplay->Nodes.size(); ++i) {
-        if (mLastNode->Timestamp <= mActiveReplay->Nodes[i].Timestamp)
-            return i;
-    }
-    return 0;
+    return static_cast<uint64_t>(std::distance(mActiveReplay->Nodes.begin(), mLastNode));
 }
 
 double CReplayVehicle::FramePrev() {

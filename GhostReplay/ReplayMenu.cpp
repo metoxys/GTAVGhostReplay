@@ -153,7 +153,9 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         if (!context.GetUnsavedRuns().empty()) {
             mbCtx.MenuOption("Unsaved recordings", "unsavedrunsmenu",
                 { "Manage recordings that aren't saved to disk.",
-                  fmt::format("{} unsaved recordings.", context.GetUnsavedRuns().size())});
+                  fmt::format("{} unsaved recording{}.",
+                      context.GetUnsavedRuns().size(),
+                      context.GetUnsavedRuns().size() != 1 ? "s" : "")});
         }
         else {
             mbCtx.Option("~m~Unsaved recordings",

@@ -778,6 +778,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             GhostReplay::LoadReplays();
             GhostReplay::LoadTrackImages();
             formattedTrackData.clear();
+            mbCtx.CloseMenu();
         }
     });
 

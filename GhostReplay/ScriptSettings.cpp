@@ -72,6 +72,7 @@ void CScriptSettings::Save() {
     SAVE_VAL("Main", "StartStopBlips", Main.StartStopBlips);
     SAVE_VAL("Main", "ShowRecordTime", Main.ShowRecordTime);
     SAVE_VAL("Main", "ReplaySortBy", Main.ReplaySortBy);
+    SAVE_VAL("Main", "Debug", Main.Debug);
 
     SAVE_VAL("Record", "AutoGhost", Record.AutoGhost);
     SAVE_VAL("Record", "DeltaMillis", Record.DeltaMillis);

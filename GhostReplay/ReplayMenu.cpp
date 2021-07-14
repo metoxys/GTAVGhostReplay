@@ -780,7 +780,10 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             formattedTrackData.clear();
             mbCtx.CloseMenu();
         }
-    });
+
+        mbCtx.BoolOption("Dev mode", GetSettings().Main.Debug,
+            { "Shows dispay elements and options used during development." });
+        });
 
     /* mainmenu -> settingsmenu -> recordsettingsmenu */
     submenus.emplace_back("recordsettingsmenu", [](NativeMenu::Menu& mbCtx, CReplayScript& context) {

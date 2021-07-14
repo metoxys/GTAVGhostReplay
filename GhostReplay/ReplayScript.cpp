@@ -216,7 +216,7 @@ void CReplayScript::ClearUnsavedRuns() {
     mUnsavedRuns.clear();
 }
 
-std::vector<CReplayData>::const_iterator CReplayScript::EraseUnsavedRun(std::vector<CReplayData>::const_iterator runIt) {
+std::vector<CReplayData>::iterator CReplayScript::EraseUnsavedRun(std::vector<CReplayData>::iterator runIt) {
     return mUnsavedRuns.erase(runIt);
 }
 

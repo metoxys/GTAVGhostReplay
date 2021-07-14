@@ -42,7 +42,7 @@ public:
         return mArsTracks;
     }
 
-    const std::vector<CReplayData>& GetUnsavedRuns() const{
+    std::vector<CReplayData>& GetUnsavedRuns() {
         return mUnsavedRuns;
     }
 
@@ -82,7 +82,7 @@ public:
     void DeselectReplay(const std::string& replayName, unsigned long long timestamp);
     void ClearSelectedReplays();
     void ClearUnsavedRuns();
-    std::vector<CReplayData>::const_iterator EraseUnsavedRun(std::vector<CReplayData>::const_iterator runIt);
+    std::vector<CReplayData>::iterator EraseUnsavedRun(std::vector<CReplayData>::iterator runIt);
 
     std::vector<std::shared_ptr<CReplayData>> GetCompatibleReplays(const std::string& trackName);
     void AddCompatibleReplay(const CReplayData& value);

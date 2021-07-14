@@ -495,31 +495,31 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
         auto unsavedRunIt = context.GetUnsavedRuns().begin();
         while (unsavedRunIt != context.GetUnsavedRuns().end()) {
-            auto unsavedRun = *unsavedRunIt;
             std::string runName = Util::FormatReplayName(
-                unsavedRun.Nodes.back().Timestamp,
-                unsavedRun.Track,
-                Util::GetVehicleName(unsavedRun.VehicleModel));
+                unsavedRunIt->Nodes.back().Timestamp,
+                unsavedRunIt->Track,
+                Util::GetVehicleName(unsavedRunIt->VehicleModel));
 
             std::string datetime;
-            if (unsavedRun.Timestamp == 0) {
+            if (unsavedRunIt->Timestamp == 0) {
                 datetime = "No date";
             }
             else {
-                datetime = Util::GetTimestampReadable(unsavedRun.Timestamp);
+                datetime = Util::GetTimestampReadable(unsavedRunIt->Timestamp);
             }
 
             std::vector<std::string> ghostDetails = {
                 "Select to save ghost.",
-                fmt::format("Track: {}", unsavedRun.Track),
+                fmt::format("Track: {}", unsavedRunIt->Track),
                 fmt::format("Vehicle: {} {}",
-                    Util::GetVehicleMake(unsavedRun.VehicleModel),
-                    Util::GetVehicleName(unsavedRun.VehicleModel)),
-                fmt::format("Time: {}", Util::FormatMillisTime(unsavedRun.Nodes.back().Timestamp)),
+                    Util::GetVehicleMake(unsavedRunIt->VehicleModel),
+                    Util::GetVehicleName(unsavedRunIt->VehicleModel)),
+                fmt::format("Time: {}", Util::FormatMillisTime(unsavedRunIt->Nodes.back().Timestamp)),
                 fmt::format("Lap recorded: {}", datetime),
             };
 
             if (mbCtx.Option(fmt::format("{}", runName), ghostDetails)) {
+                CReplayData& unsavedRun = *unsavedRunIt;
                 unsavedRun.Name = runName;
 
                 CReplayData::WriteAsync(unsavedRun);

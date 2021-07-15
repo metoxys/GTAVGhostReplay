@@ -66,6 +66,7 @@ bool ShouldFindImpactsHook(uint64_t a1, uint64_t a2) {
         int matched = 0;
 
         bool playerInComparison = addrPlayerVeh == entity1 || addrPlayerVeh == entity2;
+        bool playerInGhost = scriptInst->IsPassengerModeActive();
 
         for (const auto& replayVehicle : scriptInst->GetReplayVehicles()) {
             auto addrReplayVeh = mem::GetAddressOfEntity(replayVehicle->GetVehicle());
@@ -73,11 +74,9 @@ bool ShouldFindImpactsHook(uint64_t a1, uint64_t a2) {
                 addrReplayVeh == entity2)
                 matched++;
 
-            if (matched == 2 || matched >= 1 && playerInComparison)
-                break;
+            if (matched == 2 || matched >= 1 && playerInComparison && !playerInGhost)
+                return false;
         }
-        if (matched == 2 || matched >= 1 && playerInComparison)
-            return false;
     }
 
     return ShouldFindImpactsOriginal(a1, a2);

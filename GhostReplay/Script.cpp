@@ -69,6 +69,8 @@ bool ShouldFindImpactsHook(uint64_t a1, uint64_t a2) {
         bool playerInGhost = scriptInst->IsPassengerModeActive();
 
         for (const auto& replayVehicle : scriptInst->GetReplayVehicles()) {
+            if (replayVehicle->GetReplayState() == EReplayState::Idle)
+                continue;
             auto addrReplayVeh = mem::GetAddressOfEntity(replayVehicle->GetVehicle());
             if (addrReplayVeh == entity1 ||
                 addrReplayVeh == entity2)

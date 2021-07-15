@@ -789,7 +789,7 @@ void CReplayScript::updateReplay() {
     if (camIgnoreVehicle) {
         // Only seems to apply for the last passed entity.
         // _DISABLE_CAM_COLLISION_FOR_ENTITY
-        CAM::_0x2AED6301F67007D5(camIgnoreVehicle);
+        CAM::_DISABLE_CAM_COLLISION_FOR_ENTITY(camIgnoreVehicle);
     
         if (mSettings.Main.Debug) {
             Vector3 infoSpherePos = ENTITY::GET_ENTITY_COORDS(camIgnoreVehicle, true);

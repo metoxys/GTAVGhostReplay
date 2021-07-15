@@ -403,7 +403,7 @@ void CReplayVehicle::createReplayVehicle(Hash model, CReplayData* activeReplay, 
     ENTITY::SET_ENTITY_INVINCIBLE(mReplayVehicle, true);
     ENTITY::SET_ENTITY_CAN_BE_DAMAGED(mReplayVehicle, false);
     VEHICLE::SET_VEHICLE_CAN_BE_VISIBLY_DAMAGED(mReplayVehicle, false);
-    VEHICLE::_SET_VEHICLE_LIGHTS_CAN_BE_VISIBLY_DAMAGED(mReplayVehicle, false);
+    VEHICLE::SET_VEHICLE_HAS_UNBREAKABLE_LIGHTS(mReplayVehicle, false);
 
     VehicleModData modData = mActiveReplay->VehicleMods;
     VehicleModData::ApplyTo(mReplayVehicle, modData);

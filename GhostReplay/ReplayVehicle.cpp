@@ -434,6 +434,14 @@ void CReplayVehicle::createReplayVehicle(Hash model, CReplayData* activeReplay, 
 }
 
 void CReplayVehicle::createReplayPed() {
+    if (mSettings.Replay.DriverModels.empty()) {
+        std::string msg = "Error: No ped models available, skipping ped creation.";
+        UI::Notify(msg, false);
+        logger.Write(ERROR, fmt::format("[Replay] {}", msg));
+        mReplayPed = 0;
+        return;
+    }
+
     random_selector selector{};
     std::string modelName = selector(mSettings.Replay.DriverModels);
     Hash model = MISC::GET_HASH_KEY(modelName.c_str());

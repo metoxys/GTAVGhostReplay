@@ -883,6 +883,9 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 "Available driver models:",
             };
 
+            if (GetSettings().Replay.DriverModels.empty()) {
+                extra.push_back("None");
+            }
             for (const auto& driverModel : GetSettings().Replay.DriverModels) {
                 extra.push_back(driverModel);
             }

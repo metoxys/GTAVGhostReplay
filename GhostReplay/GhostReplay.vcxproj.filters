@@ -235,5 +235,8 @@
     <ClInclude Include="..\thirdparty\minhook\src\hde\table64.h">
       <Filter>ThirdParty\minhook\hde</Filter>
     </ClInclude>
+    <ClInclude Include="Util\Random.hpp">
+      <Filter>Util</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

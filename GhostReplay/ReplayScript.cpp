@@ -685,6 +685,12 @@ void CReplayScript::TeleportToTrack(const CTrackData& trackData) {
     }
 }
 
+void CReplayScript::ToggleDrivers(bool enable) {
+    for (auto& replayVehicle : mReplayVehicles) {
+        replayVehicle->ToggleDriver(enable);
+    }
+}
+
 // Prevent needlessly traversing mReplayVehicles multiple times per tick
 void CReplayScript::updateGlobalStates() {
     auto replayState = EReplayState::Idle;

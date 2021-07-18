@@ -172,6 +172,7 @@
     <ClInclude Include="Util\Math.hpp" />
     <ClInclude Include="Util\Misc.hpp" />
     <ClInclude Include="Util\Paths.hpp" />
+    <ClInclude Include="Util\Random.hpp" />
     <ClInclude Include="Util\String.hpp" />
     <ClInclude Include="Util\UI.hpp" />
     <ClInclude Include="VehicleMod.h" />

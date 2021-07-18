@@ -3,6 +3,7 @@
 
 #include "Util/Logger.hpp"
 #include "Util/Misc.hpp"
+#include "Util/String.hpp"
 
 #include <simpleini/SimpleIni.h>
 
@@ -58,6 +59,12 @@ void CScriptSettings::Load() {
 
     LOAD_VAL("Replay", "SyncDistance", Replay.SyncDistance);
     LOAD_VAL("Replay", "SyncCompensation", Replay.SyncCompensation);
+
+    LOAD_VAL("Replay", "EnableDrivers", Replay.EnableDrivers);
+    std::string driverModels = ini.GetValue("Replay", "DriverModels", "");
+    if (!driverModels.empty()) {
+        Replay.DriverModels = Util::split(driverModels, ' ');
+    }
 }
 
 void CScriptSettings::Save() {
@@ -90,6 +97,9 @@ void CScriptSettings::Save() {
     SAVE_VAL("Replay", "SyncType", as_int(Replay.SyncType));
     SAVE_VAL("Replay", "SyncDistance", Replay.SyncDistance);
     SAVE_VAL("Replay", "SyncCompensation", Replay.SyncCompensation);
+
+    SAVE_VAL("Replay", "EnableDrivers", Replay.EnableDrivers);
+    // DriverModels not editable in-game
 
     result = ini.SaveFile(mSettingsFile.c_str());
     CHECK_LOG_SI_ERROR(result, "save");

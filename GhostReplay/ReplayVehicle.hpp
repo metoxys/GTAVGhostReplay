@@ -49,11 +49,14 @@ public:
     double FramePrev();
     double FrameNext();
 
+    void ToggleDriver(bool enable);
+
 private:
     const CScriptSettings& mSettings;
     CReplayData* mActiveReplay;
 
     Vehicle mReplayVehicle;
+    Ped mReplayPed;
     std::unique_ptr<CWrappedBlip> mReplayVehicleBlip;
 
     EReplayState mReplayState;
@@ -68,6 +71,7 @@ private:
     void resetReplay();
 
     void createReplayVehicle(Hash model, CReplayData* activeReplay, Vector3 pos);
+    void createReplayPed();
     void createBlip();
     void deleteBlip();
 

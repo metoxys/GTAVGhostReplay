@@ -868,6 +868,32 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 { "Compensate for drift by pulling the vehicle to its intended position.",
                   "This value is the pull strength." });
         }
+
+        bool toggleDrivers = mbCtx.BoolOption("Enable drivers", GetSettings().Replay.EnableDrivers,
+            { "Spawns drivers in the replay vehicles.",
+              "While this allows things like active spoilers to work, "
+              "it does severely reduce engine audio quality, so it is disabled by default." });
+
+        if (toggleDrivers) {
+            context.ToggleDrivers(GetSettings().Replay.EnableDrivers);
+        }
+
+        if (GetSettings().Replay.EnableDrivers) {
+            std::vector<std::string> extra{
+                "Available driver models:",
+            };
+
+            for (const auto& driverModel : GetSettings().Replay.DriverModels) {
+                extra.push_back(driverModel);
+            }
+
+            extra.push_back("");
+            extra.push_back("Change or add models in settings_general.ini");
+
+            mbCtx.OptionPlus("Driver models", extra, nullptr, nullptr, nullptr, "Models",
+                { "Shows available models for the driver,",
+                  "randomly picks the model on spawning a replay vehicle." });
+        }
     });
 
     return submenus;

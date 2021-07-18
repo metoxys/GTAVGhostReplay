@@ -124,6 +124,8 @@ public:
 
     Vehicle GetPlayerVehicle() { return mPlayerVehicle; }
 
+    void ToggleDrivers(bool enable);
+
 protected:
     void updateGlobalStates();
     void updateReplay();

@@ -5,6 +5,7 @@
 #include "Util/Logger.hpp"
 #include "Util/Math.hpp"
 #include "Util/Game.hpp"
+#include "Util/Random.hpp"
 #include "Memory/VehicleExtensions.hpp"
 #include <inc/natives.h>
 #include <fmt/format.h>
@@ -20,6 +21,8 @@ CReplayVehicle::CReplayVehicle(const CScriptSettings& settings, CReplayData* act
     , mOnCleanup(onCleanup) {
     mLastNode = activeReplay->Nodes.begin();
     createReplayVehicle(activeReplay->VehicleModel, activeReplay, activeReplay->Nodes[0].Pos);
+    if (mSettings.Replay.EnableDrivers)
+        createReplayPed();
     hideVehicle();
 }
 
@@ -196,6 +199,18 @@ double CReplayVehicle::FrameNext() {
     return delta;
 }
 
+void CReplayVehicle::ToggleDriver(bool enable) {
+    if (enable) {
+        createReplayPed();
+    }
+    else {
+        if (ENTITY::DOES_ENTITY_EXIST(mReplayPed)) {
+            PED::REMOVE_PED_ELEGANTLY(&mReplayPed);
+            mReplayPed = 0;
+        }
+    }
+}
+
 void CReplayVehicle::startReplay() {
     unhideVehicle();
     mLastNode = mActiveReplay->Nodes.begin();
@@ -340,6 +355,11 @@ void CReplayVehicle::showNode(
     if (VEHICLE::IS_THIS_MODEL_A_HELI(ENTITY::GET_ENTITY_MODEL(mReplayVehicle))) {
         VEHICLE::SET_HELI_BLADES_SPEED(mReplayVehicle, 1.0f);
     }
+
+    if (mReplayPed) {
+        AUDIO::STOP_CURRENT_PLAYING_SPEECH(mReplayPed);
+        AUDIO::STOP_CURRENT_PLAYING_AMBIENT_SPEECH(mReplayPed);
+    }
 }
 
 void CReplayVehicle::resetReplay() {
@@ -411,6 +431,39 @@ void CReplayVehicle::createReplayVehicle(Hash model, CReplayData* activeReplay, 
 
     VehicleModData modData = mActiveReplay->VehicleMods;
     VehicleModData::ApplyTo(mReplayVehicle, modData);
+}
+
+void CReplayVehicle::createReplayPed() {
+    random_selector selector{};
+    std::string modelName = selector(mSettings.Replay.DriverModels);
+    Hash model = MISC::GET_HASH_KEY(modelName.c_str());
+    int pedType = ePedType::PED_TYPE_CIVMALE;
+    if (!(STREAMING::IS_MODEL_IN_CDIMAGE(model) && STREAMING::IS_MODEL_A_PED(model))) {
+        // Ped doesn't exist
+        std::string msg =
+            fmt::format("Error: Couldn't find ped model 0x{:08X}. Skipping ped creation.", model);
+        UI::Notify(msg, false);
+        logger.Write(ERROR, fmt::format("[Replay] {}", msg));
+        mReplayPed = 0;
+        return;
+    }
+    STREAMING::REQUEST_MODEL(model);
+    auto startTime = GetTickCount64();
+    
+    while (!STREAMING::HAS_MODEL_LOADED(model)) {
+        WAIT(0);
+        if (GetTickCount64() > startTime + 5000) {
+            // Couldn't load model
+            WAIT(0);
+            STREAMING::SET_MODEL_AS_NO_LONGER_NEEDED(model);
+            std::string msg = fmt::format("Error: Failed to load ped model 0x{:08X}.", model);
+            UI::Notify(msg, false);
+            logger.Write(ERROR, fmt::format("[Replay] {}", msg));
+            return;
+        }
+    }
+    
+    mReplayPed = PED::CREATE_PED_INSIDE_VEHICLE(mReplayVehicle, pedType, model, -1, false, false);
 }
 
 void CReplayVehicle::createBlip() {

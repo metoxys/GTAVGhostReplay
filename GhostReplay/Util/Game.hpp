@@ -21,6 +21,7 @@ namespace Util {
     Vehicle CreateVehicle(Hash model, VehicleModData* vehicleModData, Vector3 pos);
 }
 
+// https://alloc8or.re/gta5/doc/enums/ePedType.txt
 enum ePedType {
     PED_TYPE_PLAYER_0,
     PED_TYPE_PLAYER_1,
@@ -52,4 +53,12 @@ enum ePedType {
     PED_TYPE_SWAT,
     PED_TYPE_ANIMAL,
     PED_TYPE_ARMY
+};
+
+// https://alloc8or.re/gta5/doc/enums/eKnockOffVehicle.txt
+enum eKnockOffVehicle {
+    KNOCKOFFVEHICLE_DEFAULT,
+    KNOCKOFFVEHICLE_NEVER,
+    KNOCKOFFVEHICLE_EASY,
+    KNOCKOFFVEHICLE_HARD
 };

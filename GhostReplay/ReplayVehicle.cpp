@@ -402,6 +402,7 @@ void CReplayVehicle::createReplayVehicle(Hash model, CReplayData* activeReplay, 
     if (mReplayVehicle == 0)
         return;
 
+    ENTITY::SET_ENTITY_AS_MISSION_ENTITY(mReplayVehicle, true, false);
 
     ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, false, false);
     ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, 0, false);
@@ -416,6 +417,7 @@ void CReplayVehicle::createReplayVehicle(Hash model, CReplayData* activeReplay, 
     ENTITY::SET_ENTITY_CAN_BE_DAMAGED(mReplayVehicle, false);
     VEHICLE::SET_VEHICLE_CAN_BE_VISIBLY_DAMAGED(mReplayVehicle, false);
     VEHICLE::SET_VEHICLE_HAS_UNBREAKABLE_LIGHTS(mReplayVehicle, false);
+    VEHICLE::_SET_DISABLE_VEHICLE_WINDOW_COLLISIONS(mReplayVehicle, true);
 }
 
 void CReplayVehicle::createReplayPed() {
@@ -457,6 +459,14 @@ void CReplayVehicle::createReplayPed() {
     }
     
     mReplayPed = PED::CREATE_PED_INSIDE_VEHICLE(mReplayVehicle, pedType, model, -1, false, false);
+
+    if (mReplayPed == 0)
+        return;
+
+    PED::SET_PED_CAN_BE_KNOCKED_OFF_VEHICLE(mReplayPed, eKnockOffVehicle::KNOCKOFFVEHICLE_NEVER);
+    PED::SET_PED_CONFIG_FLAG(mReplayPed, 32, false);
+    ENTITY::SET_ENTITY_INVINCIBLE(mReplayPed, true);
+    ENTITY::SET_ENTITY_AS_MISSION_ENTITY(mReplayPed, true, false);
 }
 
 void CReplayVehicle::createBlip() {

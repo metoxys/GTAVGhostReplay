@@ -14,6 +14,7 @@
 #include "Util/Math.hpp"
 #include "Util/String.hpp"
 #include "Util/Misc.hpp"
+#include "Util/Game.hpp"
 
 #include <menukeyboard.h>
 #include <fmt/format.h>
@@ -28,6 +29,7 @@ namespace GhostReplay {
     bool EvaluateInput(std::string& searchFor);
     void UpdateTrackFilter(CReplayScript& context);
     void UpdateReplayFilter(CReplayScript& context);
+    void CreateReplayVehicle(CReplayData* replay);
 
     bool trackSearchSelected = false;
     std::string trackSelectSearch;
@@ -423,6 +425,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
             if (!replay->MarkedForDeletion) {
                 description.emplace_back("Press Left to delete.");
+                description.emplace_back("Press Right to spawn a copy of the replay vehicle.");
             }
             else {
                 description.emplace_back("Press Right to unmark deletion.");
@@ -431,7 +434,12 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             }
 
             auto clearDeleteFlag = [&]() {
-                replay->MarkedForDeletion = false;
+                if (replay->MarkedForDeletion == false) {
+                    CreateReplayVehicle(replay.get());
+                }
+                else {
+                    replay->MarkedForDeletion = false;
+                }
             };
 
             bool triggerBreak = false;
@@ -1083,4 +1091,31 @@ void GhostReplay::UpdateReplayFilter(CReplayScript& context) {
     else if (GetSettings().Main.ReplaySortBy == 2) {
         std::sort(filteredReplays.begin(), filteredReplays.end(), dateLess);
     }
+}
+
+void GhostReplay::CreateReplayVehicle(CReplayData* replay) {
+    Vector3 pos;
+    Ped playerPed = PLAYER::PLAYER_PED_ID();
+    Vehicle playerVehicle = PED::GET_VEHICLE_PED_IS_IN(playerPed, false);
+
+    Vector3 dimMinReplay, dimMaxReplay;
+    MISC::GET_MODEL_DIMENSIONS(replay->VehicleModel, &dimMinReplay, &dimMaxReplay);
+
+    if (ENTITY::DOES_ENTITY_EXIST(playerVehicle)) {
+        Vector3 dimMinPlr, dimMaxPlr;
+        MISC::GET_MODEL_DIMENSIONS(ENTITY::GET_ENTITY_MODEL(playerVehicle), &dimMinPlr, &dimMaxPlr);
+        float offsetRight = dimMaxPlr.x + 1.5f + -dimMinReplay.x;
+        pos = ENTITY::GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(playerVehicle, offsetRight, 0.0f, 0.0f);
+    }
+    else {
+        float offsetRight = 1.5f + -dimMinReplay.x;
+        pos = ENTITY::GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(playerPed, offsetRight, 0.0f, 0.0f);
+    }
+
+    Vehicle vehicle = Util::CreateVehicle(replay->VehicleModel, &replay->VehicleMods, pos);
+    if (vehicle == 0)
+        return;
+
+    ENTITY::SET_ENTITY_HEADING(vehicle, ENTITY::GET_ENTITY_HEADING(playerPed));
+    ENTITY::SET_VEHICLE_AS_NO_LONGER_NEEDED(&vehicle);
 }

@@ -1,4 +1,5 @@
 #pragma once
+#include "../VehicleMod.h"
 #include <inc/natives.h>
 
 namespace Util {
@@ -17,6 +18,7 @@ namespace Util {
     SBoxPoints GetBoxPoints(Vector3 pos, Vector3 rot, Vector3 fwd, Vector3 dimMax, Vector3 dimMin);
     void DrawModelExtents(Hash model, Vector3 pos, Vector3 rot, int r, int g, int b);
     bool Intersects(Entity a, Entity b);
+    Vehicle CreateVehicle(Hash model, VehicleModData* vehicleModData, Vector3 pos);
 }
 
 enum ePedType {

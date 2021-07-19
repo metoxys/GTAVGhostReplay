@@ -1,6 +1,7 @@
 #include "Game.hpp"
 #include "Math.hpp"
 #include "UI.hpp"
+#include <fmt/format.h>
 
 namespace Util {
     bool VehicleAvailable(Vehicle vehicle, Ped playerPed, bool checkSeat) {
@@ -101,5 +102,28 @@ namespace Util {
         intersected = intersected || Intersect(boxA.Rfd, boxA.Rrd, boxB.Rfd, boxB.Rrd);
 
         return intersected;
+    }
+
+    Vehicle CreateVehicle(Hash model, VehicleModData* vehicleModData, Vector3 pos) {
+        STREAMING::REQUEST_MODEL(model);
+        auto startTime = GetTickCount64();
+
+        while (!STREAMING::HAS_MODEL_LOADED(model)) {
+            WAIT(0);
+            if (GetTickCount64() > startTime + 5000) {
+                // Couldn't load model
+                WAIT(0);
+                STREAMING::SET_MODEL_AS_NO_LONGER_NEEDED(model);
+                std::string msg = fmt::format("Error: Failed to load model 0x{:08X}.", model);
+                UI::Notify(msg, false);
+                return 0;
+            }
+        }
+
+        Vehicle vehicle = VEHICLE::CREATE_VEHICLE(model,
+            pos.x, pos.y, pos.z, 0, false, true, false);
+        if (vehicleModData)
+            VehicleModData::ApplyTo(vehicle, *vehicleModData);
+        return vehicle;
     }
 }

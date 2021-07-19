@@ -396,24 +396,12 @@ void CReplayVehicle::createReplayVehicle(Hash model, CReplayData* activeReplay, 
             return;
         }
     }
-    STREAMING::REQUEST_MODEL(model);
-    auto startTime = GetTickCount64();
 
-    while (!STREAMING::HAS_MODEL_LOADED(model)) {
-        WAIT(0);
-        if (GetTickCount64() > startTime + 5000) {
-            // Couldn't load model
-            WAIT(0);
-            STREAMING::SET_MODEL_AS_NO_LONGER_NEEDED(model);
-            std::string msg = fmt::format("Error: Failed to load model 0x{:08X}.", model);
-            UI::Notify(msg, false);
-            logger.Write(ERROR, fmt::format("[Replay] {}", msg));
-            return;
-        }
-    }
+    mReplayVehicle = Util::CreateVehicle(model, &mActiveReplay->VehicleMods, pos);
 
-    mReplayVehicle = VEHICLE::CREATE_VEHICLE(model,
-        pos.x, pos.y, pos.z, 0, false, true, false);
+    if (mReplayVehicle == 0)
+        return;
+
 
     ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, false, false);
     ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, 0, false);
@@ -428,9 +416,6 @@ void CReplayVehicle::createReplayVehicle(Hash model, CReplayData* activeReplay, 
     ENTITY::SET_ENTITY_CAN_BE_DAMAGED(mReplayVehicle, false);
     VEHICLE::SET_VEHICLE_CAN_BE_VISIBLY_DAMAGED(mReplayVehicle, false);
     VEHICLE::SET_VEHICLE_HAS_UNBREAKABLE_LIGHTS(mReplayVehicle, false);
-
-    VehicleModData modData = mActiveReplay->VehicleMods;
-    VehicleModData::ApplyTo(mReplayVehicle, modData);
 }
 
 void CReplayVehicle::createReplayPed() {

@@ -871,7 +871,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 { "When the vehicle drifts too far off its intended position, it needs to re-sync positions.",
                   "This value is the drift distance after which it re-syncs, in meters." });
 
-            mbCtx.FloatOptionCb("Sync compensation", GetSettings().Replay.SyncCompensation, 0.00f, 20.00f, 0.10f,
+            mbCtx.FloatOptionCb("Sync compensation", GetSettings().Replay.SyncCompensation, 0.00f, 50.00f, 0.10f,
                 MenuUtils::GetKbFloat,
                 { "Compensate for drift by pulling the vehicle to its intended position.",
                   "This value is the pull strength." });

@@ -46,7 +46,7 @@ public:
         bool ZeroVelocityOnPause = true;
         ESyncType SyncType = ESyncType::Constant;
         float SyncDistance = 0.01f;
-        float SyncCompensation = 10.00f;
+        float SyncCompensation = 20.00f;
         bool EnableDrivers = false;
         std::vector<std::string> DriverModels;
     } Replay;

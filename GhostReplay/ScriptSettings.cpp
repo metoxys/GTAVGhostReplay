@@ -53,10 +53,6 @@ void CScriptSettings::Load() {
 
     auto syncType = as_int(Replay.SyncType);
     LOAD_VAL("Replay", "SyncType", syncType);
-    if (syncType > ESyncTypeMax)
-        syncType = ESyncTypeMax;
-    Replay.SyncType = static_cast<ESyncType>(syncType);
-
     LOAD_VAL("Replay", "SyncDistance", Replay.SyncDistance);
     LOAD_VAL("Replay", "SyncCompensation", Replay.SyncCompensation);
 
@@ -65,6 +61,23 @@ void CScriptSettings::Load() {
     if (!driverModels.empty()) {
         Replay.DriverModels = Util::split(driverModels, ' ');
     }
+
+    // Correct invalid settings
+    if (Main.ReplaySortBy < 0 || Main.ReplaySortBy > 2) {
+        logger.Write(WARN, "[Settings] Main.ReplaySortBy: Invalid value '%d', using 0", Main.ReplaySortBy);
+        Main.ReplaySortBy = 0;
+    }
+
+    if (Replay.ForceLights < 0 || Replay.ForceLights > 2) {
+        logger.Write(WARN, "[Settings] Replay.ForceLights: Invalid value '%d', using 0", Replay.ForceLights);
+        Replay.ForceLights = 0;
+    }
+
+    if (syncType < 0 || syncType > ESyncTypeMax) {
+        logger.Write(WARN, "[Settings] Replay.SyncType: Invalid value '%d', using 0", syncType);
+        syncType = 0;
+    }
+    Replay.SyncType = static_cast<ESyncType>(syncType);
 }
 
 void CScriptSettings::Save() {

@@ -21,6 +21,7 @@ public:
         bool GhostBlips = true;
         bool StartStopBlips = true;
         bool ShowRecordTime = true;
+        // 0: Name, 1: Lap time, 2: Date
         int ReplaySortBy = 0;
         bool Debug = false;
     } Main;

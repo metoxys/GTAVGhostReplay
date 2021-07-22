@@ -50,7 +50,7 @@ namespace GhostReplay {
         { "Approximate: Effects are present, but vehicle may get knocked off-course by terrain or props." },
     };
     const std::vector<std::string> replaySortOptions = { "Name", "Lap time", "Date" };
-    const std::vector<std::string> replaySortDescriptions = { 
+    const std::vector<std::vector<std::string>> replaySortDescriptions = {
         { "Sorts by replay name alphabetically, ascending." },
         { "Sorts by lap time, ascending (fastest first)." },
         { "Sorts by date, ascending (oldest first)." }
@@ -183,7 +183,20 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             return;
         }
 
-        if (mbCtx.Option(fmt::format("Track name: {}", currentTrackName))) {
+        std::vector<std::string> trackNameOptDescr;
+        if (activeTrack) {
+            trackNameOptDescr = {
+                "Enter a name to create a new track."
+            };
+        }
+        else {
+            trackNameOptDescr = {
+                "Rename the track.",
+                "Press enter to edit."
+            };
+        }
+
+        if (mbCtx.Option(fmt::format("Track name: {}", currentTrackName), trackNameOptDescr)) {
             std::string newName = currentTrackName == "None" ? "" : currentTrackName;
             if (MenuUtils::GetKbString(newName)) {
                 if (activeTrack) {
@@ -219,21 +232,31 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 UI::DrawLine(activeTrack->FinishLine.A, activeTrack->FinishLine.B, 255, 255, 255, 255);
             }
 
-            if (mbCtx.Option("Set start line")) {
+            const std::vector<std::string> startLineDescr = {
+                "Set or move the start line."
+            };
+            const std::vector<std::string> finishLineDescr = {
+                "Set or move the finish line."
+            };
+            const std::vector<std::string> saveDescr = {
+                "Save and activate the track."
+            };
+
+            if (mbCtx.Option("Set start line", startLineDescr)) {
                 SLineDef newLineDef{};
                 if (context.StartLineDef(newLineDef, "start")) {
                     activeTrack->StartLine = newLineDef;
                 }
             }
 
-            if (mbCtx.Option("Set finish line")) {
+            if (mbCtx.Option("Set finish line", finishLineDescr)) {
                 SLineDef newLineDef{};
                 if (context.StartLineDef(newLineDef, "finish")) {
                     activeTrack->FinishLine = newLineDef;
                 }
             }
 
-            if (mbCtx.Option("Save track")) {
+            if (mbCtx.Option("Save track", saveDescr)) {
                 std::string missingPoints;
 
                 if (activeTrack->StartLine.A == emptyVec)
@@ -386,7 +409,8 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             return;
         }
 
-        if (mbCtx.StringArray("Sort by", replaySortOptions, GetSettings().Main.ReplaySortBy, replaySortDescriptions)) {
+        if (mbCtx.StringArray("Sort by", replaySortOptions, GetSettings().Main.ReplaySortBy,
+            replaySortDescriptions[GetSettings().Main.ReplaySortBy])) {
             UpdateReplayFilter(context);
         }
 
@@ -552,8 +576,10 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         mbCtx.Subtitle("");
 
         float offset = static_cast<float>(GetSettings().Replay.OffsetSeconds);
-        bool offsetChanged = mbCtx.FloatOptionCb("Offset", offset, -60.0f, 60.0f, 0.05f,
-            MenuUtils::GetKbFloat, { "Ghost offset. Positive is in front, negative is behind, in seconds." });
+        bool offsetChanged = mbCtx.FloatOptionCb("Ghost offset", offset, -60.0f, 60.0f, 0.1f,
+            MenuUtils::GetKbFloat,
+            { "Delay of the ghost car. Positive values put it ahead, negative values delay.",
+              "In seconds." });
         if (offsetChanged) {
             GetSettings().Replay.OffsetSeconds = static_cast<double>(offset);
             auto newTime = context.GetReplayProgress() + offset * 1000.0;
@@ -566,8 +592,8 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
         const std::vector<std::string> replayAlphaDescr{
             "The transparency of the ghost vehicle.",
-            "0: completely invisible.",
-            "100: completely visible.",
+            "0%: completely invisible.",
+            "100%: completely visible.",
         };
         int replayAlpha = GetSettings().Replay.VehicleAlpha;
         if (mbCtx.IntOptionCb("Ghost opacity %", replayAlpha, 0, 100, 20, MenuUtils::GetKbInt, replayAlphaDescr)) {
@@ -728,7 +754,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                     [&]() { context.PassengerVehiclePrev(); },
                     "Spectating",
                     { "Select to enter or exit spectator mode.",
-                      "Press left and right to select different vehicles."
+                      "Press left and right to select different vehicles.",
                       "Spectator mode places you in the passenger seat of the replay vehicle." });
                 if (toggle) {
                     if (active)

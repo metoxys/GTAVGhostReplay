@@ -124,6 +124,7 @@ namespace Util {
             pos.x, pos.y, pos.z, 0, false, true, false);
         if (vehicleModData)
             VehicleModData::ApplyTo(vehicle, *vehicleModData);
+        VEHICLE::SET_VEHICLE_DIRT_LEVEL(vehicle, 0.0f);
         return vehicle;
     }
 }

@@ -188,6 +188,7 @@ protected:
     Vehicle mPassengerModePlayerVehicle = 0;
     bool mPassengerModPlayerVehicleManagedByThisScript = false;
     CReplayVehicle* mPassengerVehicle = nullptr;
+    bool mPassengerFlagWindscreen = true;
 
     Vehicle mPlayerVehicle = 0;
 };

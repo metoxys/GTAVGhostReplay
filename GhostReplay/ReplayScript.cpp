@@ -440,6 +440,11 @@ void CReplayScript::ActivatePassengerMode() {
     else {
         setPlayerIntoVehicleFreeSeat(mPassengerVehicle->GetVehicle());
     }
+
+    PED::SET_PED_CAN_BE_KNOCKED_OFF_VEHICLE(playerPed, eKnockOffVehicle::KNOCKOFFVEHICLE_NEVER);
+    mPassengerFlagWindscreen = PED::GET_PED_CONFIG_FLAG(playerPed, 32, true);
+    PED::SET_PED_CONFIG_FLAG(playerPed, 32, false);
+
     mPassengerModeActive = true;
 }
 
@@ -494,6 +499,9 @@ void CReplayScript::DeactivatePassengerMode(Vehicle vehicle) {
         ENTITY::SET_ENTITY_COORDS(playerPed, currCoords.x, currCoords.y, groundZ,
             false, false, false, false);
     }
+
+    PED::SET_PED_CAN_BE_KNOCKED_OFF_VEHICLE(playerPed, eKnockOffVehicle::KNOCKOFFVEHICLE_DEFAULT);
+    PED::SET_PED_CONFIG_FLAG(playerPed, 32, mPassengerFlagWindscreen);
 
     mPassengerModeActive = false;
 }

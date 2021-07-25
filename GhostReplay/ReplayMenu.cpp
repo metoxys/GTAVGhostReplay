@@ -838,6 +838,9 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             GetSettings().Record.DeltaMillis = deltaMillis;
         }
 
+        mbCtx.BoolOption("Record lights", GetSettings().Record.Optional.Lights,
+            { "Records lights (low beam and high beam) when enabled." });
+
         mbCtx.BoolOption("Reduce file size", GetSettings().Record.ReduceFileSize,
             { "Check to save smaller files. Uncheck to save formatted json file, e.g. for inspecting data.",
               "Saves about 40% when recording each frame at 144Hz.",

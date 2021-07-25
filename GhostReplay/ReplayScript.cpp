@@ -917,10 +917,12 @@ bool CReplayScript::saveNode(double gameTime, SReplayNode& node, Vehicle vehicle
     node.Gear = VExt::GetGearCurr(vehicle);
     node.RPM = VExt::GetCurrentRPM(vehicle);
 
-    BOOL areLowBeamsOn, areHighBeamsOn;
-    VEHICLE::GET_VEHICLE_LIGHTS_STATE(vehicle, &areLowBeamsOn, &areHighBeamsOn);
-    node.LowBeams = areLowBeamsOn;
-    node.HighBeams = areHighBeamsOn;
+    if (mSettings.Record.Optional.Lights) {
+        BOOL areLowBeamsOn, areHighBeamsOn;
+        VEHICLE::GET_VEHICLE_LIGHTS_STATE(vehicle, &areLowBeamsOn, &areHighBeamsOn);
+        node.LowBeams = areLowBeamsOn;
+        node.HighBeams = areHighBeamsOn;
+    }
 
     bool saved = false;
     double lastNodeTime = 0.0;

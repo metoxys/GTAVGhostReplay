@@ -2,6 +2,7 @@
 #include "VehicleMod.h"
 
 #include <inc/types.h>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -19,8 +20,8 @@ struct SReplayNode {
     int Gear;
     float RPM;
 
-    bool LowBeams;
-    bool HighBeams;
+    std::optional<bool> LowBeams;
+    std::optional<bool> HighBeams;
 
     bool operator<(const SReplayNode& other) const {
         return Timestamp < other.Timestamp;

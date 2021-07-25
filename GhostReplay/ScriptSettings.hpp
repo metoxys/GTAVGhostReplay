@@ -30,6 +30,9 @@ public:
         bool AutoGhost = true;
         int DeltaMillis = 0;
         bool ReduceFileSize = true;
+        struct {
+            bool Lights = false;
+        } Optional;
     } Record;
 
     struct {

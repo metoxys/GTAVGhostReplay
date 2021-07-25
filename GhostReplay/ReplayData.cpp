@@ -67,8 +67,12 @@ CReplayData CReplayData::Read(const std::string& replayFile) {
             node.Brake = jsonNode.value("Brake", 0.0f);
             node.Gear = jsonNode.value("Gear", -1);
             node.RPM = jsonNode.value("RPM", -1.0f);
-            node.LowBeams = jsonNode.value("LowBeams", false);
-            node.HighBeams = jsonNode.value("HighBeams", false);
+
+            if (jsonNode.contains("LowBeams"))
+                node.LowBeams = jsonNode.at("LowBeams").get<bool>();
+            
+            if (jsonNode.contains("HighBeams"))
+                node.HighBeams = jsonNode.at("HighBeams").get<bool>();
 
             replayData.Nodes.push_back(node);
         }
@@ -97,7 +101,7 @@ void CReplayData::write(bool pretty) {
     replayJson["Mods"] = VehicleMods;
 
     for (auto& Node : Nodes) {
-        replayJson["Nodes"].push_back({
+        nlohmann::ordered_json node = {
             { "T", Node.Timestamp },
             { "Pos", Node.Pos },
             { "Rot", Node.Rot },
@@ -108,9 +112,14 @@ void CReplayData::write(bool pretty) {
             { "Brake", Node.Brake },
             { "Gear", Node.Gear },
             { "RPM", Node.RPM },
-            { "LowBeams", Node.LowBeams },
-            { "HighBeams", Node.HighBeams },
-        });
+        };
+
+        if (Node.LowBeams != std::nullopt)
+            node.push_back({ "LowBeams", *Node.LowBeams });
+        if (Node.HighBeams != std::nullopt)
+            node.push_back({ "HighBeams", *Node.HighBeams });
+
+        replayJson["Nodes"].push_back(node);
     }
 
     std::ofstream replayFile(mFileName);

@@ -348,8 +348,10 @@ void CReplayVehicle::showNode(
             break;
         case 0: // Default
         default:
-            VEHICLE::SET_VEHICLE_LIGHTS(mReplayVehicle, nodeCurr->LowBeams ? 3 : 4);
-            VEHICLE::SET_VEHICLE_FULLBEAM(mReplayVehicle, nodeCurr->HighBeams);
+            if (nodeCurr->LowBeams != std::nullopt)
+                VEHICLE::SET_VEHICLE_LIGHTS(mReplayVehicle, *nodeCurr->LowBeams ? 3 : 4);
+            if (nodeCurr->HighBeams != std::nullopt)
+                VEHICLE::SET_VEHICLE_FULLBEAM(mReplayVehicle, *nodeCurr->HighBeams);
     }
 
     if (VEHICLE::IS_THIS_MODEL_A_HELI(ENTITY::GET_ENTITY_MODEL(mReplayVehicle))) {

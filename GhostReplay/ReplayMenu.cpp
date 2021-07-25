@@ -841,6 +841,9 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         mbCtx.BoolOption("Record lights", GetSettings().Record.Optional.Lights,
             { "Records lights (low beam and high beam) when enabled." });
 
+        mbCtx.BoolOption("Record indicators", GetSettings().Record.Optional.Indicators,
+            { "Records indicators (left, right and hazard) when enabled." });
+
         mbCtx.BoolOption("Reduce file size", GetSettings().Record.ReduceFileSize,
             { "Check to save smaller files. Uncheck to save formatted json file, e.g. for inspecting data.",
               "Saves about 40% when recording each frame at 144Hz.",

@@ -62,3 +62,13 @@ enum eKnockOffVehicle {
     KNOCKOFFVEHICLE_EASY,
     KNOCKOFFVEHICLE_HARD
 };
+
+enum EVehicleLightState : uint32_t {
+    LightStateIndicatorLeft = 1 << 8,
+    LightStateIndicatorRight = 1 << 9,
+};
+
+enum EIndicators {
+    IndicatorRight = 0,
+    IndicatorLeft = 1,
+};

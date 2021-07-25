@@ -74,6 +74,12 @@ CReplayData CReplayData::Read(const std::string& replayFile) {
             if (jsonNode.contains("HighBeams"))
                 node.HighBeams = jsonNode.at("HighBeams").get<bool>();
 
+            if (jsonNode.contains("IndicatorLeft"))
+                node.IndicatorLeft = jsonNode.at("IndicatorLeft").get<bool>();
+
+            if (jsonNode.contains("IndicatorRight"))
+                node.IndicatorRight = jsonNode.at("IndicatorRight").get<bool>();
+
             replayData.Nodes.push_back(node);
         }
         logger.Write(DEBUG, "[Replay] Parsed %s", replayFile.c_str());
@@ -118,6 +124,10 @@ void CReplayData::write(bool pretty) {
             node.push_back({ "LowBeams", *Node.LowBeams });
         if (Node.HighBeams != std::nullopt)
             node.push_back({ "HighBeams", *Node.HighBeams });
+        if (Node.IndicatorLeft != std::nullopt)
+            node.push_back({ "IndicatorLeft", *Node.IndicatorLeft });
+        if (Node.IndicatorRight != std::nullopt)
+            node.push_back({ "IndicatorRight", *Node.IndicatorRight });
 
         replayJson["Nodes"].push_back(node);
     }

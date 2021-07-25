@@ -22,6 +22,8 @@ struct SReplayNode {
 
     std::optional<bool> LowBeams;
     std::optional<bool> HighBeams;
+    std::optional<bool> IndicatorLeft;
+    std::optional<bool> IndicatorRight;
 
     bool operator<(const SReplayNode& other) const {
         return Timestamp < other.Timestamp;

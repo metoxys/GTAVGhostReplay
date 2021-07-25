@@ -32,6 +32,7 @@ public:
         bool ReduceFileSize = true;
         struct {
             bool Lights = false;
+            bool Indicators = false;
         } Optional;
     } Record;
 

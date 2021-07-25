@@ -924,6 +924,12 @@ bool CReplayScript::saveNode(double gameTime, SReplayNode& node, Vehicle vehicle
         node.HighBeams = areHighBeamsOn;
     }
 
+    if (mSettings.Record.Optional.Indicators) {
+        auto lightStates = VExt::GetLightStates(vehicle);
+        node.IndicatorRight = (lightStates & EVehicleLightState::LightStateIndicatorRight) > 0;
+        node.IndicatorLeft = (lightStates & EVehicleLightState::LightStateIndicatorLeft) > 0;
+    }
+
     bool saved = false;
     double lastNodeTime = 0.0;
     if (!mCurrentRun.Nodes.empty()) {

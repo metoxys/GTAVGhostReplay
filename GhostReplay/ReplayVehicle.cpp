@@ -354,6 +354,14 @@ void CReplayVehicle::showNode(
                 VEHICLE::SET_VEHICLE_FULLBEAM(mReplayVehicle, *nodeCurr->HighBeams);
     }
 
+    if (nodeCurr->IndicatorLeft != std::nullopt) {
+        VEHICLE::SET_VEHICLE_INDICATOR_LIGHTS(mReplayVehicle, EIndicators::IndicatorLeft, *nodeCurr->IndicatorLeft);
+    }
+
+    if (nodeCurr->IndicatorRight != std::nullopt) {
+        VEHICLE::SET_VEHICLE_INDICATOR_LIGHTS(mReplayVehicle, EIndicators::IndicatorRight, *nodeCurr->IndicatorRight);
+    }
+
     if (VEHICLE::IS_THIS_MODEL_A_HELI(ENTITY::GET_ENTITY_MODEL(mReplayVehicle))) {
         VEHICLE::SET_HELI_BLADES_SPEED(mReplayVehicle, 1.0f);
     }

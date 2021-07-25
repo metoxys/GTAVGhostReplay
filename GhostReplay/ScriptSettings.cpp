@@ -40,6 +40,11 @@ void CScriptSettings::Load() {
 
     LOAD_VAL("Record", "AutoGhost", Record.AutoGhost);
     LOAD_VAL("Record", "DeltaMillis", Record.DeltaMillis);
+    LOAD_VAL("Record", "ReduceFileSize", Record.ReduceFileSize);
+
+    LOAD_VAL("Record", "Optional.Lights", Record.Optional.Lights);
+    LOAD_VAL("Record", "Optional.Indicators", Record.Optional.Indicators);
+    LOAD_VAL("Record", "Optional.Siren", Record.Optional.Siren);
 
     LOAD_VAL("Replay", "OffsetSeconds", Replay.OffsetSeconds);
     LOAD_VAL("Replay", "VehicleAlpha", Replay.VehicleAlpha);
@@ -96,6 +101,11 @@ void CScriptSettings::Save() {
 
     SAVE_VAL("Record", "AutoGhost", Record.AutoGhost);
     SAVE_VAL("Record", "DeltaMillis", Record.DeltaMillis);
+    SAVE_VAL("Record", "ReduceFileSize", Record.ReduceFileSize);
+
+    SAVE_VAL("Record", "Optional.Lights", Record.Optional.Lights);
+    SAVE_VAL("Record", "Optional.Indicators", Record.Optional.Indicators);
+    SAVE_VAL("Record", "Optional.Siren", Record.Optional.Siren);
 
     SAVE_VAL("Replay", "OffsetSeconds", Replay.OffsetSeconds);
     SAVE_VAL("Replay", "VehicleAlpha", Replay.VehicleAlpha);

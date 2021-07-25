@@ -844,8 +844,9 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         mbCtx.BoolOption("Record indicators", GetSettings().Record.Optional.Indicators,
             { "Records indicators (left, right and hazard) when enabled." });
 
-        mbCtx.BoolOption("Record siren", GetSettings().Record.Optional.Siren,
-            { "Records siren when enabled. Only records on/off, doesn't record fast/slow." });
+        mbCtx.BoolOption("Record emergency lights/siren", GetSettings().Record.Optional.Siren,
+            { "Records emergency lights/siren when enabled. Only records on/off, doesn't record fast/slow.",
+              "Keep in mind the siren is only audible if the playback vehicle has a driver." });
 
         mbCtx.BoolOption("Reduce file size", GetSettings().Record.ReduceFileSize,
             { "Check to save smaller files. Uncheck to save formatted json file, e.g. for inspecting data.",

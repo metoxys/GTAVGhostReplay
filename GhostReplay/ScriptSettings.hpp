@@ -33,6 +33,7 @@ public:
         struct {
             bool Lights = false;
             bool Indicators = false;
+            bool Siren = false;
         } Optional;
     } Record;
 

@@ -930,6 +930,10 @@ bool CReplayScript::saveNode(double gameTime, SReplayNode& node, Vehicle vehicle
         node.IndicatorLeft = (lightStates & EVehicleLightState::LightStateIndicatorLeft) > 0;
     }
 
+    if (mSettings.Record.Optional.Siren) {
+        node.Siren = VEHICLE::IS_VEHICLE_SIREN_ON(vehicle);
+    }
+
     bool saved = false;
     double lastNodeTime = 0.0;
     if (!mCurrentRun.Nodes.empty()) {

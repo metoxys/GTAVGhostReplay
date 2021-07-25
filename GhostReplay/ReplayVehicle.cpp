@@ -362,6 +362,14 @@ void CReplayVehicle::showNode(
         VEHICLE::SET_VEHICLE_INDICATOR_LIGHTS(mReplayVehicle, EIndicators::IndicatorRight, *nodeCurr->IndicatorRight);
     }
 
+    if (nodeCurr->Siren != std::nullopt) {
+        if (*nodeCurr->Siren && !VEHICLE::IS_VEHICLE_SIREN_ON(mReplayVehicle))
+            VEHICLE::SET_VEHICLE_SIREN(mReplayVehicle, true);
+        
+        if (!*nodeCurr->Siren && VEHICLE::IS_VEHICLE_SIREN_ON(mReplayVehicle))
+            VEHICLE::SET_VEHICLE_SIREN(mReplayVehicle, false);
+    }
+
     if (VEHICLE::IS_THIS_MODEL_A_HELI(ENTITY::GET_ENTITY_MODEL(mReplayVehicle))) {
         VEHICLE::SET_HELI_BLADES_SPEED(mReplayVehicle, 1.0f);
     }
@@ -504,6 +512,8 @@ void CReplayVehicle::hideVehicle() {
     ENTITY::SET_ENTITY_COORDS_NO_OFFSET(mReplayVehicle, pos.x, pos.y, pos.z + 100.0f, false, false, false);
 
     VExt::SetCurrentRPM(mReplayVehicle, 0.0f);
+
+    VEHICLE::SET_VEHICLE_SIREN(mReplayVehicle, false);
 }
 
 void CReplayVehicle::unhideVehicle() {

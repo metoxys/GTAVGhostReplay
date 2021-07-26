@@ -370,10 +370,6 @@ void CReplayVehicle::showNode(
             VEHICLE::SET_VEHICLE_SIREN(mReplayVehicle, false);
     }
 
-    if (VEHICLE::IS_THIS_MODEL_A_HELI(ENTITY::GET_ENTITY_MODEL(mReplayVehicle))) {
-        VEHICLE::SET_HELI_BLADES_SPEED(mReplayVehicle, 1.0f);
-    }
-
     if (mReplayPed) {
         AUDIO::STOP_CURRENT_PLAYING_SPEECH(mReplayPed);
         AUDIO::STOP_CURRENT_PLAYING_AMBIENT_SPEECH(mReplayPed);
@@ -514,6 +510,10 @@ void CReplayVehicle::hideVehicle() {
     VExt::SetCurrentRPM(mReplayVehicle, 0.0f);
 
     VEHICLE::SET_VEHICLE_SIREN(mReplayVehicle, false);
+
+    if (VEHICLE::IS_THIS_MODEL_A_HELI(ENTITY::GET_ENTITY_MODEL(mReplayVehicle))) {
+        VEHICLE::SET_HELI_BLADES_SPEED(mReplayVehicle, 0.0f);
+    }
 }
 
 void CReplayVehicle::unhideVehicle() {
@@ -525,4 +525,8 @@ void CReplayVehicle::unhideVehicle() {
     UpdateCollision(mSettings.Replay.SyncType != ESyncType::Constant);
     VEHICLE::SET_VEHICLE_ENGINE_ON(mReplayVehicle, true, true, false);
     ENTITY::FREEZE_ENTITY_POSITION(mReplayVehicle, false);
+
+    if (VEHICLE::IS_THIS_MODEL_A_HELI(ENTITY::GET_ENTITY_MODEL(mReplayVehicle))) {
+        VEHICLE::SET_HELI_BLADES_SPEED(mReplayVehicle, 1.0f);
+    }
 }

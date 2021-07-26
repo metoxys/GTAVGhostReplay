@@ -487,7 +487,9 @@ void CReplayVehicle::createBlip() {
     mReplayVehicleBlip = std::make_unique<CWrappedBlip>(
         mReplayVehicle,
         eBlipSprite::BlipSpriteStandard,
-        mActiveReplay->Name,
+        fmt::format("Replay - {} ({})",
+            Util::GetVehicleName(mActiveReplay->VehicleModel),
+            Util::FormatMillisTime(mActiveReplay->Nodes.back().Timestamp)),
         eBlipColor::BlipColorWhite, true);
 }
 

@@ -484,13 +484,29 @@ void CReplayVehicle::createReplayPed() {
 }
 
 void CReplayVehicle::createBlip() {
+    eBlipSprite blipSprite = eBlipSprite::BlipSpriteStandard;
+
+    if (VEHICLE::IS_THIS_MODEL_A_PLANE(mActiveReplay->VehicleModel)) {
+        blipSprite = eBlipSprite::BlipSpriteJet;
+    }
+    else if (VEHICLE::IS_THIS_MODEL_A_HELI(mActiveReplay->VehicleModel)) {
+        blipSprite = eBlipSprite::BlipSpriteHelicopterAnimated;
+    }
+    else if (VEHICLE::GET_VEHICLE_CLASS(mReplayVehicle) == eVehicleClass::VehicleClassEmergency) {
+        blipSprite = eBlipSprite::BlipSpritePoliceOfficer2;
+    }
+
     mReplayVehicleBlip = std::make_unique<CWrappedBlip>(
         mReplayVehicle,
-        eBlipSprite::BlipSpriteStandard,
+        blipSprite,
         fmt::format("Replay - {} ({})",
             Util::GetVehicleName(mActiveReplay->VehicleModel),
             Util::FormatMillisTime(mActiveReplay->Nodes.back().Timestamp)),
         eBlipColor::BlipColorWhite, true);
+
+    if (blipSprite == eBlipSprite::BlipSpritePoliceOfficer2) {
+        mReplayVehicleBlip->SetScale(0.5f);
+    }
 }
 
 void CReplayVehicle::deleteBlip() {

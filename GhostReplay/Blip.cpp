@@ -5,7 +5,7 @@
 CWrappedBlip::CWrappedBlip(Vector3 pos, eBlipSprite blip, std::string name, eBlipColor color)
     : mHandle(HUD::ADD_BLIP_FOR_COORD(pos.x, pos.y, pos.z))
     , mEntity(0)
-    , mName(std::move(name)) {
+    , mName(name) {
     SetSprite(blip);
     SetName(name);
     SetColor(color);
@@ -15,7 +15,7 @@ CWrappedBlip::CWrappedBlip(Vector3 pos, eBlipSprite blip, std::string name, eBli
 CWrappedBlip::CWrappedBlip(Entity entity, eBlipSprite blip, std::string name, eBlipColor color, bool showHeading)
     : mHandle(HUD::ADD_BLIP_FOR_ENTITY(entity))
     , mEntity(entity)
-    , mName(std::move(name)) {
+    , mName(name) {
     SetSprite(blip);
     SetName(name);
     SetColor(color);

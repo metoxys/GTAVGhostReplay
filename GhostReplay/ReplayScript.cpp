@@ -775,7 +775,19 @@ void CReplayScript::updateReplay() {
     
     float distMaxSq = std::numeric_limits<float>::max();
     Vehicle camIgnoreVehicle = 0;
+
+    std::vector<CReplayVehicle*> replayVehiclesToDelete;
     for (const auto& replayVehicle : mReplayVehicles) {
+        if (!ENTITY::DOES_ENTITY_EXIST(replayVehicle->GetVehicle())) {
+            replayVehiclesToDelete.push_back(replayVehicle.get());
+            logger.Write(ERROR, fmt::format("[Replay] Managed vehicle {} with ID {:08X} stopped existing. "
+                "Another script likely forcefully removed it. "
+                "Deselected replay to prevent crashes.",
+                Util::GetVehicleName(replayVehicle->GetReplay()->VehicleModel),
+                replayVehicle->GetVehicle()));
+            continue;
+        }
+
         anyGhostLapTriggered |= replayVehicle->UpdatePlayback(
             replayTime,
             !inGhostVehicle && startPassedThisTick,
@@ -797,6 +809,13 @@ void CReplayScript::updateReplay() {
                 }
             }
         }
+    }
+
+    if (!replayVehiclesToDelete.empty()) {
+        for (auto* deleteVehicle : replayVehiclesToDelete) {
+            DeselectReplay(deleteVehicle->GetReplay()->Name, deleteVehicle->GetReplay()->Timestamp);
+        }
+        UI::Notify("~r~ERROR: Replay vehicle(s) missing, deselected for safety. Details in log.");
     }
 
     // Still won't go right if it overlaps multiple vehicles, but this is *something*.

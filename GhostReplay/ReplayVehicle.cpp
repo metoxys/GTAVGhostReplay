@@ -514,6 +514,9 @@ void CReplayVehicle::deleteBlip() {
 }
 
 void CReplayVehicle::hideVehicle() {
+    if (!ENTITY::DOES_ENTITY_EXIST(mReplayVehicle))
+        return;
+
     auto pos = ENTITY::GET_ENTITY_COORDS(mReplayVehicle, !ENTITY::IS_ENTITY_DEAD(mReplayVehicle, false));
 
     ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, false, false);

@@ -27,8 +27,16 @@ CReplayVehicle::CReplayVehicle(const CScriptSettings& settings, CReplayData* act
 }
 
 CReplayVehicle::~CReplayVehicle() {
-    if (!Dll::Unloading())
+    if (!Dll::Unloading()) {
         resetReplay();
+        if (ENTITY::DOES_ENTITY_EXIST(mReplayPed)) {
+            ENTITY::SET_ENTITY_AS_MISSION_ENTITY(mReplayPed, false, false);
+            ENTITY::DELETE_ENTITY(&mReplayPed);
+        }
+
+        ENTITY::SET_ENTITY_AS_MISSION_ENTITY(mReplayVehicle, false, false);
+        ENTITY::DELETE_ENTITY(&mReplayVehicle);
+    }
 }
 
 void CReplayVehicle::UpdateCollision(bool enable) {

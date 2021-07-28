@@ -57,9 +57,6 @@ namespace {
     }
 }
 
-// alloc8or
-// If you know it's a rage::fwExtensibleBase, call GetIsClassId(), 
-// otherwise check the RTTI/typeid (see fivem/PurecallDebug.cpp for a code example).
 bool ShouldFindImpactsHook(uint64_t a1, uint64_t a2) {
     auto entity1 = *(unsigned int*)(a1 + 0x5C) | ((unsigned __int64)*(unsigned int*)(a1 + 0x4C) << 32);
     auto entity2 = *(unsigned int*)(a2 + 0x5C) | ((unsigned __int64)*(unsigned int*)(a2 + 0x4C) << 32);

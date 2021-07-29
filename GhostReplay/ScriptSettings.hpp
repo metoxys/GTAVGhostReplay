@@ -23,6 +23,7 @@ public:
         bool ShowRecordTime = true;
         // 0: Name, 1: Lap time, 2: Date
         int ReplaySortBy = 0;
+        bool RagePresence = true;
         bool Debug = false;
     } Main;
 

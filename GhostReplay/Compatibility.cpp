@@ -1,8 +1,8 @@
 #include "Compatibility.h"
+#include "Script.hpp"
+#include "Util/Logger.hpp"
 
 #include <Windows.h>
-
-#include "Util/Logger.hpp"
 
 #define CHECK_ADDR(NAME) \
     NAME##_ = CheckAddr<decltype(NAME##_)>(Module, #NAME);
@@ -72,67 +72,67 @@ void RagePresence::Setup() {
 }
 
 void RagePresence::SetCustomMission(const char* mission) {
-    if (SetCustomMission_)
+    if (SetCustomMission_ && GhostReplay::GetSettings().Main.RagePresence)
         SetCustomMission_(mission);
 }
 
 const char* RagePresence::GetCustomMission() {
-    if (GetCustomMission_)
+    if (GetCustomMission_ && GhostReplay::GetSettings().Main.RagePresence)
         return GetCustomMission_();
     return "";
 }
 
 bool RagePresence::IsCustomMissionSet() {
-    if (IsCustomMissionSet_)
+    if (IsCustomMissionSet_ && GhostReplay::GetSettings().Main.RagePresence)
         return IsCustomMissionSet_();
     return false;
 }
 
 void RagePresence::ClearCustomMission() {
-    if (ClearCustomMission_)
+    if (ClearCustomMission_ && GhostReplay::GetSettings().Main.RagePresence)
         ClearCustomMission_();
 }
 
 void RagePresence::SetCustomDetails(const char* details) {
-    if (SetCustomDetails_)
+    if (SetCustomDetails_ && GhostReplay::GetSettings().Main.RagePresence)
         SetCustomDetails_(details);
 }
 
 const char* RagePresence::GetCustomDetails() {
-    if (GetCustomDetails_)
+    if (GetCustomDetails_ && GhostReplay::GetSettings().Main.RagePresence)
         return GetCustomDetails_();
     return "";
 }
 
 bool RagePresence::AreCustomDetailsSet() {
-    if (AreCustomDetailsSet_)
+    if (AreCustomDetailsSet_ && GhostReplay::GetSettings().Main.RagePresence)
         return AreCustomDetailsSet_();
     return false;
 }
 
 void RagePresence::ClearCustomDetails() {
-    if (ClearCustomDetails_)
+    if (ClearCustomDetails_ && GhostReplay::GetSettings().Main.RagePresence)
         ClearCustomDetails_();
 }
 
 void RagePresence::SetCustomState(const char* state) {
-    if (SetCustomState_)
+    if (SetCustomState_ && GhostReplay::GetSettings().Main.RagePresence)
         SetCustomState_(state);
 }
 
 const char* RagePresence::GetCustomState() {
-    if (GetCustomState_)
+    if (GetCustomState_ && GhostReplay::GetSettings().Main.RagePresence)
         return GetCustomState_();
     return "";
 }
 
 bool RagePresence::IsCustomStateSet() {
-    if (IsCustomStateSet_)
+    if (IsCustomStateSet_ && GhostReplay::GetSettings().Main.RagePresence)
         return IsCustomStateSet_();
     return false;
 }
 
 void RagePresence::ClearCustomState() {
-    if (ClearCustomState_)
+    if (ClearCustomState_ && GhostReplay::GetSettings().Main.RagePresence)
         ClearCustomState_();
 }

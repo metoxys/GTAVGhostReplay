@@ -798,8 +798,8 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             { "Shows the time since the lap/recording started.",
               "Appears on the top left of the screen, when a map is selected." });
 
-        mbCtx.BoolOption("Broadcast to RagePresence", GetSettings().Main.RagePresence,
-            { "Display the current race stats on Discord using RagePresence by Lemon." });
+        //mbCtx.BoolOption("Broadcast to RagePresence", GetSettings().Main.RagePresence,
+        //    { "Display the current race stats on Discord using RagePresence by Lemon." });
 
         mbCtx.MenuOption("Recording settings", "recordsettingsmenu");
         mbCtx.MenuOption("Advanced ghost settings", "advghostsettingsmenu");

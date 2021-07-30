@@ -40,11 +40,11 @@ T CheckAddr(HMODULE lib, const std::string& funcName) {
 }
 
 void Compatibility::Setup() {
-    RagePresence::Setup();
+    //RagePresence::Setup();
 }
 
 void Compatibility::Release() {
-    RagePresence::SetCustomMission_ = nullptr;
+    //RagePresence::SetCustomMission_ = nullptr;
 }
 
 void RagePresence::Setup() {

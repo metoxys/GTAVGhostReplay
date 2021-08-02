@@ -291,7 +291,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 "Press select to toggle track selection.",
             };
 
-            std::string optionName = fmt::format("{}[ARS] {}", selector, track.Name);
+            std::string optionName = fmt::format("{}{}", selector, track.Name);
             bool highlighted;
             if (mbCtx.OptionPlus(optionName, {}, &highlighted, nullptr, nullptr, "", description)) {
                 if (!currentTrack)

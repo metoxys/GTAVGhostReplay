@@ -103,17 +103,20 @@ void CReplayScript::SetTrack(const std::string& trackName) {
     }
 
     CTrackData* foundTrack = nullptr;
-    for (auto& track : mTracks) {
-        if (track.Name == trackName) {
-            foundTrack = &track;
-            break;
+    if (!trackName._Starts_with("[ARS] ")) {
+        for (auto& track : mTracks) {
+            if (track.Name == trackName) {
+                foundTrack = &track;
+                break;
+            }
         }
     }
-
-    for (auto& track : mArsTracks) {
-        if (track.Name == trackName) {
-            foundTrack = &track;
-            break;
+    else {
+        for (auto& track : mArsTracks) {
+            if (track.Name == trackName) {
+                foundTrack = &track;
+                break;
+            }
         }
     }
 

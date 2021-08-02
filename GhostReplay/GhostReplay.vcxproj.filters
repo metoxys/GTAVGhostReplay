@@ -74,6 +74,7 @@
       <Filter>Util</Filter>
     </ClCompile>
     <ClCompile Include="Blip.cpp" />
+    <ClCompile Include="ReplayVehicle.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Util">
@@ -194,5 +195,6 @@
       <Filter>Util</Filter>
     </ClInclude>
     <ClInclude Include="Blip.hpp" />
+    <ClInclude Include="ReplayVehicle.hpp" />
   </ItemGroup>
 </Project>

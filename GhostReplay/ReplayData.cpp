@@ -3,6 +3,7 @@
 #include "Util/Paths.hpp"
 #include "Util/Logger.hpp"
 #include "ReplayScriptUtils.hpp"
+#include "Script.hpp"
 
 #include <nlohmann/json.hpp>
 #include <fmt/format.h>
@@ -11,15 +12,15 @@
 #include <thread>
 #include <utility>
 
-void to_json(nlohmann::json& j, const Vector3& vector3) {
-    j = nlohmann::json{
+void to_json(nlohmann::ordered_json& j, const Vector3& vector3) {
+    j = nlohmann::ordered_json{
         { "X", vector3.x },
         { "Y", vector3.y },
         { "Z", vector3.z },
     };
 }
 
-void from_json(const nlohmann::json& j, Vector3& vector3) {
+void from_json(const nlohmann::ordered_json& j, Vector3& vector3) {
     j.at("X").get_to(vector3.x);
     j.at("Y").get_to(vector3.y);
     j.at("Z").get_to(vector3.z);
@@ -28,7 +29,7 @@ void from_json(const nlohmann::json& j, Vector3& vector3) {
 CReplayData CReplayData::Read(const std::string& replayFile) {
     CReplayData replayData(replayFile);
 
-    nlohmann::json replayJson;
+    nlohmann::ordered_json replayJson;
     std::ifstream replayFileStream(replayFile.c_str());
     if (!replayFileStream.is_open()) {
         logger.Write(ERROR, "[Replay] Failed to open %s", replayFile.c_str());
@@ -66,8 +67,21 @@ CReplayData CReplayData::Read(const std::string& replayFile) {
             node.Brake = jsonNode.value("Brake", 0.0f);
             node.Gear = jsonNode.value("Gear", -1);
             node.RPM = jsonNode.value("RPM", -1.0f);
-            node.LowBeams = jsonNode.value("LowBeams", false);
-            node.HighBeams = jsonNode.value("HighBeams", false);
+
+            if (jsonNode.contains("LowBeams"))
+                node.LowBeams = jsonNode.at("LowBeams").get<bool>();
+            
+            if (jsonNode.contains("HighBeams"))
+                node.HighBeams = jsonNode.at("HighBeams").get<bool>();
+
+            if (jsonNode.contains("IndicatorLeft"))
+                node.IndicatorLeft = jsonNode.at("IndicatorLeft").get<bool>();
+
+            if (jsonNode.contains("IndicatorRight"))
+                node.IndicatorRight = jsonNode.at("IndicatorRight").get<bool>();
+
+            if (jsonNode.contains("Siren"))
+                node.Siren = jsonNode.at("Siren").get<bool>();
 
             replayData.Nodes.push_back(node);
         }
@@ -86,8 +100,8 @@ CReplayData::CReplayData(std::string fileName)
     , VehicleModel(0)
     , mFileName(std::move(fileName)) {}
 
-void CReplayData::Write() {
-    nlohmann::json replayJson;
+void CReplayData::write(bool pretty) {
+    nlohmann::ordered_json replayJson;
 
     replayJson["Timestamp"] = Timestamp;
     replayJson["Name"] = Name;
@@ -96,7 +110,7 @@ void CReplayData::Write() {
     replayJson["Mods"] = VehicleMods;
 
     for (auto& Node : Nodes) {
-        replayJson["Nodes"].push_back({
+        nlohmann::ordered_json node = {
             { "T", Node.Timestamp },
             { "Pos", Node.Pos },
             { "Rot", Node.Rot },
@@ -107,11 +121,33 @@ void CReplayData::Write() {
             { "Brake", Node.Brake },
             { "Gear", Node.Gear },
             { "RPM", Node.RPM },
-            { "LowBeams", Node.LowBeams },
-            { "HighBeams", Node.HighBeams },
-        });
+        };
+
+        if (Node.LowBeams != std::nullopt)
+            node.push_back({ "LowBeams", *Node.LowBeams });
+        if (Node.HighBeams != std::nullopt)
+            node.push_back({ "HighBeams", *Node.HighBeams });
+        if (Node.IndicatorLeft != std::nullopt)
+            node.push_back({ "IndicatorLeft", *Node.IndicatorLeft });
+        if (Node.IndicatorRight != std::nullopt)
+            node.push_back({ "IndicatorRight", *Node.IndicatorRight });
+        if (Node.Siren != std::nullopt)
+            node.push_back({ "Siren", *Node.Siren });
+
+        replayJson["Nodes"].push_back(node);
     }
 
+    std::ofstream replayFile(mFileName);
+
+    if (pretty)
+        replayFile << std::setw(2) << replayJson << std::endl;
+    else
+        replayFile << replayJson.dump();
+
+    logger.Write(INFO, "[Replay] Written %s", mFileName.c_str());
+}
+
+void CReplayData::generateFileName() {
     const std::string replaysPath =
         Paths::GetModuleFolder(Paths::GetOurModuleHandle()) +
         Constants::ModDir +
@@ -130,19 +166,15 @@ void CReplayData::Write() {
         }
     }
 
-    const std::string replayFileName = fmt::format("{}\\{}{}.json", replaysPath, cleanName, suffix);
-
-    std::ofstream replayFile(replayFileName);
-    replayFile << std::setw(2) << replayJson << std::endl;
-
-    logger.Write(INFO, "[Replay] Written %s", replayFileName.c_str());
-    mFileName = replayFileName;
+    mFileName = fmt::format("{}\\{}{}.json", replaysPath, cleanName, suffix);
 }
 
-void CReplayData::WriteAsync(const CReplayData& replayData) {
-    std::thread([replayData]() {
+void CReplayData::WriteAsync(CReplayData& replayData) {
+    replayData.generateFileName();
+    bool pretty = !GhostReplay::GetSettings().Record.ReduceFileSize;
+    std::thread([replayData, pretty]() {
         CReplayData myCopy = replayData;
-        myCopy.Write();
+        myCopy.write(pretty);
     }).detach();
 }
 

@@ -2,11 +2,12 @@
 #include "VehicleMod.h"
 
 #include <inc/types.h>
+#include <optional>
 #include <string>
 #include <vector>
 
 struct SReplayNode {
-    unsigned long long Timestamp;
+    double Timestamp;
     Vector3 Pos;
     Vector3 Rot;
     std::vector<float> WheelRotations;
@@ -19,8 +20,11 @@ struct SReplayNode {
     int Gear;
     float RPM;
 
-    bool LowBeams;
-    bool HighBeams;
+    std::optional<bool> LowBeams;
+    std::optional<bool> HighBeams;
+    std::optional<bool> IndicatorLeft;
+    std::optional<bool> IndicatorRight;
+    std::optional<bool> Siren;
 
     bool operator<(const SReplayNode& other) const {
         return Timestamp < other.Timestamp;
@@ -30,10 +34,9 @@ struct SReplayNode {
 class CReplayData {
 public:
     static CReplayData Read(const std::string& replayFile);
-    static void WriteAsync(const CReplayData& replayData);
+    static void WriteAsync(CReplayData& replayData);
 
     CReplayData(std::string fileName);
-    void Write();
     std::string FileName() const { return mFileName; }
     void Delete() const;
 
@@ -51,5 +54,10 @@ public:
     // chosen from.
     std::vector<SReplayNode> Nodes;
 private:
+    // Make sure mFileName has been set before calling this.
+    void write(bool pretty);
+    // Only run this before asynchronously calling write().
+    void generateFileName();
+
     std::string mFileName;
 };

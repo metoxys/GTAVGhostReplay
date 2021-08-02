@@ -1,4 +1,5 @@
 #include "UI.hpp"
+#include "Math.hpp"
 #include "../Constants.hpp"
 
 #include <inc/enums.h>
@@ -34,7 +35,7 @@ void showNotification(const std::string& message, int* prevNotification) {
 }
 
 void UI::Notify(const std::string& message) {
-    Notify(message, true);
+    Notify(message, false);
 }
 
 void UI::Notify(const std::string& message, bool removePrevious) {
@@ -45,16 +46,20 @@ void UI::Notify(const std::string& message, bool removePrevious) {
     showNotification(fmt::format("{}\n{}", Constants::NotificationPrefix, message), notifHandleAddr);
 }
 
-void UI::ShowText(float x, float y, float scale, const std::string& text) {
-    HUD::SET_TEXT_FONT(0);
+void UI::ShowText(float x, float y, float scale, const std::string& text, int font, bool outline) {
+    HUD::SET_TEXT_FONT(font);
     HUD::SET_TEXT_SCALE(scale, scale);
     HUD::SET_TEXT_COLOUR(255, 255, 255, 255);
     HUD::SET_TEXT_WRAP(0.0, 1.0);
     HUD::SET_TEXT_CENTRE(0);
-    HUD::SET_TEXT_OUTLINE();
+    if (outline) HUD::SET_TEXT_OUTLINE();
     HUD::BEGIN_TEXT_COMMAND_DISPLAY_TEXT("STRING");
     HUD::ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(text.c_str());
     HUD::END_TEXT_COMMAND_DISPLAY_TEXT(x, y, 0);
+}
+
+void UI::ShowText(float x, float y, float scale, const std::string& text) {
+    ShowText(x, y, scale, text, 4, true);
 }
 
 std::string UI::GetKeyboardResult() {
@@ -86,27 +91,31 @@ void UI::DrawLine(Vector3 pA, Vector3 pB, int r, int g, int b, int a) {
     GRAPHICS::DRAW_LINE(pA.x, pA.y, pA.z, pB.x, pB.y, pB.z, r, g, b, a);
 }
 
-void UI::ShowText3D(Vector3 location, const std::vector<std::string>& textLines) {
-    float height = 0.0125f;
+void UI::ShowText3D(Vector3 location, float baseSize, const std::vector<std::string>& textLines) {
+    Vector3 cameraPos = CAM::GET_GAMEPLAY_CAM_COORD();
+    float distance = Distance(cameraPos, location);
+    float totalMult = baseSize / (distance * (CAM::GET_GAMEPLAY_CAM_FOV() / 60.0f));
+
+    float height = 0.0125f * totalMult;
 
     GRAPHICS::SET_DRAW_ORIGIN(location.x, location.y, location.z, 0);
     int i = 0;
 
-    float szX = 0.060f;
-    for (const auto& line : textLines) {
-        ShowText(0, 0 + height * static_cast<float>(i), 0.2f, line);
-        float currWidth = GetStringWidth(line, 0.2f, 0);
-        if (currWidth > szX) {
+    float szX = 0.000f;
+    for (auto line : textLines) {
+        float currWidth = GetStringWidth(line, 0.2f * totalMult, 0);
+        ShowText(0.0f, 0.0f + height * i, 0.2f * totalMult, line, 0, true);
+        if (currWidth > szX)
             szX = currWidth;
-        }
         i++;
     }
 
-    float szY = (height * static_cast<float>(i)) + 0.02f;
-    GRAPHICS::DRAW_RECT(0.027f, (height * static_cast<float>(i)) / 2.0f, szX, szY,
+    float szY = height * i;
+    GRAPHICS::DRAW_RECT(0.0f + szX / 2.0f, (height * i) / 2.0f, szX, szY,
         0, 0, 0, 92, 0);
     GRAPHICS::CLEAR_DRAW_ORIGIN();
 }
+
 
 void UI::ShowHelpText(const std::string& message) {
     HUD::BEGIN_TEXT_COMMAND_DISPLAY_HELP("CELL_EMAIL_BCON");
@@ -118,4 +127,3 @@ void UI::ShowHelpText(const std::string& message) {
 
     HUD::END_TEXT_COMMAND_DISPLAY_HELP(0, false, false, -1);
 }
-

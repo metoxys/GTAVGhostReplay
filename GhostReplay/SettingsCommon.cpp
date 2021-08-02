@@ -16,6 +16,10 @@ void SetValue(CSimpleIniA& ini, const char* section, const char* key, float val)
     ini.SetDoubleValue(section, key, static_cast<double>(val));
 }
 
+void SetValue(CSimpleIniA& ini, const char* section, const char* key, double val) {
+    ini.SetDoubleValue(section, key, val);
+}
+
 int GetValue(CSimpleIniA& ini, const char* section, const char* key, int val) {
     return ini.GetLongValue(section, key, val);
 }
@@ -30,4 +34,8 @@ bool GetValue(CSimpleIniA& ini, const char* section, const char* key, bool val) 
 
 float GetValue(CSimpleIniA& ini, const char* section, const char* key, float val) {
     return static_cast<float>(ini.GetDoubleValue(section, key, val));
+}
+
+double GetValue(CSimpleIniA& ini, const char* section, const char* key, double val) {
+    return ini.GetDoubleValue(section, key, val);
 }

@@ -21,15 +21,16 @@ std::string Util::StripString(std::string input) {
     return input;
 }
 
-std::string Util::FormatMillisTime(unsigned long long totalTime) {
-    unsigned long long milliseconds = totalTime % 1000;
-    unsigned long long seconds = (totalTime / 1000) % 60;
-    unsigned long long minutes = (totalTime / 1000) / 60;
+std::string Util::FormatMillisTime(double totalTime) {
+    auto timeMillis = static_cast<uint32_t>(totalTime);
+    unsigned long long milliseconds = timeMillis % 1000;
+    unsigned long long seconds = (timeMillis / 1000) % 60;
+    unsigned long long minutes = (timeMillis / 1000) / 60;
     return fmt::format("{}:{:02d}.{:03d}", minutes, seconds, milliseconds);
 }
 
 std::string Util::FormatReplayName(
-    unsigned long long totalTime,
+    double totalTime,
     const std::string& trackName,
     const std::string& vehicleName) {
     std::string timeStr = Util::FormatMillisTime(totalTime);

@@ -4,9 +4,9 @@
 
 namespace Util {
     std::string StripString(std::string input);
-    std::string FormatMillisTime(unsigned long long totalTime);
+    std::string FormatMillisTime(double totalTime);
     std::string FormatReplayName(
-        unsigned long long totalTime,
+        double totalTime,
         const std::string& trackName,
         const std::string& vehicleName);
     std::string GetVehicleName(Hash model);

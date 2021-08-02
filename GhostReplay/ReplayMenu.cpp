@@ -13,15 +13,23 @@
 #include "Util/UI.hpp"
 #include "Util/Math.hpp"
 #include "Util/String.hpp"
+#include "Util/Misc.hpp"
+#include "Util/Game.hpp"
 
 #include <menukeyboard.h>
 #include <fmt/format.h>
 
 namespace GhostReplay {
-    std::vector<std::string> FormatTrackData(NativeMenu::Menu& mbCtx, CReplayScript& context, const CTrackData& track);
+    struct SFormattedTrackData {
+        size_t NumCompatibleReplays;
+        std::vector<std::string> Content;
+    };
+
+    const std::vector<std::string>& FormatTrackData(NativeMenu::Menu& mbCtx, CReplayScript& context, const CTrackData& track);
     bool EvaluateInput(std::string& searchFor);
     void UpdateTrackFilter(CReplayScript& context);
     void UpdateReplayFilter(CReplayScript& context);
+    void CreateReplayVehicle(CReplayData* replay);
 
     bool trackSearchSelected = false;
     std::string trackSelectSearch;
@@ -32,17 +40,41 @@ namespace GhostReplay {
     bool replaySearchSelected = false;
     std::string replaySelectSearch;
 
-    std::vector<CReplayData> filteredReplays;
+    std::vector<std::shared_ptr<CReplayData>> filteredReplays;
+    std::unordered_map<std::string, SFormattedTrackData> formattedTrackData;
+
+    const std::vector<std::string> lightsOptions = { "Default", "Force Off", "Force On" };
+    const std::vector<std::string> syncOptions = { "Absolute", "Approximate" };
+    const std::vector<std::vector<std::string>> syncDescriptions = {
+        { "Absolute: Perfect playback, but lacks effects like tyre trails, dirt and smoke. Good for hotlaps." },
+        { "Approximate: Effects are present, but vehicle may get knocked off-course by terrain or props." },
+    };
+    const std::vector<std::string> replaySortOptions = { "Name", "Lap time", "Date" };
+    const std::vector<std::vector<std::string>> replaySortDescriptions = {
+        { "Sorts by replay name alphabetically, ascending." },
+        { "Sorts by lap time, ascending (fastest first)." },
+        { "Sorts by date, ascending (oldest first)." }
+    };
 }
 
 std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
     std::vector<CScriptMenu<CReplayScript>::CSubmenu> submenus;
     /* mainmenu */
     submenus.emplace_back("mainmenu", [](NativeMenu::Menu& mbCtx, CReplayScript& context) {
-        mbCtx.Title("Ghost Car");
+        mbCtx.Title("Ghost Replay");
         mbCtx.Subtitle(fmt::format("~b~{}{}", Constants::DisplayVersion, GIT_DIFF));
 
-        CReplayData* activeReplay = context.ActiveReplay();
+        if (GhostReplay::ReplaysLocked()) {
+            mbCtx.Option(fmt::format("Loading replays ({}/{})",
+                GhostReplay::ReplaysLoaded(), GhostReplay::ReplaysTotal()), {
+                    "Please wait, replays are loading.",
+                    "Currently processing:",
+                    GhostReplay::CurrentLoadingReplay()
+                });
+            return;
+        }
+
+        auto activeReplays = context.ActiveReplays();
         CTrackData* activeTrack = context.ActiveTrack();
         auto scriptMode = context.ScriptMode();
 
@@ -52,15 +84,31 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
         std::string currentGhostName = "None";
         std::vector<std::string> ghostDetails;
-        if (activeReplay) {
+        if (activeReplays.size() == 1) {
+            auto activeReplay = activeReplays[0];
             currentGhostName = activeReplay->Name;
             ghostDetails = {
                 fmt::format("Track: {}", activeReplay->Track),
-                fmt::format("Car: {} {}",
+                fmt::format("Vehicle: {} {}",
                     Util::GetVehicleMake(activeReplay->VehicleModel),
                     Util::GetVehicleName(activeReplay->VehicleModel)),
                 fmt::format("Time: {}", Util::FormatMillisTime(activeReplay->Nodes.back().Timestamp))
             };
+        }
+        else if (activeReplays.size() > 1) {
+            currentGhostName = fmt::format("{} ghosts", activeReplays.size());
+            ghostDetails.push_back(fmt::format("Track: {}", activeReplays[0]->Track));
+            ghostDetails.push_back(fmt::format("{} replays:", activeReplays.size()));
+            for (const auto& replay : activeReplays) {
+                if (ghostDetails.size() > 5) {
+                    ghostDetails.push_back("...");
+                    break;
+                }
+                ghostDetails.push_back(fmt::format(" {} {} ({})",
+                    Util::GetVehicleMake(replay->VehicleModel),
+                    Util::GetVehicleName(replay->VehicleModel),
+                    Util::FormatMillisTime(replay->Nodes.back().Timestamp)));
+            }
         }
 
         if (mbCtx.MenuOption(fmt::format("Track: {}", currentTrackName), "trackselectmenu")) {
@@ -71,28 +119,30 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             UpdateReplayFilter(context);
         }
 
-        bool replaying = context.GetReplayState() == EReplayState::Playing;
-        std::string replayAbortOption = replaying ? "Cancel playing ghost" : "~m~Cancel playing ghost";
+        mbCtx.MenuOption("Ghost controls", "ghostoptionsmenu");
+
+        bool replaying = context.GetReplayState() != EReplayState::Idle;
+        std::string replayAbortOption = replaying ? "Cancel playing ghosts" : "~m~Cancel playing ghosts";
         std::vector<std::string> replayAbortDetail;
         if (replaying) {
-            replayAbortDetail = { "Currently replaying a ghost car.",
-                "Want to re-do your lap, but not cross the finish line? Use this to stop and reset the ghost car." };
+            replayAbortDetail = { "Currently replaying a ghost.",
+                "Want to re-do your lap, but not cross the finish line? Use this to stop and reset the ghost." };
         }
         if (mbCtx.Option(replayAbortOption, replayAbortDetail)) {
             if (replaying)
-                context.SetReplayState(EReplayState::Finished);
+                context.StopAllReplays();
         }
 
-        bool recording = context.GetRecordState() == ERecordState::Recording;
+        bool recording = context.IsRecording();
         std::string recordAbortOption = recording ? "Cancel recording" : "~m~Cancel recording";
         std::vector<std::string> recordAbortDetail;
         if (recording) {
-            recordAbortDetail = { "Currently recording a ghost car.",
+            recordAbortDetail = { "Currently recording a ghost replay.",
                 "Not racing anymore? Use this to stop and discard the recording." };
         }
         if (mbCtx.Option(recordAbortOption, recordAbortDetail)) {
             if (recording)
-                context.SetRecordState(ERecordState::Finished);
+                context.StopRecording();
         }
 
         if (mbCtx.MenuOption("Track setup", "tracksetupmenu")) {
@@ -102,18 +152,18 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             context.SetScriptMode(EScriptMode::ReplayActive);
         }
 
-        mbCtx.MenuOption("Unsaved runs", "unsavedrunsmenu");
-
-        if (mbCtx.Option("Refresh tracks and ghosts", 
-            { "Refresh tracks and ghosts if they are changed outside the script." } )) {
-            GhostReplay::LoadTracks();
-            GhostReplay::LoadARSTracks();
-            GhostReplay::LoadReplays();
-            GhostReplay::LoadTrackImages();
-            context.SetTrack("");
-            UI::Notify("Tracks and replays refreshed", false);
+        if (!context.GetUnsavedRuns().empty()) {
+            mbCtx.MenuOption("Unsaved recordings", "unsavedrunsmenu",
+                { "Manage recordings that aren't saved to disk.",
+                  fmt::format("{} unsaved recording{}.",
+                      context.GetUnsavedRuns().size(),
+                      context.GetUnsavedRuns().size() != 1 ? "s" : "")});
         }
-
+        else {
+            mbCtx.Option("~m~Unsaved recordings",
+                { "Manage recordings that aren't saved to disk.",
+                  "No unsaved recordings to view or save." });
+        }
         mbCtx.MenuOption("Settings", "settingsmenu");
     });
 
@@ -133,7 +183,20 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             return;
         }
 
-        if (mbCtx.Option(fmt::format("Track name: {}", currentTrackName))) {
+        std::vector<std::string> trackNameOptDescr;
+        if (activeTrack) {
+            trackNameOptDescr = {
+                "Enter a name to create a new track."
+            };
+        }
+        else {
+            trackNameOptDescr = {
+                "Rename the track.",
+                "Press enter to edit."
+            };
+        }
+
+        if (mbCtx.Option(fmt::format("Track name: {}", currentTrackName), trackNameOptDescr)) {
             std::string newName = currentTrackName == "None" ? "" : currentTrackName;
             if (MenuUtils::GetKbString(newName)) {
                 if (activeTrack) {
@@ -169,21 +232,31 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 UI::DrawLine(activeTrack->FinishLine.A, activeTrack->FinishLine.B, 255, 255, 255, 255);
             }
 
-            if (mbCtx.Option("Set start line")) {
+            const std::vector<std::string> startLineDescr = {
+                "Set or move the start line."
+            };
+            const std::vector<std::string> finishLineDescr = {
+                "Set or move the finish line."
+            };
+            const std::vector<std::string> saveDescr = {
+                "Save and activate the track."
+            };
+
+            if (mbCtx.Option("Set start line", startLineDescr)) {
                 SLineDef newLineDef{};
                 if (context.StartLineDef(newLineDef, "start")) {
                     activeTrack->StartLine = newLineDef;
                 }
             }
 
-            if (mbCtx.Option("Set finish line")) {
+            if (mbCtx.Option("Set finish line", finishLineDescr)) {
                 SLineDef newLineDef{};
                 if (context.StartLineDef(newLineDef, "finish")) {
                     activeTrack->FinishLine = newLineDef;
                 }
             }
 
-            if (mbCtx.Option("Save track")) {
+            if (mbCtx.Option("Save track", saveDescr)) {
                 std::string missingPoints;
 
                 if (activeTrack->StartLine.A == emptyVec)
@@ -203,6 +276,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 activeTrack->Write();
                 UI::Notify(fmt::format("Saved track {}", activeTrack->Name), true);
                 GhostReplay::LoadTracks();
+                context.SetTrack(activeTrack->Name);
             }
         }
     });
@@ -245,6 +319,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             };
 
             if (!track.MarkedForDeletion) {
+                description.emplace_back("Press Right to teleport to starting point.");
                 description.emplace_back("Press Left to delete.");
             }
             else {
@@ -253,7 +328,11 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 description.emplace_back("~r~~h~THIS IS PERMANENT");
             }
 
-            auto clearDeleteFlag = [&]() {
+            auto onRight = [&]() {
+                if (!track.MarkedForDeletion) {
+                    context.TeleportToTrack(track);
+                }
+
                 track.MarkedForDeletion = false;
             };
             auto deleteFlag = [&]() {
@@ -268,7 +347,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
             std::string optionName = fmt::format("{}{}{}", deleteCol, selector, track.Name);
             bool highlighted;
-            if (mbCtx.OptionPlus(optionName, {}, &highlighted, clearDeleteFlag, deleteFlag, "", description)) {
+            if (mbCtx.OptionPlus(optionName, {}, &highlighted, onRight, deleteFlag, "", description)) {
                 if (!currentTrack)
                     context.SetTrack(track.Name);
                 else
@@ -276,7 +355,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             }
 
             if (highlighted) {
-                auto extras = FormatTrackData(mbCtx, context, track);
+                auto& extras = FormatTrackData(mbCtx, context, track);
                 mbCtx.OptionPlusPlus(extras, track.Name);
             }
         }
@@ -289,11 +368,16 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
             std::vector<std::string> description{
                 "Press select to toggle track selection.",
+                "Press Right to teleport to starting point.",
             };
 
-            std::string optionName = fmt::format("{}[ARS] {}", selector, track.Name);
+            auto onRight = [&]() {
+                context.TeleportToTrack(track);
+            };
+
+            std::string optionName = fmt::format("{}{}", selector, track.Name);
             bool highlighted;
-            if (mbCtx.OptionPlus(optionName, {}, &highlighted, nullptr, nullptr, "", description)) {
+            if (mbCtx.OptionPlus(optionName, {}, &highlighted, onRight, nullptr, "", description)) {
                 if (!currentTrack)
                     context.SetTrack(track.Name);
                 else
@@ -301,7 +385,7 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             }
 
             if (highlighted) {
-                auto extras = FormatTrackData(mbCtx, context, track);
+                auto& extras = FormatTrackData(mbCtx, context, track);
                 mbCtx.OptionPlusPlus(extras, track.Name);
             }
         }
@@ -325,6 +409,11 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             return;
         }
 
+        if (mbCtx.StringArray("Sort by", replaySortOptions, GetSettings().Main.ReplaySortBy,
+            replaySortDescriptions[GetSettings().Main.ReplaySortBy])) {
+            UpdateReplayFilter(context);
+        }
+
         if (replaySearchSelected) {
             if (EvaluateInput(replaySelectSearch)) {
                 UpdateReplayFilter(context);
@@ -343,20 +432,24 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
         for (auto& replay : filteredReplays) {
             bool currentReplay = false;
-            if (context.ActiveReplay()) {
-                currentReplay =
-                    context.ActiveReplay()->Name == replay.Name &&
-                    context.ActiveReplay()->Timestamp == replay.Timestamp;
-            }
+            const auto& activeReplays = context.ActiveReplays();
+            currentReplay = std::find_if(activeReplays.begin(), activeReplays.end(),
+                [&](const CReplayData* activeReplay) {
+                    return activeReplay->Name == replay->Name &&
+                        activeReplay->Timestamp == replay->Timestamp;
+                }
+            ) != activeReplays.end();
+
             std::string selector = currentReplay ? "-> " : "";
-            std::string deleteCol = replay.MarkedForDeletion ? "~r~" : "";
+            std::string deleteCol = replay->MarkedForDeletion ? "~r~" : "";
 
             std::vector<std::string> description{
                 "Press select to toggle replay selection.",
             };
 
-            if (!replay.MarkedForDeletion) {
+            if (!replay->MarkedForDeletion) {
                 description.emplace_back("Press Left to delete.");
+                description.emplace_back("Press Right to spawn a copy of the replay vehicle.");
             }
             else {
                 description.emplace_back("Press Right to unmark deletion.");
@@ -365,50 +458,60 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             }
 
             auto clearDeleteFlag = [&]() {
-                replay.MarkedForDeletion = false;
+                if (replay->MarkedForDeletion == false) {
+                    CreateReplayVehicle(replay.get());
+                }
+                else {
+                    replay->MarkedForDeletion = false;
+                }
             };
 
             bool triggerBreak = false;
             auto deleteFlag = [&]() {
-                if (replay.MarkedForDeletion) {
-                    context.DeleteReplay(replay);
+                if (replay->MarkedForDeletion) {
+                    context.DeleteReplay(*replay);
                     triggerBreak = true;
                     UpdateReplayFilter(context);
                 }
                 else {
-                    replay.MarkedForDeletion = true;
+                    replay->MarkedForDeletion = true;
                 }
             };
 
             std::string optionNameRaw = fmt::format("{} - {}",
-                Util::FormatMillisTime(replay.Nodes.back().Timestamp),
-                Util::GetVehicleName(replay.VehicleModel));
+                Util::FormatMillisTime(replay->Nodes.back().Timestamp),
+                Util::GetVehicleName(replay->VehicleModel));
             std::string optionName = fmt::format("{}{}{}", deleteCol, selector, optionNameRaw);
             std::string datetime;
-            if (replay.Timestamp == 0) {
+            if (replay->Timestamp == 0) {
                 datetime = "No date";
             }
             else {
-                datetime = Util::GetTimestampReadable(replay.Timestamp);
+                datetime = Util::GetTimestampReadable(replay->Timestamp);
             }
             std::vector<std::string> extras
             {
-                fmt::format("Track: {}", replay.Track),
-                fmt::format("Car: {} {}",
-                    Util::GetVehicleMake(replay.VehicleModel),
-                    Util::GetVehicleName(replay.VehicleModel)),
-                fmt::format("Time: {}",  Util::FormatMillisTime(replay.Nodes.back().Timestamp)),
+                fmt::format("Track: {}", replay->Track),
+                fmt::format("Vehicle: {} {}",
+                    Util::GetVehicleMake(replay->VehicleModel),
+                    Util::GetVehicleName(replay->VehicleModel)),
+                fmt::format("Time: {}",  Util::FormatMillisTime(replay->Nodes.back().Timestamp)),
                 fmt::format("Lap recorded: {}", datetime),
             };
 
             if (mbCtx.OptionPlus(optionName, extras, nullptr, clearDeleteFlag, deleteFlag, "Ghost", description)) {
                 if (!currentReplay)
-                    context.SetReplay(replay.Name, replay.Timestamp);
+                    context.SelectReplay(replay->Name, replay->Timestamp);
                 else
-                    context.SetReplay("");
+                    context.DeselectReplay(replay->Name, replay->Timestamp);
             }
             if (triggerBreak)
                 break;
+        }
+
+        if (mbCtx.Option("Deselect all replays")) {
+            context.StopAllReplays();
+            context.ClearSelectedReplays();
         }
     });
 
@@ -424,31 +527,31 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
         auto unsavedRunIt = context.GetUnsavedRuns().begin();
         while (unsavedRunIt != context.GetUnsavedRuns().end()) {
-            auto unsavedRun = *unsavedRunIt;
             std::string runName = Util::FormatReplayName(
-                unsavedRun.Nodes.back().Timestamp,
-                unsavedRun.Track,
-                Util::GetVehicleName(unsavedRun.VehicleModel));
+                unsavedRunIt->Nodes.back().Timestamp,
+                unsavedRunIt->Track,
+                Util::GetVehicleName(unsavedRunIt->VehicleModel));
 
             std::string datetime;
-            if (unsavedRun.Timestamp == 0) {
+            if (unsavedRunIt->Timestamp == 0) {
                 datetime = "No date";
             }
             else {
-                datetime = Util::GetTimestampReadable(unsavedRun.Timestamp);
+                datetime = Util::GetTimestampReadable(unsavedRunIt->Timestamp);
             }
 
             std::vector<std::string> ghostDetails = {
                 "Select to save ghost.",
-                fmt::format("Track: {}", unsavedRun.Track),
-                fmt::format("Car: {} {}",
-                    Util::GetVehicleMake(unsavedRun.VehicleModel),
-                    Util::GetVehicleName(unsavedRun.VehicleModel)),
-                fmt::format("Time: {}", Util::FormatMillisTime(unsavedRun.Nodes.back().Timestamp)),
+                fmt::format("Track: {}", unsavedRunIt->Track),
+                fmt::format("Vehicle: {} {}",
+                    Util::GetVehicleMake(unsavedRunIt->VehicleModel),
+                    Util::GetVehicleName(unsavedRunIt->VehicleModel)),
+                fmt::format("Time: {}", Util::FormatMillisTime(unsavedRunIt->Nodes.back().Timestamp)),
                 fmt::format("Lap recorded: {}", datetime),
             };
 
             if (mbCtx.Option(fmt::format("{}", runName), ghostDetails)) {
+                CReplayData& unsavedRun = *unsavedRunIt;
                 unsavedRun.Name = runName;
 
                 CReplayData::WriteAsync(unsavedRun);
@@ -456,7 +559,6 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
                 context.AddCompatibleReplay(unsavedRun);
 
                 unsavedRunIt = context.EraseUnsavedRun(unsavedRunIt);
-                //GhostReplay::LoadReplays();
             }
             else {
                 ++unsavedRunIt;
@@ -465,6 +567,206 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
         if (mbCtx.Option("Clear unsaved runs")) {
             context.ClearUnsavedRuns();
+        }
+    });
+
+    /* mainmenu -> ghostoptionsmenu */
+    submenus.emplace_back("ghostoptionsmenu", [](NativeMenu::Menu& mbCtx, CReplayScript& context) {
+        mbCtx.Title("Ghost controls");
+        mbCtx.Subtitle("");
+
+        float offset = static_cast<float>(GetSettings().Replay.OffsetSeconds);
+        bool offsetChanged = mbCtx.FloatOptionCb("Ghost offset", offset, -60.0f, 60.0f, 0.1f,
+            MenuUtils::GetKbFloat,
+            { "Delay of the ghost car. Positive values put it ahead, negative values delay.",
+              "In seconds." });
+        if (offsetChanged) {
+            GetSettings().Replay.OffsetSeconds = static_cast<double>(offset);
+            auto newTime = context.GetReplayProgress() + offset * 1000.0;
+            for (auto& replayVehicle : context.GetReplayVehicles()) {
+                if (replayVehicle->GetReplayState() != EReplayState::Idle)
+                    replayVehicle->SetReplayTime(newTime);
+            }
+
+        }
+
+        const std::vector<std::string> replayAlphaDescr{
+            "The transparency of the ghost vehicle.",
+            "0%: completely invisible.",
+            "100%: completely visible.",
+        };
+        int replayAlpha = GetSettings().Replay.VehicleAlpha;
+        if (mbCtx.IntOptionCb("Ghost opacity %", replayAlpha, 0, 100, 20, MenuUtils::GetKbInt, replayAlphaDescr)) {
+            if (replayAlpha < 0)
+                replayAlpha = 0;
+            if (replayAlpha > 100)
+                replayAlpha = 100;
+            GetSettings().Replay.VehicleAlpha = replayAlpha;
+            for (auto& replayVehicle : context.GetReplayVehicles()) {
+                ENTITY::SET_ENTITY_ALPHA(
+                    replayVehicle->GetVehicle(),
+                    map(GetSettings().Replay.VehicleAlpha, 0, 100, 0, 255), false);
+                if (GetSettings().Replay.VehicleAlpha == 100) {
+                    ENTITY::RESET_ENTITY_ALPHA(replayVehicle->GetVehicle());
+                }
+            }
+        }
+
+        mbCtx.StringArray("Lights", lightsOptions, GetSettings().Replay.ForceLights,
+            { "Default: Replay lights as recorded.",
+              "Forced Off: Always lights off.",
+              "Forced On: Always use low beam.", });
+
+        if (context.ActiveReplays().empty()) {
+            mbCtx.Option("~m~Replay controls unavailable", { "Select a track and a replay." });
+        }
+        else {
+            const double scrubDist = GetSettings().Replay.ScrubDistanceSeconds * 1000.0; // milliseconds
+            const auto& activeReplays = context.ActiveReplays();
+            const auto& replayVehicles = context.GetReplayVehicles();
+            EReplayState replayState = context.GetReplayState();
+
+            std::string replayStateName;
+            switch (replayState) {
+                case EReplayState::Paused:  replayStateName = "Paused"; break;
+                case EReplayState::Playing: replayStateName = "Playing"; break;
+                case EReplayState::Idle:    // Default
+                default:                    replayStateName = "Stopped";
+            }
+
+            std::vector<std::string> playbackDetails;
+
+            if (activeReplays.size() == 1 && replayVehicles.size() == 1) {
+                auto activeReplay = activeReplays[0];
+                playbackDetails = {
+                    fmt::format("{} on {}", Util::GetVehicleName(activeReplay->VehicleModel), activeReplay->Track),
+                    replayStateName,
+                    fmt::format("{} / {}",
+                        Util::FormatMillisTime(replayVehicles[0]->GetReplayProgress()),
+                        Util::FormatMillisTime(activeReplay->Nodes.back().Timestamp)),
+                };
+            }
+            else if (activeReplays.size() > 1) {
+                auto numGhosts = replayVehicles.size();
+                auto numStillDriving = 0;
+                for(const auto& replayVehicle : replayVehicles) {
+                    numStillDriving += replayVehicle->GetReplayState() == EReplayState::Idle ? 0 : 1;
+                }
+                
+                playbackDetails = {
+                    fmt::format("{} ghosts on {}", activeReplays.size(), context.ActiveTrack()->Name),
+                    fmt::format("{} - {} / {}",
+                        replayStateName,
+                        Util::FormatMillisTime(context.GetReplayProgress()),
+                        Util::FormatMillisTime(context.GetSlowestActiveReplay())),
+                    fmt::format("{} out of {} driving", numStillDriving, numGhosts),
+                };
+
+                for (const auto& replayVehicle : replayVehicles) {
+                    playbackDetails.push_back(
+                        fmt::format("{} - {} / {}",
+                            Util::GetVehicleName(replayVehicle->GetReplay()->VehicleModel),
+                            Util::FormatMillisTime(replayVehicle->GetReplayProgress()),
+                            Util::FormatMillisTime(replayVehicle->GetReplay()->Nodes.back().Timestamp))
+                    );
+                }
+            }
+
+            std::string secondsFormat = fmt::format("{:.3f} second{}",
+                GetSettings().Replay.ScrubDistanceSeconds,
+                Math::Near(GetSettings().Replay.ScrubDistanceSeconds, 1.0, 0.0005) ? "" : "s");
+            std::string playbackDescription =
+                fmt::format("Playback controls. Select to play or pause. "
+                    "Press left and right to jump backward or forward {}.", secondsFormat);
+
+            bool togglePause = mbCtx.OptionPlus(
+                fmt::format("<< {} >>", replayState != EReplayState::Playing ? "Play" : "Pause"),
+                playbackDetails,
+                nullptr,
+                [&]() { context.ScrubForward(scrubDist); },
+                [&]() { context.ScrubBackward(scrubDist); },
+                "Playback controls",
+                { playbackDescription });
+            if (togglePause) {
+                context.TogglePause(replayState == EReplayState::Playing);
+            }
+
+            if (GetSettings().Main.Debug && activeReplays.size() == 1 && replayVehicles.size() == 1) {
+                bool togglePause = mbCtx.OptionPlus(
+                    fmt::format("<< [{}/{}] >>", context.GetFrameIndex(), context.GetNumFrames() - 1),
+                    playbackDetails,
+                    nullptr,
+                    [&]() { context.FrameNext(); },
+                    [&]() { context.FramePrev(); },
+                    "Frame controls",
+                    { "Frame controls. Select to play/pause. Left = previous frame. Right = next frame." });
+                if (togglePause) {
+                    context.TogglePause(replayState == EReplayState::Playing);
+                }
+            }
+            else if (GetSettings().Main.Debug) {
+                bool togglePause = mbCtx.OptionPlus(
+                    fmt::format("<< {} >>", replayState != EReplayState::Playing ? "Play" : "Pause"),
+                    playbackDetails,
+                    nullptr,
+                    [&]() { context.ScrubForward(5.0); },
+                    [&]() { context.ScrubBackward(5.0); },
+                    "Step controls",
+                    { "Frame controls replaced by 5ms step for multiple vehicles." });
+                if (togglePause) {
+                    context.TogglePause(replayState == EReplayState::Playing);
+                }
+            }
+
+            bool replaying = replayState != EReplayState::Idle;
+            std::string replayAbortOption = replaying ? "Stop playback" : "~m~Stop playback";
+            if (mbCtx.Option(replayAbortOption)) {
+                if (replaying)
+                    context.StopAllReplays();
+            }
+
+            bool passengerModeAvailable = context.ActiveTrack() && context.ActiveReplays().size() > 0;
+
+            if (passengerModeAvailable) {
+                bool active = context.IsPassengerModeActive();
+                std::string optionText = active ?
+                    "<< Stop spectating >>" :
+                    "<< Spectate >>";
+
+                std::vector<std::string> passengerDetails;
+                for (const auto& replayVehicle : context.GetReplayVehicles()) {
+                    std::string selectMarker;
+                    if (replayVehicle.get() == context.GetPassengerVehicle()) {
+                        selectMarker = "-> ";
+                    }
+                    passengerDetails.push_back(fmt::format("{}{} - {} ({})",
+                        selectMarker,
+                        Util::GetVehicleName(replayVehicle->GetReplay()->VehicleModel),
+                        Util::FormatMillisTime(replayVehicle->GetReplay()->Nodes.back().Timestamp),
+                        replayVehicle->GetReplayState() == EReplayState::Idle ? "Stopped" : "Playing"));
+                }
+
+                bool toggle = mbCtx.OptionPlus(
+                    optionText,
+                    passengerDetails,
+                    nullptr,
+                    [&]() { context.PassengerVehicleNext(); },
+                    [&]() { context.PassengerVehiclePrev(); },
+                    "Spectating",
+                    { "Select to enter or exit spectator mode.",
+                      "Press left and right to select different vehicles.",
+                      "Spectator mode places you in the passenger seat of the replay vehicle." });
+                if (toggle) {
+                    if (active)
+                        context.DeactivatePassengerMode();
+                    else
+                        context.ActivatePassengerMode();
+                }
+            }
+            else {
+                mbCtx.Option("~m~Spectator mode unavailable",
+                    { "Spectator mode is available when a track and one or more replays are selected." });
+            }
         }
     });
 
@@ -483,17 +785,51 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
             { "Draws green flares for the track start, red flares for the track finish.",
               "Setting applies next time a track is selected." });
 
-        mbCtx.MenuOption("Recording options", "recordoptionsmenu");
-        mbCtx.MenuOption("Replay/ghost options", "replayoptionsmenu");
-    });
+        mbCtx.BoolOption("Ghost blips", GetSettings().Main.GhostBlips,
+            { "Draws blips for the ghost vehicle.",
+              "Setting applies next time a ghost is started." });
 
-    /* mainmenu -> settingsmenu -> recordoptionsmenu */
-    submenus.emplace_back("recordoptionsmenu", [](NativeMenu::Menu& mbCtx, CReplayScript& context) {
-        mbCtx.Title("Recording options");
+        mbCtx.BoolOption("Track blips", GetSettings().Main.StartStopBlips,
+            { "Draws blips for the start and finish.",
+              "Setting applies next time a track is selected.",
+              "Draws separate start (blue) and finish (white) blips when they're further apart than 5 meters." });
+
+        mbCtx.BoolOption("Show recording time", GetSettings().Main.ShowRecordTime,
+            { "Shows the time since the lap/recording started.",
+              "Appears on the top left of the screen, when a map is selected." });
+
+        //mbCtx.BoolOption("Broadcast to RagePresence", GetSettings().Main.RagePresence,
+        //    { "Display the current race stats on Discord using RagePresence by Lemon." });
+
+        mbCtx.MenuOption("Recording settings", "recordsettingsmenu");
+        mbCtx.MenuOption("Advanced ghost settings", "advghostsettingsmenu");
+
+        if (mbCtx.Option("Refresh tracks and ghosts",
+            { "Refresh tracks and ghosts if they are changed outside the script." })) {
+            context.StopRecording();
+            context.StopAllReplays();
+            context.ClearSelectedReplays();
+
+            GhostReplay::LoadTracks();
+            GhostReplay::LoadARSTracks();
+            GhostReplay::LoadReplays();
+            GhostReplay::LoadTrackImages();
+            formattedTrackData.clear();
+            mbCtx.CloseMenu();
+        }
+
+        mbCtx.BoolOption("Developer mode", GetSettings().Main.Debug,
+            { "Shows dispay elements and options used during development." });
+        });
+
+    /* mainmenu -> settingsmenu -> recordsettingsmenu */
+    submenus.emplace_back("recordsettingsmenu", [](NativeMenu::Menu& mbCtx, CReplayScript& context) {
+        mbCtx.Title("Recording settings");
         mbCtx.Subtitle("");
 
         mbCtx.BoolOption("Automatically save faster laps", GetSettings().Record.AutoGhost,
-            { "Laps faster than the current playing ghost file, are saved to disk automatically." });
+            { "Laps faster than the current playing ghost file, are saved automatically.",
+              "Only active when one ghost is selected." });
 
         std::vector<std::string> timestepDescr{
             "The minimum time in milliseconds between each ghost recording sample.",
@@ -504,31 +840,38 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
         if (mbCtx.IntOptionCb("Recording timestep", deltaMillis, 0, 1000, 1, MenuUtils::GetKbInt, timestepDescr)) {
             GetSettings().Record.DeltaMillis = deltaMillis;
         }
+
+        mbCtx.BoolOption("Record lights", GetSettings().Record.Optional.Lights,
+            { "Records lights (low beam and high beam) when enabled." });
+
+        mbCtx.BoolOption("Record indicators", GetSettings().Record.Optional.Indicators,
+            { "Records indicators (left, right and hazard) when enabled." });
+
+        mbCtx.BoolOption("Record emergency lights/siren", GetSettings().Record.Optional.Siren,
+            { "Records emergency lights/siren when enabled. Only records on/off, doesn't record fast/slow.",
+              "Keep in mind the siren is only audible if the playback vehicle has a driver." });
+
+        mbCtx.BoolOption("Reduce file size", GetSettings().Record.ReduceFileSize,
+            { "Check to save smaller files. Uncheck to save formatted json file, e.g. for inspecting data.",
+              "Saves about 40% when recording each frame at 144Hz.",
+              "Does not affect existing saved files." });
     });
 
-    /* mainmenu -> settingsmenu -> replayoptionsmenu */
-    submenus.emplace_back("replayoptionsmenu", [](NativeMenu::Menu& mbCtx, CReplayScript& context) {
-        mbCtx.Title("Replay options");
-        mbCtx.Subtitle("");
+    /* mainmenu -> settingsmenu -> advghostsettingsmenu */
+    submenus.emplace_back("advghostsettingsmenu", [](NativeMenu::Menu& mbCtx, CReplayScript& context) {
+        mbCtx.Title("Ghost settings");
+        mbCtx.Subtitle("Advanced");
 
         mbCtx.BoolOption("Auto-load quickest ghost", GetSettings().Replay.AutoLoadGhost, 
-            { "Automatically loads the quickest ghost lap when a track is selected, for that specific car model." });
+            { "Automatically loads the quickest ghost lap when a track is selected, for that specific vehicle model." });
 
-        std::vector<std::string> replayAlphaDescr{
-            "The transparency of the ghost vehicle. Applied on ghost lap start.",
-            "0: completely invisible.",
-            "100: completely visible.",
-        };
-        int replayAlpha = GetSettings().Replay.VehicleAlpha;
-        if (mbCtx.IntOptionCb("Ghost opacity %", replayAlpha, 0, 100, 20, MenuUtils::GetKbInt, replayAlphaDescr)) {
-            if (replayAlpha < 0)
-                replayAlpha = 0;
-            if (replayAlpha > 100)
-                replayAlpha = 100;
-            GetSettings().Replay.VehicleAlpha = replayAlpha;
-            ENTITY::SET_ENTITY_ALPHA(
-                context.GetReplayVehicle(),
-                map(GetSettings().Replay.VehicleAlpha, 0, 100, 0, 255), false);
+        float scrubDist = static_cast<float>(GetSettings().Replay.ScrubDistanceSeconds);
+        bool scrubDistChanged = mbCtx.FloatOptionCb("Scrub distance", scrubDist, 0.010f, 60.0f, 0.010f,
+            MenuUtils::GetKbFloat,
+            { "How far to skip back and forth, in seconds.",
+              "Hint: Press enter/select to manually input value." });
+        if (scrubDistChanged) {
+            GetSettings().Replay.ScrubDistanceSeconds = static_cast<double>(scrubDist);
         }
 
         std::string fallbackOpt =
@@ -545,13 +888,80 @@ std::vector<CScriptMenu<CReplayScript>::CSubmenu> GhostReplay::BuildMenu() {
 
         mbCtx.BoolOption("Force fallback model", GetSettings().Replay.ForceFallbackModel, 
             { "Always use the fallback model." });
+
+        mbCtx.BoolOption("Zero velocity on pause", GetSettings().Replay.ZeroVelocityOnPause,
+            { "When paused, no velocity is set. This stops the third person gameplay camera from moving, "
+              "but will cause glitched suspension for vehicles with advanced handling flag 0x0800000." });
+
+        auto syncType = as_int(GetSettings().Replay.SyncType);
+        const auto& description = syncDescriptions[syncType];
+        if (mbCtx.StringArray("Replay sync type", syncOptions, syncType, description)) {
+            GetSettings().Replay.SyncType = static_cast<ESyncType>(syncType);
+            for (auto& replayVehicle : context.GetReplayVehicles()) {
+                if (replayVehicle->GetReplayState() != EReplayState::Idle) {
+                    replayVehicle->UpdateCollision(GetSettings().Replay.SyncType != ESyncType::Constant);
+                }
+            }
+        }
+
+        if (GetSettings().Replay.SyncType == ESyncType::Distance) {
+            mbCtx.FloatOptionCb("Resync distance", GetSettings().Replay.SyncDistance, 0.01f, 1.00f, 0.01f,
+                MenuUtils::GetKbFloat,
+                { "When the vehicle drifts too far off its intended position, it needs to re-sync positions.",
+                  "This value is the drift distance after which it re-syncs, in meters." });
+
+            mbCtx.FloatOptionCb("Sync compensation", GetSettings().Replay.SyncCompensation, 0.00f, 50.00f, 0.10f,
+                MenuUtils::GetKbFloat,
+                { "Compensate for drift by pulling the vehicle to its intended position.",
+                  "This value is the pull strength." });
+        }
+
+        bool toggleDrivers = mbCtx.BoolOption("Enable drivers", GetSettings().Replay.EnableDrivers,
+            { "Spawns drivers in the replay vehicles.",
+              "While this allows things like active spoilers to work, "
+              "it does severely reduce engine audio quality, so it is disabled by default." });
+
+        if (toggleDrivers) {
+            context.ToggleDrivers(GetSettings().Replay.EnableDrivers);
+        }
+
+        if (GetSettings().Replay.EnableDrivers) {
+            std::vector<std::string> extra{
+                "Available driver models:",
+            };
+
+            if (GetSettings().Replay.DriverModels.empty()) {
+                extra.push_back("None");
+            }
+            for (const auto& driverModel : GetSettings().Replay.DriverModels) {
+                extra.push_back(driverModel);
+            }
+
+            extra.push_back("");
+            extra.push_back("Change or add models in settings_general.ini");
+
+            mbCtx.OptionPlus("Driver models", extra, nullptr, nullptr, nullptr, "Models",
+                { "Shows available models for the driver,",
+                  "randomly picks the model on spawning a replay vehicle." });
+        }
     });
 
     return submenus;
 }
 
-std::vector<std::string> GhostReplay::FormatTrackData(NativeMenu::Menu& mbCtx, CReplayScript& context, const CTrackData& track) {
+const std::vector<std::string>& GhostReplay::FormatTrackData(NativeMenu::Menu& mbCtx, CReplayScript& context, const CTrackData& track) {
     auto compatibleReplays = context.GetCompatibleReplays(track.Name);
+
+    auto formattedTrackDataIt = formattedTrackData.find(track.Name);
+    if (formattedTrackDataIt != formattedTrackData.end()) {
+        if (formattedTrackDataIt->second.NumCompatibleReplays == compatibleReplays.size()) {
+            return formattedTrackDataIt->second.Content;
+        }
+        else {
+            formattedTrackData.erase(formattedTrackDataIt);
+        }
+    }
+
     CReplayData fastestReplayInfo = context.GetFastestReplay(track.Name, 0);
     std::string lapRecordString = "No times set";
     if (!fastestReplayInfo.Name.empty()) {
@@ -578,20 +988,22 @@ std::vector<std::string> GhostReplay::FormatTrackData(NativeMenu::Menu& mbCtx, C
 
     // compatibleReplays is ordered quickest to slowest.
     std::sort(compatibleReplays.begin(), compatibleReplays.end(),
-        [](const CReplayData& a, const CReplayData& b) {
-            return a.Nodes.back().Timestamp < b.Nodes.back().Timestamp;
+        [](const auto& a, const auto& b) {
+            return a->Nodes.back().Timestamp < b->Nodes.back().Timestamp;
         });
 
     std::vector<Hash> fastestModels;
     for (const auto& replay : compatibleReplays) {
-        if (std::find(fastestModels.begin(), fastestModels.end(), replay.VehicleModel) != fastestModels.end())
+        if (std::find(fastestModels.begin(), fastestModels.end(), replay->VehicleModel) != fastestModels.end())
             continue;
         extras.push_back(fmt::format("{} ({})",
-            Util::FormatMillisTime(replay.Nodes.back().Timestamp),
-            Util::GetVehicleName(replay.VehicleModel)));
-        fastestModels.push_back(replay.VehicleModel);
+            Util::FormatMillisTime(replay->Nodes.back().Timestamp),
+            Util::GetVehicleName(replay->VehicleModel)));
+        fastestModels.push_back(replay->VehicleModel);
     }
-    return extras;
+
+    auto inserted = formattedTrackData.insert({ track.Name, { compatibleReplays.size(), extras } });
+    return inserted.first->second.Content;
 }
 
 bool GhostReplay::EvaluateInput(std::string& searchFor) {
@@ -670,21 +1082,79 @@ void GhostReplay::UpdateReplayFilter(CReplayScript& context) {
     if (context.ActiveTrack() == nullptr)
         return;
 
+    auto splitSearchTerms = Util::split(replaySelectSearch, ' ');
+
     for (const auto& replay : context.GetCompatibleReplays(context.ActiveTrack()->Name)) {
-        std::string vehicleName = Util::GetVehicleName(replay.VehicleModel);
-        std::string tracktime = Util::FormatMillisTime(replay.Nodes.back().Timestamp);
+        std::string vehicleMake = Util::GetVehicleMake(replay->VehicleModel);
+        std::string vehicleName = Util::GetVehicleName(replay->VehicleModel);
+        std::string tracktime = Util::FormatMillisTime(replay->Nodes.back().Timestamp);
         std::string datetime;
-        if (replay.Timestamp == 0) {
+        if (replay->Timestamp == 0) {
             datetime = "No date";
         }
         else {
-            datetime = Util::GetTimestampReadable(replay.Timestamp);
+            datetime = Util::GetTimestampReadable(replay->Timestamp);
         }
-        if (Util::FindSubstring(replay.Name, replaySelectSearch) != -1 ||
-            Util::FindSubstring(vehicleName, replaySelectSearch) != -1 ||
-            Util::FindSubstring(tracktime, replaySelectSearch) != -1 ||
-            Util::FindSubstring(datetime, replaySelectSearch) != -1) {
+
+        uint32_t matchedTerms = 0;
+        for (const auto& searchTerm : splitSearchTerms) {
+            if (Util::FindSubstring(replay->Name, searchTerm) != -1 ||
+                Util::FindSubstring(vehicleMake, searchTerm) != -1 ||
+                Util::FindSubstring(vehicleName, searchTerm) != -1 ||
+                Util::FindSubstring(tracktime, searchTerm) != -1 ||
+                Util::FindSubstring(datetime, searchTerm) != -1) {
+                matchedTerms++;
+            }
+        }
+
+        if (matchedTerms == splitSearchTerms.size() || splitSearchTerms.empty()) {
             filteredReplays.push_back(replay);
         }
     }
+
+    auto dateLess = [](const std::shared_ptr<CReplayData>& replaya,
+        const std::shared_ptr<CReplayData>& replayb) {
+            return replaya->Timestamp < replayb->Timestamp;
+    };
+
+    auto timeLess = [](const std::shared_ptr<CReplayData>& replaya,
+        const std::shared_ptr<CReplayData>& replayb) {
+        return replaya->Nodes.back().Timestamp < replayb->Nodes.back().Timestamp;
+    };
+
+    // Lap time
+    if (GetSettings().Main.ReplaySortBy == 1) {
+        std::sort(filteredReplays.begin(), filteredReplays.end(), timeLess);
+    }
+    // Date
+    else if (GetSettings().Main.ReplaySortBy == 2) {
+        std::sort(filteredReplays.begin(), filteredReplays.end(), dateLess);
+    }
+}
+
+void GhostReplay::CreateReplayVehicle(CReplayData* replay) {
+    Vector3 pos;
+    Ped playerPed = PLAYER::PLAYER_PED_ID();
+    Vehicle playerVehicle = PED::GET_VEHICLE_PED_IS_IN(playerPed, false);
+
+    Vector3 dimMinReplay, dimMaxReplay;
+    MISC::GET_MODEL_DIMENSIONS(replay->VehicleModel, &dimMinReplay, &dimMaxReplay);
+
+    if (ENTITY::DOES_ENTITY_EXIST(playerVehicle)) {
+        Vector3 dimMinPlr, dimMaxPlr;
+        MISC::GET_MODEL_DIMENSIONS(ENTITY::GET_ENTITY_MODEL(playerVehicle), &dimMinPlr, &dimMaxPlr);
+        float offsetRight = dimMaxPlr.x + 1.5f + -dimMinReplay.x;
+        pos = ENTITY::GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(playerVehicle, offsetRight, 0.0f, 0.0f);
+    }
+    else {
+        float offsetRight = 1.5f + -dimMinReplay.x;
+        pos = ENTITY::GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(playerPed, offsetRight, 0.0f, 0.0f);
+    }
+
+    Vehicle vehicle = Util::CreateVehicle(replay->VehicleModel, &replay->VehicleMods, pos);
+    if (vehicle == 0)
+        return;
+
+    ENTITY::SET_ENTITY_HEADING(vehicle, ENTITY::GET_ENTITY_HEADING(playerPed));
+    ENTITY::SET_VEHICLE_AS_NO_LONGER_NEEDED(&vehicle);
 }

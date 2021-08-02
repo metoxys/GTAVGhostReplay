@@ -5,6 +5,7 @@
 #include "Constants.hpp"
 #include "Compatibility.h"
 #include "Memory/VehicleExtensions.hpp"
+#include "Memory/NativeMemory.hpp"
 
 #include "Util/Logger.hpp"
 #include "Util/Paths.hpp"
@@ -12,18 +13,34 @@
 
 #include <inc/natives.h>
 #include <inc/main.h>
+#include <MinHook.h>
 #include <fmt/format.h>
 #include <memory>
 #include <filesystem>
+#include <thread>
+#include <mutex>
 
 using namespace GhostReplay;
 namespace fs = std::filesystem;
+
+// Thanks @Dot.!
+typedef bool (*ShouldFindImpacts_t)(uint64_t, uint64_t);
+ShouldFindImpacts_t ShouldFindImpactsOriginal = nullptr;
 
 namespace {
     std::shared_ptr<CScriptSettings> settings;
     std::shared_ptr<CReplayScript> scriptInst;
 
-    std::vector<CReplayData> replays;
+    std::atomic_bool stopLoading = false;
+    std::atomic<uint32_t> totalReplays = 0;
+    std::atomic<uint32_t> loadedReplays = 0;
+    std::vector<std::string> pendingReplays;
+
+    std::mutex currentLoadingReplayMutex;
+    std::string currentLoadingReplay;
+
+    std::mutex replaysMutex;
+    std::vector<std::shared_ptr<CReplayData>> replays;
     std::vector<CTrackData> tracks;
     std::vector<CTrackData> arsTracks;
     std::vector<CImage> trackImages;
@@ -33,13 +50,85 @@ namespace {
             track.MarkedForDeletion = false;
         }
 
+        std::lock_guard replaysLock(replaysMutex);
         for (auto& replay : replays) {
-            replay.MarkedForDeletion = false;
+            replay->MarkedForDeletion = false;
         }
     }
 }
 
+bool ShouldFindImpactsHook(uint64_t a1, uint64_t a2) {
+    auto entity1 = *(unsigned int*)(a1 + 0x5C) | ((unsigned __int64)*(unsigned int*)(a1 + 0x4C) << 32);
+    auto entity2 = *(unsigned int*)(a2 + 0x5C) | ((unsigned __int64)*(unsigned int*)(a2 + 0x4C) << 32);
+    if (scriptInst) {
+        auto playerVehicle = scriptInst->GetPlayerVehicle();
+        auto addrPlayerVeh = mem::GetAddressOfEntity(playerVehicle);
+        int matched = 0;
+
+        bool playerInComparison = addrPlayerVeh == entity1 || addrPlayerVeh == entity2;
+        bool playerInGhost = scriptInst->IsPassengerModeActive();
+
+        for (const auto& replayVehicle : scriptInst->GetReplayVehicles()) {
+            if (replayVehicle->GetReplayState() == EReplayState::Idle)
+                continue;
+            auto addrReplayVeh = mem::GetAddressOfEntity(replayVehicle->GetVehicle());
+            if (addrReplayVeh == entity1 ||
+                addrReplayVeh == entity2)
+                matched++;
+
+            if (matched == 2 || matched >= 1 && playerInComparison && !playerInGhost)
+                return false;
+        }
+    }
+
+    return ShouldFindImpactsOriginal(a1, a2);
+}
+
+void Dll::SetupHooks() {
+    auto addr = mem::FindPattern("48 8B C4 48 89 58 08 48 89 68 10 48 89 70 18 48 89 78 20 41 56 48 83 EC 20 48 8B EA 4C 8B F1 E8 ? ? ? ? 33 DB");
+    if (!addr) {
+        logger.Write(ERROR, "Couldn't find ShouldFindImpacts");
+        return;
+    }
+    logger.Write(DEBUG, "Found ShouldFindImpacts at 0x%p", addr);
+
+    auto result = MH_Initialize();
+    if (result != MH_OK) {
+        logger.Write(ERROR, "MH_Initialize failed: %d", result);
+        return;
+    }
+
+    result = MH_CreateHook((LPVOID)addr, &ShouldFindImpactsHook, reinterpret_cast<LPVOID*>(&ShouldFindImpactsOriginal));
+    if (result != MH_OK) {
+        logger.Write(ERROR, "MH_CreateHook failed: %d", result);
+        return;
+    }
+
+    result = MH_EnableHook(MH_ALL_HOOKS);
+    if (result != MH_OK) {
+        logger.Write(ERROR, "MH_EnableHook failed: %d", result);
+        return;
+    }
+}
+
+void Dll::ClearHooks() {
+    auto result = MH_DisableHook(MH_ALL_HOOKS);
+    if (result != MH_OK)
+    {
+        logger.Write(ERROR, "MH_DisableHook failed: %d", result);
+        return;
+    }
+    result = MH_Uninitialize();
+    if (result != MH_OK)
+    {
+        logger.Write(ERROR, "MH_Uninitialize failed: %d", result);
+        return;
+    }
+}
+
 void GhostReplay::ScriptMain() {
+    stopLoading = false;
+
     const std::string settingsGeneralPath =
         Paths::GetModuleFolder(Paths::GetOurModuleHandle()) +
         Constants::ModDir +
@@ -94,38 +183,84 @@ CReplayScript* GhostReplay::GetScript() {
     return scriptInst.get();
 }
 
-uint32_t GhostReplay::LoadReplays() {
+bool GhostReplay::ReplaysLocked() {
+    return totalReplays != loadedReplays;
+}
+
+uint32_t GhostReplay::ReplaysLoaded() {
+    return loadedReplays;
+}
+
+uint32_t GhostReplay::ReplaysTotal() {
+    return totalReplays;
+}
+
+std::string GhostReplay::CurrentLoadingReplay() {
+    std::lock_guard nameMutex(currentLoadingReplayMutex);
+    return currentLoadingReplay;
+}
+
+void GhostReplay::LoadReplays() {
     const std::string replaysPath =
         Paths::GetModuleFolder(Paths::GetOurModuleHandle()) +
         Constants::ModDir +
         "\\Replays";
 
     logger.Write(DEBUG, "[Replay] Clearing and reloading replays");
-
-    replays.clear();
-
+    
     if (!(fs::exists(fs::path(replaysPath)) && fs::is_directory(fs::path(replaysPath)))) {
         logger.Write(ERROR, "[Replay] Directory [%s] not found!", replaysPath.c_str());
-        return 0;
+        return;
     }
+    
+    {
+        std::lock_guard replaysLock(replaysMutex);
+        replays.clear();
+    }
+
+    pendingReplays.clear();
+    totalReplays = 0;
+    loadedReplays = 0;
 
     for (const auto& file : fs::directory_iterator(replaysPath)) {
         if (Util::to_lower(fs::path(file).extension().string()) != ".json") {
             logger.Write(DEBUG, "[Replay] Skipping [%s] - not .json", fs::path(file).string().c_str());
             continue;
         }
-
-        CReplayData replay = CReplayData::Read(fs::path(file).string());
-        if (!replay.Nodes.empty())
-            replays.push_back(replay);
-        else
-            logger.Write(WARN, "[Replay] Skipping [%s] - not a valid file", fs::path(file).string().c_str());
-
-        logger.Write(DEBUG, "[Replay] Loaded replay [%s]", replay.Name.c_str());
+        pendingReplays.push_back(fs::path(file).string());
+        ++totalReplays;
     }
-    logger.Write(INFO, "[Replay] Replays loaded: %d", replays.size());
 
-    return static_cast<unsigned>(replays.size());
+    std::thread([replaysPath]() {
+        for (const auto& file : pendingReplays) {
+            {
+                std::lock_guard nameMutex(currentLoadingReplayMutex);
+                currentLoadingReplay = std::filesystem::path(file).stem().string();
+            }
+
+            if (stopLoading) {
+                return;
+            }
+
+            CReplayData replay = CReplayData::Read(file);
+            if (!replay.Nodes.empty()) {
+                std::lock_guard replaysLock(replaysMutex);
+                replays.push_back(std::make_shared<CReplayData>(replay));
+            }
+            else {
+                logger.Write(WARN, "[Replay] Skipping [%s] - not a valid file", file.c_str());
+            }
+
+            logger.Write(DEBUG, "[Replay] Loaded replay [%s]", replay.Name.c_str());
+            ++loadedReplays;
+        }
+
+        logger.Write(INFO, "[Replay] Replays loaded: %d", replays.size());
+        pendingReplays.clear();
+
+        std::lock_guard nameMutex(currentLoadingReplayMutex);
+        currentLoadingReplay = std::string();
+    }).detach();
 }
 
 uint32_t GhostReplay::LoadTracks() {
@@ -179,22 +314,25 @@ uint32_t GhostReplay::LoadTrackImages() {
 
     for (const auto& file : fs::recursive_directory_iterator(tracksPath)) {
         auto stem = fs::path(file).stem().string();
-        auto okExts = Img::GetAllowedExtensions();
         auto ext = Util::to_lower(fs::path(file).extension().string());
-        if (std::find(okExts.begin(), okExts.end(), ext) == okExts.end()) {
-            logger.Write(DEBUG, "[TrackImg] Skipping [%s] - not .png, .jpg or .jpeg", fs::path(file).string().c_str());
+        if (ext == ".json") {
             continue;
         }
 
         std::string fileName = fs::path(file).string();
+        auto dims = Img::GetIMGDimensions(fileName);
         unsigned width;
         unsigned height;
-        if (!Img::GetIMGDimensions(fileName, &width, &height)) {
-            logger.Write(WARN, "[TrackImg] [%s] Couldn't determine image size, using default 480x270.",
-                fs::path(file).string().c_str());
-            width = 480;
-            height = 270;
+
+        if (dims) {
+            width = dims->first;
+            height = dims->second;
         }
+        else {
+            logger.Write(WARN, "[TrackImg] Skipping [%s]: not an valid image.", fs::path(file).string().c_str());
+            continue;
+        }
+
         int handle = createTexture(fileName.c_str());
         trackImages.emplace_back(handle, stem, width, height);
 
@@ -238,6 +376,11 @@ uint32_t GhostReplay::LoadARSTracks() {
     return static_cast<unsigned>(arsTracks.size());
 }
 
-void GhostReplay::AddReplay(CReplayData replay) {
-    replays.push_back(replay);
+void GhostReplay::AddReplay(const CReplayData& replay) {
+    std::lock_guard replaysLock(replaysMutex);
+    replays.push_back(std::make_shared<CReplayData>(replay));
+}
+
+void GhostReplay::TriggerLoadStop() {
+    stopLoading = true;
 }

@@ -54,11 +54,11 @@ VehicleMod VehicleMod::Get(Vehicle vehicle) {
             VEHICLE::GET_VEHICLE_EXTRA_COLOURS(vehicle, &Value0, &Value1);
             break;
         case ModType::ColorCustom1:
-            Value0 = true;// VEHICLE::GET_IS_VEHICLE_PRIMARY_COLOUR_CUSTOM(vehicle);
+            Value0 = VEHICLE::GET_IS_VEHICLE_PRIMARY_COLOUR_CUSTOM(vehicle);
             VEHICLE::GET_VEHICLE_CUSTOM_PRIMARY_COLOUR(vehicle, &Value1, &Value2, &Value3);
             break;
         case ModType::ColorCustom2:
-            Value0 = true;// VEHICLE::GET_IS_VEHICLE_SECONDARY_COLOUR_CUSTOM(vehicle);
+            Value0 = VEHICLE::GET_IS_VEHICLE_SECONDARY_COLOUR_CUSTOM(vehicle);
             VEHICLE::GET_VEHICLE_CUSTOM_SECONDARY_COLOUR(vehicle, &Value1, &Value2, &Value3);
             break;
         case ModType::Mod:
@@ -193,15 +193,6 @@ VehicleModData VehicleModData::LoadFrom(Vehicle vehicle) {
 
     data.VehicleMods.clear();
 
-
-    // Custom colors
-    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::ColorCustom1 }.Get(vehicle));
-    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::ColorCustom2 }.Get(vehicle));
-
-    // Primary/Secondary
-    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::Color }.Get(vehicle));
-    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::ExtraColors }.Get(vehicle));
-
     // Wheeltype
     data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::WheelType }.Get(vehicle));
 
@@ -239,6 +230,14 @@ VehicleModData VehicleModData::LoadFrom(Vehicle vehicle) {
     data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::XenonColor }.Get(vehicle));
     data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::InteriorColor }.Get(vehicle));
     data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::DashboardColor }.Get(vehicle));
+
+    // Custom colors
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::ColorCustom1 }.Get(vehicle));
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::ColorCustom2 }.Get(vehicle));
+
+    // Primary/Secondary
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::Color }.Get(vehicle));
+    data.VehicleMods.push_back(VehicleMod{ VehicleMod::ModType::ExtraColors }.Get(vehicle));
 
     return data;
 }

@@ -49,7 +49,7 @@ struct VehicleModData {
     static void ApplyTo(Vehicle vehicle, VehicleModData modData);
 };
 
-inline void to_json(nlohmann::json& j, const VehicleMod& mod) {
+inline void to_json(nlohmann::ordered_json& j, const VehicleMod& mod) {
     j = nlohmann::json{
         { "ModType", mod.Type },
         { "ModId", mod.ModId },
@@ -60,7 +60,7 @@ inline void to_json(nlohmann::json& j, const VehicleMod& mod) {
     };
 }
 
-inline void from_json(const nlohmann::json& j, VehicleMod& mod) {
+inline void from_json(const nlohmann::ordered_json& j, VehicleMod& mod) {
     j.at("ModType").get_to(mod.Type  );
     j.at("ModId"  ).get_to(mod.ModId );
     j.at("Value0" ).get_to(mod.Value0);
@@ -69,14 +69,14 @@ inline void from_json(const nlohmann::json& j, VehicleMod& mod) {
     j.at("Value3" ).get_to(mod.Value3);
 }
 
-inline void to_json(nlohmann::json& j, const VehicleModData& modData) {
-    j = nlohmann::json{
+inline void to_json(nlohmann::ordered_json& j, const VehicleModData& modData) {
+    j = nlohmann::ordered_json{
         { "Plate", modData.Plate },
         { "VehicleMods", modData.VehicleMods },
     };
 }
 
-inline void from_json(const nlohmann::json& j, VehicleModData& modData) {
+inline void from_json(const nlohmann::ordered_json& j, VehicleModData& modData) {
     j.at("Plate").get_to(modData.Plate);
     j.at("VehicleMods").get_to(modData.VehicleMods);
 }

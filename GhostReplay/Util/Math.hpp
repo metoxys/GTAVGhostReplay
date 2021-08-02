@@ -89,23 +89,37 @@ inline Vector3 lerp(Vector3 a, Vector3 b, float f, float min, float max) {
     };
 }
 
-template <typename Vector3T>
+template<typename T>
+concept TVec3 = requires(T t) { t.z; };
+
+template <TVec3 Vector3T>
 auto Length(Vector3T vec) {
     return std::sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 auto Distance(Vector3T vec1, Vector3T vec2) {
     Vector3T distance = vec1 - vec2;
     return Length(distance);
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
+auto LengthSq(Vector3T vec) {
+    return (vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
+}
+
+template <TVec3 Vector3T>
+auto DistanceSq(Vector3T vec1, Vector3T vec2) {
+    Vector3T distance = vec1 - vec2;
+    return LengthSq(distance);
+}
+
+template <TVec3 Vector3T>
 auto Dot(Vector3T a, Vector3T b)  {
     return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 Vector3T Cross(Vector3T left, Vector3T right) {
     Vector3T result{};
     result.x = left.y * right.z - left.z * right.y;
@@ -114,7 +128,7 @@ Vector3T Cross(Vector3T left, Vector3T right) {
     return result;
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 Vector3T operator + (Vector3T left, Vector3T right) {
     Vector3T v{};
     v.x = left.x + right.x;
@@ -123,7 +137,7 @@ Vector3T operator + (Vector3T left, Vector3T right) {
     return v;
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 Vector3T operator - (Vector3T left, Vector3T right) {
     Vector3T v{};
     v.x = left.x - right.x;
@@ -132,7 +146,7 @@ Vector3T operator - (Vector3T left, Vector3T right) {
     return v;
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 Vector3T operator * (Vector3T value, decltype(value.x) scale) {
     Vector3T v{};
     v.x = value.x * scale;
@@ -141,12 +155,12 @@ Vector3T operator * (Vector3T value, decltype(value.x) scale) {
     return v;
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 Vector3T operator * (decltype(std::declval<Vector3T>().x) scale, Vector3T vec) {
     return vec * scale;
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 Vector3T Normalize(Vector3T vec) {
     Vector3T vector = {};
     auto length = Length(vec);
@@ -160,12 +174,12 @@ Vector3T Normalize(Vector3T vec) {
     return vector;
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 Vector3T GetOffsetInWorldCoords(Vector3T position, Vector3T rotation, Vector3T forward, Vector3T offset) {
-    float num1 = cosf(rotation.y);
-    float x = num1 * cosf(-rotation.z);
-    float y = num1 * sinf(rotation.z);
-    float z = sinf(-rotation.y);
+    auto num1 = cos(rotation.y);
+    auto x = num1 * cos(-rotation.z);
+    auto y = num1 * sin(rotation.z);
+    auto z = sin(-rotation.y);
     Vector3 right = { x, 0, y, 0, z, 0 };
     Vector3 up = Cross(right, forward);
     return position + (right * offset.x) + (forward * offset.y) + (up * offset.z);
@@ -182,7 +196,7 @@ T GetAngleBetween(T h1, T h2, T separation) {
     return separation;
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 auto GetAngleBetween(Vector3T a, Vector3T b) {
     Vector3T normal{};
     normal.z = static_cast < decltype(a.x) >(1.0);
@@ -192,21 +206,38 @@ auto GetAngleBetween(Vector3T a, Vector3T b) {
     return angle;
 }
 
-template <typename Vector3T>
+template <TVec3 Vector3T>
 Vector3T RotationToDirection(Vector3T rot) {
-    float z = rot.z;
-    float num = z * 0.0174532924f;
+    auto rotZ = (rot.z);
+    auto rotX = (rot.x);
+    auto multXY = abs(cos(rotX));
+    Vector3T v{};
+    v.x = -sin(rotZ) * multXY;
+    v.y = cos(rotZ) * multXY;
+    v.z = sin(rotX);
+    return v;
+}
 
-    float x = rot.x;
-    float num2 = x * 0.0174532924f;
+template <TVec3 Vector3T>
+Vector3T RelativeRightVector(Vector3T rot) {
+    auto num = cos(rot.y);
+    Vector3T v{};
+    v.x = cos(-rot.z) * num;
+    v.y = sin(rot.z) * num;
+    v.z = sin(-rot.y);
+    return v;
+}
 
-    float num3 = abs(cos(num2));
+template <TVec3 Vector3T>
+inline Vector3T GetRelativeOffsetGivenWorldCoords(Vector3T position1, Vector3T position2, Vector3T rot) {
+    Vector3T right = RelativeRightVector(rot);
+    Vector3T forward = RotationToDirection(rot);
 
-    Vector3T dir{};
-    dir.x = -sin(num) * num3;
-    dir.y = cos(num) * num3;
-    dir.z = sin(num2);
-    return dir;
+    Vector3T v{};
+    v.x = -1 * Dot(right, (position1 - position2));
+    v.y = -1 * Dot(forward, (position1 - position2));
+    v.z = position2.z - position1.z;
+    return v;
 }
 
 inline bool operator==(const Vector3& lhs, const Vector3& rhs) {
@@ -244,4 +275,14 @@ inline Vector3 GetPerpendicular(Vector3 a, Vector3 b, float length, bool counter
         abCw.y = -ab.x;
     }
     return a + abCw * length;
+}
+
+inline bool ccw(Vector3 A, Vector3 B, Vector3 C) {
+    return (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x);
+}
+
+// Return true if line segments AB and CD intersect
+// Only X,Y plane is checked
+inline bool Intersect(Vector3 A, Vector3 B, Vector3 C, Vector3 D) {
+    return ccw(A, C, D) != ccw(B, C, D) && ccw(A, B, C) != ccw(A, B, D);
 }

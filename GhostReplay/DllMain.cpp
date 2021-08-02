@@ -13,6 +13,13 @@
 
 namespace fs = std::filesystem;
 
+namespace Dll {
+    bool unloading = false;
+}
+
+bool Dll::Unloading() { return unloading; }
+
+
 BOOL APIENTRY DllMain(HMODULE hInstance, DWORD reason, LPVOID lpReserved) {
     const std::string modPath = Paths::GetModuleFolder(hInstance) + Constants::ModDir;
     const std::string logFile = modPath + "\\" + Paths::GetModuleNameWithoutExtension(hInstance) + ".log";
@@ -27,6 +34,7 @@ BOOL APIENTRY DllMain(HMODULE hInstance, DWORD reason, LPVOID lpReserved) {
 
     switch (reason) {
         case DLL_PROCESS_ATTACH: {
+            Dll::unloading = false;
             logger.Clear();
             int gameVersion = getGameVersion();
             logger.Write(INFO, "GhostReplay %s (built %s %s) (%s)",
@@ -39,6 +47,7 @@ BOOL APIENTRY DllMain(HMODULE hInstance, DWORD reason, LPVOID lpReserved) {
             break;
         }
         case DLL_PROCESS_DETACH: {
+            Dll::unloading = true;
             scriptUnregister(hInstance);
             break;
         }

@@ -400,6 +400,9 @@ void CReplayScript::updatePlayback(unsigned long long gameTime, bool startPassed
                 ENTITY::SET_ENTITY_COMPLETELY_DISABLE_COLLISION(mReplayVehicle, false, false);
                 VEHICLE::SET_VEHICLE_ENGINE_ON(mReplayVehicle, true, true, false);
                 mLastNode = mActiveReplay->Nodes.begin();
+
+                mReplayVehicleBlip->SetAlpha(255);
+                mReplayVehicleBlip->SetName(mActiveReplay->Name);
             }
             else {
                 break;
@@ -485,6 +488,9 @@ void CReplayScript::updatePlayback(unsigned long long gameTime, bool startPassed
             ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, false, false);
             VExt::SetCurrentRPM(mReplayVehicle, 0.0f);
             mLastNode = mActiveReplay->Nodes.begin();
+
+            mReplayVehicleBlip->SetAlpha(0);
+
             break;
         }
     }
@@ -709,6 +715,8 @@ bool CReplayScript::passedLineThisTick(SLineDef line, Vector3 oldPos, Vector3 ne
 
 void CReplayScript::createReplayVehicle(Hash model, CReplayData* activeReplay, Vector3 pos) {
     if (ENTITY::DOES_ENTITY_EXIST(mReplayVehicle)) {
+        mReplayVehicleBlip.reset();
+
         ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, false, false);
         ENTITY::DELETE_ENTITY(&mReplayVehicle);
         mReplayVehicle = 0;
@@ -755,6 +763,14 @@ void CReplayScript::createReplayVehicle(Hash model, CReplayData* activeReplay, V
 
     mReplayVehicle = VEHICLE::CREATE_VEHICLE(model,
         pos.x, pos.y, pos.z, 0, false, true, false);
+
+    mReplayVehicleBlip.reset();
+    mReplayVehicleBlip = std::make_unique<CWrappedBlip>(
+        mReplayVehicle,
+        eBlipSprite::BlipSpriteStandard,
+        activeReplay->Name,
+        eBlipColor::BlipColorWhite, true);
+    mReplayVehicleBlip->SetAlpha(0);
 
     ENTITY::SET_ENTITY_VISIBLE(mReplayVehicle, false, false);
     ENTITY::SET_ENTITY_ALPHA(mReplayVehicle, 0, false);

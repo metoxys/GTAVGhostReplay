@@ -102,6 +102,7 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
     </ClCompile>
     <ClCompile Include="..\thirdparty\pugixml\src\pugixml.cpp" />
+    <ClCompile Include="Blip.cpp" />
     <ClCompile Include="Compatibility.cpp" />
     <ClCompile Include="Image.cpp" />
     <ClCompile Include="ReplayData.cpp" />
@@ -136,6 +137,7 @@
     <ClInclude Include="..\thirdparty\lodepng\lodepng.h" />
     <ClInclude Include="..\thirdparty\pugixml\src\pugiconfig.hpp" />
     <ClInclude Include="..\thirdparty\pugixml\src\pugixml.hpp" />
+    <ClInclude Include="Blip.hpp" />
     <ClInclude Include="Compatibility.h" />
     <ClInclude Include="Image.hpp" />
     <ClInclude Include="ReplayData.hpp" />

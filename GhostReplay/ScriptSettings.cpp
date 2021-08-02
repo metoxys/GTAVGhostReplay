@@ -30,6 +30,7 @@ void CScriptSettings::Load() {
 
     LOAD_VAL("Main", "NotifyLaps", Main.NotifyLaps);
     LOAD_VAL("Main", "DrawStartFinish", Main.DrawStartFinish);
+    LOAD_VAL("Main", "GhostBlips", Main.GhostBlips);
     try {
         LOAD_VAL("Main", "ExtensiveReplayTelemetry", Main.ExtensiveReplayTelemetry);
     }
@@ -54,6 +55,7 @@ void CScriptSettings::Save() {
 
     SAVE_VAL("Main", "NotifyLaps", Main.NotifyLaps);
     SAVE_VAL("Main", "DrawStartFinish", Main.DrawStartFinish);
+    SAVE_VAL("Main", "GhostBlips", Main.GhostBlips);
     SAVE_VAL("Main", "ExtensiveReplayTelemetry", Main.ExtensiveReplayTelemetry);
 
     SAVE_VAL("Record", "AutoGhost", Record.AutoGhost);

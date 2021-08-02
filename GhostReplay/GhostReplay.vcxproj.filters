@@ -73,6 +73,7 @@
     <ClCompile Include="Util\Inputs.cpp">
       <Filter>Util</Filter>
     </ClCompile>
+    <ClCompile Include="Blip.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Util">
@@ -192,5 +193,6 @@
     <ClInclude Include="Util\Inputs.hpp">
       <Filter>Util</Filter>
     </ClInclude>
+    <ClInclude Include="Blip.hpp" />
   </ItemGroup>
 </Project>

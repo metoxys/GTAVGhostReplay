@@ -4,6 +4,7 @@
 #include "TrackData.hpp"
 #include "Image.hpp"
 #include "Blip.hpp"
+#include "ReplayVehicle.hpp"
 
 #include <vector>
 #include <string>
@@ -11,12 +12,6 @@
 enum class EScriptMode {
     DefineTrack,
     ReplayActive,
-};
-
-enum class EReplayState {
-    Idle,
-    Playing,
-    Finished,
 };
 
 enum class ERecordState {
@@ -69,11 +64,14 @@ public:
     }
 
     EReplayState GetReplayState() {
-        return mReplayState;
+        if (mReplayVehicle)
+            return mReplayVehicle->GetReplayState();
+        return EReplayState::Idle;
     }
 
     void SetReplayState(EReplayState replayState) {
-        mReplayState = replayState;
+        if (mReplayVehicle)
+            mReplayVehicle->SetReplayState(replayState);
     }
 
     ERecordState GetRecordState() {
@@ -85,7 +83,9 @@ public:
     }
 
     Vehicle GetReplayVehicle() {
-        return mReplayVehicle;
+        if (mReplayVehicle)
+            return mReplayVehicle->GetVehicle();
+        return 0;
     }
 
     void SetTrack(const std::string& trackName);
@@ -107,11 +107,9 @@ public:
 
 protected:
     void updateReplay();
-    void updatePlayback(unsigned long long gameTime, bool startPassedThisTick, bool finishPassedThisTick);
     void updateRecord(unsigned long long gameTime, bool startPassedThisTick, bool finishPassedThisTick);
     void updateTrackDefine();
     bool passedLineThisTick(SLineDef line, Vector3 oldPos, Vector3 newPos);
-    void createReplayVehicle(Hash model, CReplayData* activeReplay, Vector3 pos);
     void clearPtfx();
     void createPtfx(const CTrackData& trackData);
 
@@ -126,17 +124,16 @@ protected:
     CTrackData* mActiveTrack;
 
     EScriptMode mScriptMode;
-    EReplayState mReplayState;
     ERecordState mRecordState;
-    unsigned long long replayStart = 0;
     unsigned long long recordStart = 0;
 
     Vector3 mLastPos;
-    std::vector<SReplayNode>::iterator mLastNode;
 
     // TODO: Refactor replay vehicle logic to... somewhere else.
-    Vehicle mReplayVehicle;
-    std::unique_ptr<CWrappedBlip> mReplayVehicleBlip;
+    //Vehicle mReplayVehicle;
+    //std::unique_ptr<CWrappedBlip> mReplayVehicleBlip;
+
+    std::unique_ptr<CReplayVehicle> mReplayVehicle;
 
     std::vector<CReplayData> mUnsavedRuns;
     CReplayData mCurrentRun;

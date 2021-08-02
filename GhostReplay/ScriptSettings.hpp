@@ -11,6 +11,7 @@ public:
     struct {
         bool NotifyLaps = true;
         bool DrawStartFinish = true;
+        bool GhostBlips = true;
         bool ExtensiveReplayTelemetry = false;
     } Main;
 
